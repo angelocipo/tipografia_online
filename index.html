@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tipografia Online — Catalogo prodotti</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: oklch(0.99 0.003 90); color: oklch(0.2 0.01 90); }
+  a { color: oklch(0.42 0.12 155); }
+  a:hover { color: oklch(0.35 0.12 155); }
+  img { max-width: 100%; }
+  button { font-family: inherit; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
+  .card { animation: fadeIn 0.3s ease both; cursor:pointer; background:#fff; border:1px solid oklch(0.91 0.005 90); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; transition:transform 0.15s, box-shadow 0.15s; }
+  .card:hover { transform:translateY(-3px); box-shadow:0 12px 28px -12px oklch(0.2 0.01 90 / 0.18); border-color:oklch(0.85 0.005 90); }
+  .chip { border:1px solid oklch(0.88 0.005 90); background:#fff; color:oklch(0.3 0.01 90); font-size:13px; font-weight:600; padding:8px 14px; border-radius:20px; cursor:pointer; }
+  .chip.active { border-color:oklch(0.42 0.12 155); background:oklch(0.42 0.12 155); color:#fff; }
+  .thumb { width:64px; height:64px; border-radius:8px; overflow:hidden; cursor:pointer; border:2px solid transparent; }
+  .thumb.active { border-color:oklch(0.42 0.12 155); }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .size-row { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-radius:10px; cursor:pointer; border:1.5px solid oklch(0.9 0.005 90); background:#fff; }
+  .size-row.active { border-color:oklch(0.42 0.12 155); background:oklch(0.42 0.12 155 / 0.06); }
+  .pill { border:1.5px solid oklch(0.88 0.005 90); background:#fff; color:oklch(0.25 0.01 90); font-size:13px; font-weight:600; padding:8px 14px; border-radius:8px; cursor:pointer; }
+  .pill.active { border-color:oklch(0.42 0.12 155); background:oklch(0.42 0.12 155 / 0.08); }
+  input[type=range] { width:100%; accent-color: oklch(0.42 0.12 155); }
+</style>
+<template id="__bundler_thumbnail" data-bg-color="#fbfaf7">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#fbfaf7"/>
+    <text x="50" y="58" font-size="34" text-anchor="middle" font-family="sans-serif" font-weight="700" fill="#2f6b46">T</text>
+  </svg>
+</template>
+</head>
+<body>
+
+<div style="position:sticky; top:0; z-index:10; background:oklch(0.99 0.003 90 / 0.92); backdrop-filter:blur(10px); border-bottom:1px solid oklch(0.9 0.005 90);">
+  <div style="max-width:1200px; margin:0 auto; padding:20px 28px; display:flex; align-items:center; justify-content:space-between; gap:24px;">
+    <div id="logoHome" style="cursor:pointer; display:flex; align-items:baseline; gap:10px;">
+      <span style="font-size:19px; font-weight:700; letter-spacing:-0.02em;">Tipografia Online</span>
+      <span style="font-size:12px; color:oklch(0.55 0.01 90); font-family:ui-monospace,monospace;">catalogo prodotti</span>
+    </div>
+    <button id="backBtn" style="display:none; border:1px solid oklch(0.85 0.005 90); background:#fff; color:oklch(0.2 0.01 90); font-size:13px; font-weight:600; padding:9px 16px; border-radius:8px; cursor:pointer;">← Tutti i prodotti</button>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=EUR"></script>
+<script>
+// ---- Payment: Stripe checkout is created dynamically by /api/create-checkout-session (see DEPLOY.md). ----
+// ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
+
+const ROLLUP_VARIANTS = [
+  { label: '80/85 × 200 cm', price: 60 },
+  { label: '150 × 200 cm', price: 350 },
+  { label: '200 × 200 cm', price: 530 },
+];
+const ROLLUP_FEATURES = [
+  'Stampa 4/0 colori (CMYK) su carta sintetica bi-strato',
+  'Struttura in alluminio con piede estraibile',
+  'Banner sostituibile, consegnato preconfezionato',
+  'Include borsa da trasporto',
+];
+const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Striscioni', 'Adesivi'];
+
+const PRODUCTS = [
+  { id:'197', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
+    img:'https://www.tipografia.online/wp-content/uploads/2025/02/rollup.jpg',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2025/02/rollup.jpg','https://www.tipografia.online/wp-content/uploads/2025/02/IMG_4262ac-copia.jpg','https://www.tipografia.online/wp-content/uploads/2025/02/IMG_4265ac-copia.jpg','https://www.tipografia.online/wp-content/uploads/2025/02/rollup-500.jpg'],
+    intro:"Rollup stampato in 24H. Stampa il tuo Roll-Up a Roma in 24 ore e presentati sempre al meglio, anche all'ultimo minuto. Qualità premium, colori vivi e materiali resistenti.",
+    features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'80×200 · 85×200 cm','Uso':'Interni'},
+    // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
+    pricing:{ type:'formula',
+      formatChoices: ['80x200cm','85x200cm'],
+      tempiChoices: ['24H','72H'],
+      strutturaChoices: [
+        { label:'Con struttura', rate:30 },
+        { label:'Solo stampa', rate:0 },
+      ],
+      rollupRate: (qty) => (qty > 6 ? 20 : qty > 4 ? 25 : 30),
+      rate24h: 10,
+    } },
+  { id:'5833', nome:'Stampa Roll-Up 200 × 200 cm', categoria:'Rollup',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/04/Professional-rollup-banner-mockup-display-copia2.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/04/Professional-rollup-banner-mockup-display-copia2.avif','https://www.tipografia.online/wp-content/uploads/2025/02/IMG_4262ac-copia.jpg','https://www.tipografia.online/wp-content/uploads/2025/02/rollup-x-pannello-kl-copia2.avif'],
+    intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
+    features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
+    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:2} },
+  { id:'5850', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/04/Professional-roll-up-banner-mockup-copia700.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/04/Professional-roll-up-banner-mockup-copia700.avif','https://www.tipografia.online/wp-content/uploads/2025/02/IMG_9552-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/rollup-IMG_4738-250x500-copia2.avif'],
+    intro:"La via di mezzo perfetta: largo abbastanza da farsi notare, comodo da spostare tra un evento e l'altro.",
+    features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
+    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:1} },
+  { id:'202', nome:'Biglietti da Visita a Rilievo', categoria:'Biglietti da Visita',
+    img:'https://www.tipografia.online/wp-content/uploads/2025/02/bv-rilievo.jpg',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2025/02/bv-rilievo.jpg'],
+    intro:'Inchiostro trasparente in rilievo su un lato, per un biglietto da visita che si sente al tatto oltre che vedersi.',
+    features:['Stampa fronte/retro a 4 colori','Rilievo applicabile anche a più motivi grafici (set)','Assistenza tecnica per il rilievo inclusa','A partire da 100 esemplari'],
+    specs:{'Carta':'Patinata 300 / 350 / 400 gr','Formato':'8,5×5,5 · 9×5 · 5,5×5,5 cm','Tempi':'1 settimana'},
+    pricing:{type:'quote', options:[
+      {key:'grammatura', label:'Grammatura', choices:['300 gr','350 gr','400 gr']},
+      {key:'formato', label:'Formato', choices:['8,5×5,5 cm','9×5 cm','5,5×5,5 cm']},
+      {key:'quantita', label:'Quantità', choices:['100','250','500','1.000+']},
+    ]} },
+  { id:'5515', nome:'Biglietti da Visita Prezzi Strategici', categoria:'Biglietti da Visita',
+    img:'https://www.tipografia.online/wp-content/uploads/2025/03/bv-2025-ac-copia700.webp',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2025/03/bv-2025-ac-copia700.webp'],
+    intro:'Il nostro biglietto da visita più conveniente: stampa fronte/retro a 4 colori con controllo tecnico incluso.',
+    features:['Stampa su f/r, a 4 colori','Controllo tecnico compreso nel prezzo','A partire da 100 esemplari'],
+    specs:{'Carta':'Patinata 300 / 400 / 500 gr','Formato':'8,5×5,5 · 9×5 · 5,5×5,5 cm','Tempi':'1 settimana'},
+    pricing:{type:'quote', options:[
+      {key:'grammatura', label:'Grammatura', choices:['300 gr','400 gr','500 gr']},
+      {key:'formato', label:'Formato', choices:['8,5×5,5 cm','9×5 cm','5,5×5,5 cm']},
+      {key:'quantita', label:'Quantità', choices:['100','250','500','1.000+']},
+    ]} },
+  { id:'217', nome:'Forex PVC Stampato', categoria:'Forex',
+    img:'https://www.tipografia.online/wp-content/uploads/2025/02/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2025/02/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif'],
+    intro:'Materiale rigido in PVC espanso, la scelta più conveniente e durevole per insegne, cartellonistica e allestimenti.',
+    features:['Disponibile in diversi formati','Tre spessori differenti','Ideale per cartellonistica e allestimento negozi'],
+    specs:{'Materiale':'PVC espanso rigido','Spessori':'3, 5, 10 mm','Uso':'Interni ed esterni'},
+    pricing:{type:'quote', options:[
+      {key:'spessore', label:'Spessore', choices:['3 mm','5 mm','10 mm']},
+      {key:'formato', label:'Formato', choices:['50×70 cm','70×100 cm','Su misura']},
+    ]} },
+  { id:'5392', nome:'Volantini A5 gr 130 Opaca o Lucida', categoria:'Volantini',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/04/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/04/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    intro:'Volantini formato A5 (148 × 210 mm), stampa fronte/retro in quadricromia offset su carta patinata 130 g/m².',
+    features:['Stampa fronte/retro in quadricromia offset','Definizione nitida e colori saturi','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'A5 · 148×210 mm','Carta':'Patinata opaca o lucida 130 g/m²','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:1000,price:48},{qty:2500,price:74},{qty:5000,price:107},{qty:10000,price:166},{qty:20000,price:299},{qty:30000,price:440},{qty:40000,price:573},{qty:50000,price:712},{qty:60000,price:851},{qty:70000,price:990},{qty:80000,price:1119},{qty:90000,price:1257},{qty:100000,price:1395}]} },
+  { id:'5560', nome:'Volantini A4 gr 170 Opaca', categoria:'Volantini',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/04/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/04/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    intro:'Volantini formato A4 (210 × 297 mm), stampa fronte/retro in quadricromia offset su carta patinata 170 g/m².',
+    features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'A4 · 210×297 mm','Carta':'Patinata opaca 170 g/m²','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:1000,price:82},{qty:2500,price:137},{qty:5000,price:236},{qty:10000,price:429},{qty:20000,price:804},{qty:30000,price:1163},{qty:40000,price:1596},{qty:50000,price:1937},{qty:60000,price:2249},{qty:70000,price:2614},{qty:80000,price:2972},{qty:90000,price:3361},{qty:100000,price:3600}]} },
+  { id:'5840', nome:'Volantini A6 gr 130 Opaca o Lucida', categoria:'Volantini',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/04/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/04/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    intro:'Volantini formato A6 (105 × 148 mm), il più piccolo e conveniente per grandi tirature.',
+    features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'A6 · 105×148 mm','Carta':'Patinata opaca o lucida 130 g/m²','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:100,price:25},{qty:500,price:31},{qty:1000,price:35},{qty:2500,price:44},{qty:5000,price:67},{qty:10000,price:108},{qty:20000,price:190},{qty:30000,price:277},{qty:40000,price:346},{qty:50000,price:437},{qty:60000,price:526},{qty:70000,price:596},{qty:80000,price:687},{qty:90000,price:776},{qty:100000,price:847}]} },
+  { id:'5723', nome:'Volantini 10×21 cm Opaca o Lucida', categoria:'Volantini',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/02/Flyers-personalizzati-e-stampa-professionale-copia.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/02/Flyers-personalizzati-e-stampa-professionale-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    intro:'Il formato DL (10×21 cm), stretto e verticale: ideale per espositori, distribuzione manuale e campagne porta a porta.',
+    features:['Stampa solo fronte o fronte/retro','Colori pieni e definiti','Controllo file prima di stampa'],
+    specs:{'Formato':'DL · 10×21 cm','Carta':'Patinata opaca o lucida','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:1000,price:35},{qty:2500,price:54},{qty:5000,price:83},{qty:10000,price:135},{qty:20000,price:238},{qty:30000,price:350},{qty:40000,price:458},{qty:50000,price:571},{qty:60000,price:683},{qty:70000,price:796},{qty:80000,price:909},{qty:90000,price:1022},{qty:100000,price:1114}]} },
+  { id:'5398', nome:'Pieghevoli A4 a 2 Ante A5', categoria:'Pieghevoli',
+    img:'https://www.tipografia.online/wp-content/uploads/2025/02/piegh-IMG_1027-kl-copia.jpg',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2025/02/piegh-IMG_1027-kl-copia.jpg'],
+    intro:'Pieghevole aperto A4, chiuso A5 (148 × 210 mm): stampa fronte/retro in quadricromia offset su carta patinata 130 g/m².',
+    features:['Stampa fronte/retro in quadricromia offset','Piega centrale a metà','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'Aperto A4 · chiuso A5','Carta':'Patinata opaca 130 g/m²','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:100,price:48},{qty:500,price:71},{qty:1000,price:89},{qty:2500,price:138},{qty:5000,price:236},{qty:10000,price:410},{qty:20000,price:769},{qty:30000,price:1169},{qty:40000,price:1563},{qty:50000,price:1902},{qty:60000,price:2315},{qty:70000,price:2784},{qty:80000,price:3037},{qty:90000,price:3427},{qty:100000,price:3619}]} },
+  { id:'5794', nome:'Pieghevoli A4 a 3 Ante 10×21 cm', categoria:'Pieghevoli',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/03/Tri-fold-brochures-with-Italian-design700.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/03/Tri-fold-brochures-with-Italian-design700.avif'],
+    intro:"Pieghevole aperto A4, chiuso 10×21 cm, con piega a portafoglio o a zig-zag: ordinato e d'impatto per servizi, menù e listini.",
+    features:['Piega a portafoglio o a zig-zag','Layout ordinato per menù e listini','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'Aperto A4 · chiuso 10×21 cm','Piega':'Portafoglio o zig-zag','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:100,price:55},{qty:500,price:70},{qty:1000,price:81},{qty:2500,price:142},{qty:5000,price:240},{qty:10000,price:433},{qty:20000,price:842},{qty:30000,price:1245},{qty:40000,price:1678},{qty:50000,price:2013},{qty:60000,price:2393},{qty:70000,price:2787},{qty:80000,price:3140},{qty:90000,price:3431},{qty:100000,price:3685}]} },
+  { id:'5606', nome:'Locandine 70×100 cm', categoria:'Locandine e Manifesti',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/02/locandine700x700-copia.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/02/locandine700x700-copia.avif'],
+    intro:'Locandine 70×100 cm stampate fronte in quadricromia offset su carta patinata lucida 100 g/m².',
+    features:['Stampa fronte in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'70×100 cm','Carta':'Patinata lucida 100 g/m²','Tempi':'7 giorni lavorativi'},
+    pricing:{type:'tiers', unit:'copie', tiers:[{qty:50,price:97},{qty:100,price:151},{qty:150,price:175},{qty:200,price:190},{qty:250,price:204},{qty:400,price:268},{qty:500,price:295},{qty:750,price:385},{qty:1000,price:454},{qty:1500,price:633},{qty:2000,price:792},{qty:3000,price:1118},{qty:4000,price:1437},{qty:5000,price:1770},{qty:6000,price:2104}]} },
+  { id:'5663', nome:'Striscioni / Banner in PVC', categoria:'Striscioni',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/02/banner-pvc-flessibile-700.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/02/banner-pvc-flessibile-700.avif'],
+    intro:'Soluzione pubblicitaria professionale e resistente per recinzioni, cantieri, impianti sportivi ed eventi, in qualsiasi condizione climatica.',
+    features:['Formati fino a 400 × 300 cm','Mesh traspirante, PVC premium, budget o riciclato','Protezione UV, vento e agenti atmosferici','Orli rinforzati e occhielli metallici opzionali','Ordinabile anche da 1 solo esemplare'],
+    specs:{'Materiale':'PVC o mesh','Formato max':'400×300 cm','Uso':'Interni ed esterni'},
+    pricing:{type:'quote', options:[
+      {key:'materiale', label:'Materiale', choices:['PVC budget','PVC premium','Mesh traspirante','Mesh riciclato']},
+      {key:'finitura', label:'Finitura', choices:['Bordo semplice','Orli + occhielli']},
+      {key:'formato', label:'Formato', choices:['100×70 cm','200×100 cm','Su misura']},
+    ]} },
+  { id:'5720', nome:'Adesivo PVC 42×10 cm', categoria:'Adesivi',
+    img:'https://www.tipografia.online/wp-content/uploads/2026/02/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.avif',
+    gallery:['https://www.tipografia.online/wp-content/uploads/2026/02/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.avif'],
+    intro:'Adesivo PVC impermeabile per esterni: resiste a pioggia e acqua salata mantenendo intatte stampa e adesione.',
+    features:['Versione monomerica o polimerica','Base bianca o trasparente (vetrofanie)','Laminazione opaca, lucida o antiscivolo','Personalizzabile in forma e dimensione'],
+    specs:{'Materiale':'Vinile PVC impermeabile','Adesione':'–40°C a +80°C','Uso':'Veicoli, vetrine, pavimenti'},
+    pricing:{type:'quote', options:[
+      {key:'tipo', label:'Tipo', choices:['Monomerico','Polimerico','Elettrostatico']},
+      {key:'laminazione', label:'Laminazione', choices:['Nessuna','Opaca','Lucida','Antiscivolo']},
+      {key:'formato', label:'Formato', choices:['42×10 cm','Su misura']},
+    ]} },
+];
+
+function fmtEUR(n){ return n.toLocaleString('it-IT', {minimumFractionDigits:0, maximumFractionDigits:2}); }
+function priceFrom(p){
+  if (p.pricing.type === 'tiers') return p.pricing.tiers[0].price;
+  if (p.pricing.type === 'size') return Math.min(...p.pricing.variants.map(v=>v.price));
+  if (p.pricing.type === 'formula') {
+    const minStruttura = Math.min(...p.pricing.strutturaChoices.map(c => c.rate));
+    return 1 * (p.pricing.rollupRate(1) + minStruttura);
+  }
+  return null;
+}
+function priceLabelFor(p){
+  if (p.pricing.type === 'quote') return 'Preventivo';
+  return 'da € ' + fmtEUR(priceFrom(p));
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function paymentBlockHtml(p, price, selectionIdx, formula){
+  return `
+    <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
+      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
+        Paga con carta — Stripe
+      </button>
+      <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
+      <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
+    </div>`;
+}
+
+async function startStripeCheckout(btn){
+  const productId = btn.dataset.productId;
+  const idx = parseInt(btn.dataset.idx, 10) || 0;
+  const pricingType = btn.dataset.pricingType;
+  const errorEl = btn.parentElement.querySelector('.stripe-error');
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Attendere…';
+  try {
+    const body = { productId };
+    if (pricingType === 'tiers') body.tierIndex = idx;
+    if (pricingType === 'size') body.sizeIndex = idx;
+    if (pricingType === 'formula') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = formulaState(p);
+      body.formula = { qty: f.qty, tempi: f.tempi, strutturaIdx: f.strutturaIdx };
+    }
+    const resp = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.url) throw new Error(data.error || 'Errore sconosciuto');
+    window.location.href = data.url;
+  } catch (err) {
+    errorEl.textContent = 'Pagamento non disponibile: connetti il backend (vedi DEPLOY.md) — ' + err.message;
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+function mountPaypalButtons(){
+  if (typeof paypal === 'undefined') return;
+  document.querySelectorAll('.paypal-slot').forEach(el => {
+    el.innerHTML = '';
+    const price = el.dataset.price;
+    paypal.Buttons({
+      style: { layout: 'horizontal', color: 'gold', shape: 'rect', height: 45, tagline: false },
+      createOrder: (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: price, currency_code: 'EUR' } }] }),
+      onApprove: (data, actions) => actions.order.capture().then(details => {
+        alert('Pagamento completato, grazie ' + (details.payer?.name?.given_name || '') + '!');
+      }),
+    }).render(el);
+  });
+}
+
+let state = {
+  category: 'Tutti',
+  selectedId: null,
+  mainImageOverride: null,
+  tierIdxById: {},
+  sizeIdxById: {},
+  quoteSelById: {},
+  formulaById: {},
+};
+
+function formulaState(p){
+  const cur = state.formulaById[p.id];
+  if (cur) return cur;
+  const fresh = { qty: 1, formato: p.pricing.formatChoices[0], tempi: p.pricing.tempiChoices[0], strutturaIdx: 0, canva: '' };
+  state.formulaById[p.id] = fresh;
+  return fresh;
+}
+
+function computeFormulaPrice(p, f){
+  const rollup = p.pricing.rollupRate(f.qty);
+  const struttura = p.pricing.strutturaChoices[f.strutturaIdx].rate;
+  const rush = f.tempi === '24H' ? p.pricing.rate24h : 0;
+  return f.qty * (rollup + struttura + rush);
+}
+
+const app = document.getElementById('app');
+const backBtn = document.getElementById('backBtn');
+document.getElementById('logoHome').addEventListener('click', () => { state.selectedId = null; render(); });
+backBtn.addEventListener('click', () => { state.selectedId = null; render(); });
+
+function render(){
+  backBtn.style.display = state.selectedId ? 'block' : 'none';
+  if (state.selectedId) renderDetail(); else renderGrid();
+  window.scrollTo(0,0);
+}
+
+function renderGrid(){
+  const chips = ['Tutti', ...CATEGORIES];
+  const visible = PRODUCTS.filter(p => state.category === 'Tutti' || p.categoria === state.category);
+  app.innerHTML = `
+    <div style="max-width:1200px; margin:0 auto; padding:36px 28px 80px;">
+      <div style="margin-bottom:28px;">
+        <h1 style="font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Il nostro catalogo</h1>
+        <p style="font-size:16px; font-weight:650; color:oklch(0.42 0.12 155); margin:0 0 10px;">Prezzi strategici. Qualità professionale. Risultati concreti.</p>
+        <p style="font-size:15px; color:oklch(0.5 0.01 90); margin:0 0 10px; max-width:640px; line-height:1.6;">Ordina i tuoi stampati online anche senza competenze grafiche. Ti aiutiamo a preparare il file corretto e a ottenere un risultato professionale. Abbiamo selezionato una serie di articoli tipografici pensati per chi vuole comunicare in modo efficace senza sprechi: formati ottimizzati, materiali affidabili e costi calibrati per ottenere il massimo rendimento per ogni stampa. Volantini, poster, materiali promozionali e prodotti con standard professionali.</p>
+        <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione e controllo file e IVA.</p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;">
+        ${chips.map(c => `<button class="chip ${c===state.category?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:20px;">
+        ${visible.map(p => `
+          <div class="card" data-open="${p.id}">
+            <div style="aspect-ratio:1/1; background:oklch(0.95 0.005 90); overflow:hidden;">
+              <img src="${p.img}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            </div>
+            <div style="padding:16px 18px 18px; display:flex; flex-direction:column; gap:8px; flex:1;">
+              <span style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:oklch(0.42 0.12 155);">${esc(p.categoria)}</span>
+              <span style="font-size:15.5px; font-weight:650; line-height:1.3;">${esc(p.nome)}</span>
+              <div style="flex:1;"></div>
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:6px;">
+                <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">${esc(priceLabelFor(p))}</span>
+                <span style="font-size:12px; color:oklch(0.5 0.01 90);">Configura →</span>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; render(); }));
+  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => { state.selectedId = el.dataset.open; state.mainImageOverride = null; render(); }));
+}
+
+function renderDetail(){
+  const p = PRODUCTS.find(x => x.id === state.selectedId);
+  const mainImage = state.mainImageOverride || p.img;
+  const specsList = Object.entries(p.specs || {});
+  let pricingHtml = '';
+
+  if (p.pricing.type === 'tiers'){
+    const idx = state.tierIdxById[p.id] ?? 0;
+    const tiers = p.pricing.tiers;
+    const tier = tiers[Math.min(idx, tiers.length-1)];
+    pricingHtml = `
+      <div style="margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+          <span style="color:oklch(0.5 0.01 90);">Quantità</span>
+          <span style="font-weight:700; font-family:ui-monospace,monospace;">${fmtEUR(tier.qty)} ${esc(p.pricing.unit)}</span>
+        </div>
+        <input type="range" min="0" max="${tiers.length-1}" step="1" value="${idx}" id="tierRange">
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale stimato</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
+      </div>
+      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(tier.price/tier.qty).toFixed(3)} / copia · IVA inclusa</div>
+      ${paymentBlockHtml(p, tier.price, idx)}`;
+  } else if (p.pricing.type === 'size'){
+    const idx = state.sizeIdxById[p.id] ?? p.pricing.defaultIndex ?? 0;
+    const variants = p.pricing.variants;
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
+        ${variants.map((v,i) => `
+          <div class="size-row ${i===idx?'active':''}" data-size="${i}">
+            <span style="font-size:14px; font-weight:600;">${esc(v.label)}</span>
+            <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">€ ${fmtEUR(v.price)}</span>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Prezzo</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(variants[idx].price)}</span>
+      </div>
+      ${paymentBlockHtml(p, variants[idx].price, idx)}`;
+  } else if (p.pricing.type === 'formula'){
+    const f = formulaState(p);
+    const total = computeFormulaPrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità</div>
+          <input type="number" min="1" id="formulaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.formatChoices.map(c => `<button class="pill ${c===f.formato?'active':''}" data-formula-formato="${esc(c)}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Tempi di stampa</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.tempiChoices.map(c => `<button class="pill ${c===f.tempi?'active':''}" data-formula-tempi="${esc(c)}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Con o senza struttura</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.strutturaChoices.map((c,i) => `<button class="pill ${i===f.strutturaIdx?'active':''}" data-formula-struttura="${i}">${esc(c.label)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Canva link modificabile <span style="opacity:.6;">(opzionale)</span></div>
+          <input type="text" id="formulaCanva" value="${esc(f.canva)}" placeholder="https://www.canva.com/design/..." style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
+          <input type="file" style="width:100%; font-size:13px;">
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'quote'){
+    const sel = state.quoteSelById[p.id] || {};
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:6px;">
+        ${p.pricing.options.map(opt => {
+          const current = sel[opt.key] ?? opt.choices[0];
+          return `<div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${esc(opt.label)}</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${opt.choices.map(c => `<button class="pill ${c===current?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}</button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90);">
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-bottom:10px;">Prezzo su richiesta in base alla configurazione selezionata.</div>
+        <button style="width:100%; border:none; background:oklch(0.42 0.12 155); color:#fff; font-size:14.5px; font-weight:700; padding:14px; border-radius:10px; cursor:pointer;">Richiedi preventivo →</button>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    <div style="max-width:1200px; margin:0 auto; padding:36px 28px 90px;">
+      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:20px; font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
+      <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:start;">
+        <div style="position:sticky; top:96px;">
+          <div style="aspect-ratio:1/1; background:oklch(0.95 0.005 90); border-radius:16px; overflow:hidden; margin-bottom:12px;">
+            <img src="${mainImage}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            ${(p.gallery||[]).map(url => `<div class="thumb ${mainImage===url?'active':''}" data-thumb="${esc(url)}"><img src="${url}"></div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <h1 style="font-size:30px; font-weight:700; letter-spacing:-0.02em; margin:0 0 14px; line-height:1.15;">${esc(p.nome)}</h1>
+          <p style="font-size:15px; line-height:1.6; color:oklch(0.35 0.01 90); margin:0 0 22px;">${esc(p.intro)}</p>
+          <div style="display:flex; flex-direction:column; gap:9px; margin-bottom:26px;">
+            ${p.features.map(f => `<div style="display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.5;"><span style="color:oklch(0.42 0.12 155); font-weight:700; margin-top:1px;">✓</span><span>${esc(f)}</span></div>`).join('')}
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:14px; padding:16px; background:oklch(0.965 0.004 90); border-radius:12px; margin-bottom:28px;">
+            ${specsList.map(([k,v]) => `<div><div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:oklch(0.5 0.01 90); margin-bottom:3px;">${esc(k)}</div><div style="font-size:13.5px; font-weight:600;">${esc(v)}</div></div>`).join('')}
+          </div>
+          <div style="border:1px solid oklch(0.9 0.005 90); border-radius:14px; padding:22px;">
+            <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:oklch(0.5 0.01 90); margin-bottom:16px;">Configura il tuo ordine</div>
+            ${pricingHtml}
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  const range = document.getElementById('tierRange');
+  if (range) range.addEventListener('input', (e) => { state.tierIdxById[p.id] = parseInt(e.target.value,10); renderDetail(); });
+  app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
+  app.querySelectorAll('[data-thumb]').forEach(el => el.addEventListener('click', () => { state.mainImageOverride = el.dataset.thumb; renderDetail(); }));
+  app.querySelectorAll('[data-quote-key]').forEach(el => el.addEventListener('click', () => {
+    state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.dataset.quoteVal };
+    renderDetail();
+  }));
+  const qtyInput = document.getElementById('formulaQty');
+  if (qtyInput) qtyInput.addEventListener('input', (e) => { formulaState(p).qty = Math.max(1, parseInt(e.target.value,10) || 1); renderDetail(); });
+  const canvaInput = document.getElementById('formulaCanva');
+  if (canvaInput) canvaInput.addEventListener('input', (e) => { formulaState(p).canva = e.target.value; });
+  app.querySelectorAll('[data-formula-formato]').forEach(el => el.addEventListener('click', () => { formulaState(p).formato = el.dataset.formulaFormato; renderDetail(); }));
+  app.querySelectorAll('[data-formula-tempi]').forEach(el => el.addEventListener('click', () => { formulaState(p).tempi = el.dataset.formulaTempi; renderDetail(); }));
+  app.querySelectorAll('[data-formula-struttura]').forEach(el => el.addEventListener('click', () => { formulaState(p).strutturaIdx = parseInt(el.dataset.formulaStruttura,10); renderDetail(); }));
+  mountPaypalButtons();
+  const stripeBtn = app.querySelector('.pay-stripe');
+  if (stripeBtn) stripeBtn.addEventListener('click', () => startStripeCheckout(stripeBtn));
+}
+
+render();
+</script>
+</body>
+</html>
