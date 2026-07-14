@@ -8,7 +8,7 @@ This site is now a static front-end (`index.html`) plus one serverless function
 1. Push this folder to a GitHub repo (or drag-and-drop deploy at vercel.com/new).
 2. Import the repo in Vercel. Framework preset: "Other" (no build step needed).
 3. In Vercel Project → Settings → Environment Variables, add:
-   - `STRIPE_SECRET_KEY` = your Stripe secret key (`sk_test_...` while testing, `sk_live_...` when live)
+   - `STRIPE_SECRET_KEY` = your Stripe secret key (`sk_test_...` while testing, `sk_live_...` when live — copy it from Stripe Dashboard → Developers → API keys)
 4. Deploy. Vercel automatically turns `api/create-checkout-session.js` into a live endpoint
    at `/api/create-checkout-session`.
 
@@ -34,8 +34,10 @@ real PayPal app Client ID (developer.paypal.com → My Apps & Credentials → Li
 
 ## How pricing stays trustworthy
 
-The browser only sends *which* product + which tier/size the customer picked — never a price.
-`api/create-checkout-session.js` looks up the real price server-side from `api/_pricing-data.js`
-before creating the Stripe Checkout Session, so a customer can't tamper with the amount from
-devtools. If you change a price in `index.html`, mirror the same number in
+The browser only sends *which* product + which tier/size/formula options the customer picked —
+never a price. `api/create-checkout-session.js` looks up the real price server-side from
+`api/_pricing-data.js` before creating the Stripe Checkout Session, so a customer can't tamper
+with the amount from devtools. If you change a price in `index.html`, mirror the same number in
 `api/_pricing-data.js`.
+
+

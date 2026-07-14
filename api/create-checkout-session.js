@@ -1,5 +1,5 @@
 // Vercel serverless function — POST /api/create-checkout-session
-// Body: { productId: string, tierIndex?: number, sizeIndex?: number }
+// Body: { productId: string, tierIndex?: number, sizeIndex?: number, formula?: {...} }
 // Computes the price SERVER-SIDE from _pricing-data.js (never trusts a client-sent amount),
 // creates a Stripe Checkout Session, and returns { url } to redirect the browser to.
 
