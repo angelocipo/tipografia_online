@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { productId, tierIndex, sizeIndex, formula, deliveryIndex } = req.body || {};
+    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender } = req.body || {};
     const product = PRICING[productId];
     if (!product) {
       res.status(400).json({ error: 'Prodotto sconosciuto' });
@@ -154,9 +154,51 @@ module.exports = async (req, res) => {
 
     const origin = req.headers.origin || `https://${req.headers.host}`;
 
+    // Flatten customer/shipping/sender data (collected on our own checkout page) into
+    // Stripe session metadata — read back in stripe-webhook.js to build the FatturaPA
+    // invoice and to know where/who the shipment should show as sender.
+    const metadata = {};
+    const c = customer || {};
+    metadata.inv_type = c.invType || 'privato';
+    metadata.inv_name = c.name || '';
+    metadata.inv_email = c.email || '';
+    metadata.inv_company = c.company || '';
+    metadata.inv_vat = c.vat || '';
+    metadata.inv_cf = c.cf || '';
+    metadata.inv_pec = c.pec || '';
+    metadata.inv_sdi = c.sdi || '';
+    metadata.inv_address = c.address || '';
+    metadata.inv_city = c.city || '';
+    metadata.inv_cap = c.cap || '';
+    metadata.inv_country = c.country || 'IT';
+
+    const sh = shipping || {};
+    if (sh.sameAsBilling) {
+      metadata.ship_same = '1';
+    } else {
+      metadata.ship_same = '0';
+      metadata.ship_name = sh.name || '';
+      metadata.ship_phone = sh.phone || '';
+      metadata.ship_address = sh.address || '';
+      metadata.ship_city = sh.city || '';
+      metadata.ship_cap = sh.cap || '';
+      metadata.ship_notes = (sh.notes || '').slice(0, 490);
+    }
+
+    const sn = sender || {};
+    metadata.sender_use = sn.use ? '1' : '0';
+    if (sn.use) {
+      metadata.sender_company = sn.company || '';
+      metadata.sender_phone = sn.phone || '';
+      metadata.sender_address = sn.address || '';
+      metadata.sender_city = sn.city || '';
+      metadata.sender_cap = sn.cap || '';
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
+      customer_email: c.email || undefined,
       line_items: [{
         price_data: {
           currency: 'eur',
@@ -165,6 +207,7 @@ module.exports = async (req, res) => {
         },
         quantity: 1,
       }],
+      metadata,
       success_url: `${origin}/?checkout=success`,
       cancel_url: `${origin}/?checkout=cancelled`,
     });

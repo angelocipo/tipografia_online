@@ -50,19 +50,25 @@ module.exports = async (req, res) => {
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const total = session.amount_total / 100;
+      const md = session.metadata || {};
+      const isCompany = md.inv_type === 'azienda';
       const order = {
         number: nextInvoiceNumber(),
         date: new Date(),
         total,
         customer: {
-          name: session.customer_details?.name || 'Cliente',
-          isCompany: false,
-          address: session.customer_details?.address?.line1 || '',
-          cap: session.customer_details?.address?.postal_code || '',
-          city: session.customer_details?.address?.city || '',
+          name: isCompany ? (md.inv_company || md.inv_name) : (md.inv_name || session.customer_details?.name || 'Cliente'),
+          isCompany,
+          vatNumber: md.inv_vat || undefined,
+          fiscalCode: md.inv_cf || undefined,
+          pec: md.inv_pec || undefined,
+          address: md.inv_address || session.customer_details?.address?.line1 || '',
+          cap: md.inv_cap || session.customer_details?.address?.postal_code || '',
+          city: md.inv_city || session.customer_details?.address?.city || '',
           province: '',
-          country: session.customer_details?.address?.country || 'IT',
-          sdiCode: '0000000', // "consumatore finale" — no SDI code, invoice made available via portal
+          country: md.inv_country || session.customer_details?.address?.country || 'IT',
+          // No SDI code = "consumatore finale", invoice made available via portal instead of pushed by SDI.
+          sdiCode: md.inv_sdi || '0000000',
         },
         lines: lineItems.data.map((li) => ({
           description: li.description,
@@ -72,6 +78,15 @@ module.exports = async (req, res) => {
         })),
       };
       await createInvoiceForOrder(order);
+
+      // Shipping/sender details aren't part of the invoice — they drive the packing slip
+      // and courier label. Logged here for now; wire to your fulfillment email/sheet/CRM.
+      console.log('Shipping for session', session.id, md.ship_same === '0'
+        ? { name: md.ship_name, phone: md.ship_phone, address: md.ship_address, city: md.ship_city, cap: md.ship_cap, notes: md.ship_notes }
+        : { sameAsBilling: true, ...order.customer });
+      if (md.sender_use === '1') {
+        console.log('Custom sender for session', session.id, { company: md.sender_company, phone: md.sender_phone, address: md.sender_address, city: md.sender_city, cap: md.sender_cap });
+      }
     } catch (err) {
       // Don't fail the webhook response for Stripe's sake — log and handle/retry invoicing separately.
       console.error('Invoice creation failed for session', session.id, err);
