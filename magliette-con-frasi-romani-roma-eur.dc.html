@@ -42,7 +42,7 @@
 </helmet>
 
 <nav class="nav">
-  <span class="nav-brand">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></span>
+  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
   <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
     <a href="{{ n.href }}" aria-current="{{ n.current }}">{{ n.label }}</a>
   </sc-for>
