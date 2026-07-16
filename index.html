@@ -775,8 +775,8 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 function paymentBlockHtml(p, price, selectionIdx, formula){
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
-      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
-        Paga con carta — Stripe
+      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price)}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
+        Vai al checkout
       </button>
       <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
@@ -847,16 +847,12 @@ async function startStripeCheckout(btn){
       const f = formulaState(p);
       body.formula = { qty: f.qty, tempi: f.tempi, strutturaIdx: f.strutturaIdx };
     }
-    const resp = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await resp.json();
-    if (!resp.ok || !data.url) throw new Error(data.error || 'Errore sconosciuto');
-    window.location.href = data.url;
+    const name = btn.dataset.name || '';
+    const price = btn.dataset.price || '';
+    const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
+    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&cfg=${cfg}`;
   } catch (err) {
-    errorEl.textContent = 'Pagamento non disponibile: connetti il backend (vedi DEPLOY.md) — ' + err.message;
+    errorEl.textContent = 'Checkout non disponibile — ' + err.message;
     errorEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = originalLabel;
