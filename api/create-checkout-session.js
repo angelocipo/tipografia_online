@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender } = req.body || {};
+    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender, shippingFee, shippingZone } = req.body || {};
     const product = PRICING[productId];
     if (!product) {
       res.status(400).json({ error: 'Prodotto sconosciuto' });
@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
     const fIdx = Math.min(Math.max(Number.isInteger(formatIdx) ? formatIdx : 0, 0), product.formatRates.length - 1);
     const cIdx = Math.min(Math.max(Number.isInteger(cartaIdx) ? cartaIdx : 2, 0), product.cartaMultiplier.length - 1);
     const q = Math.max(1, parseInt(qty, 10) || 1);
-    const total = Math.round(product.formatRates[fIdx] * q * product.cartaMultiplier[cIdx] * 100) / 100;
+    const total = Math.round(product.formatRates[fIdx] * q * product.cartaMultiplier[cIdx] * 1.22 * 100) / 100;
     unitAmountCents = Math.round(total * 100);
     description = `${product.nome} — ${product.formatChoices[fIdx]}, ${product.cartaChoices[cIdx]}, ${q}pz`;
     } else if (product.type === 'flat') {
@@ -162,6 +162,27 @@ module.exports = async (req, res) => {
 
     const origin = req.headers.origin || `https://${req.headers.host}`;
 
+    const lineItems = [{
+      price_data: {
+        currency: 'eur',
+        product_data: { name: description },
+        unit_amount: unitAmountCents,
+      },
+      quantity: 1,
+    }];
+    const shipFee = Math.max(0, Number(shippingFee) || 0);
+    if (shipFee > 0) {
+      const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)' };
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: `Spedizione — ${zoneLabels[shippingZone] || shippingZone || ''}` },
+          unit_amount: Math.round(shipFee * 100),
+        },
+        quantity: 1,
+      });
+    }
+
     // Flatten customer/shipping/sender data (collected on our own checkout page) into
     // Stripe session metadata — read back in stripe-webhook.js to build the FatturaPA
     // invoice and to know where/who the shipment should show as sender.
@@ -202,19 +223,14 @@ module.exports = async (req, res) => {
       metadata.sender_city = sn.city || '';
       metadata.sender_cap = sn.cap || '';
     }
+    metadata.shipping_fee = String(shipFee);
+    metadata.shipping_zone = shippingZone || '';
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       customer_email: c.email || undefined,
-      line_items: [{
-        price_data: {
-          currency: 'eur',
-          product_data: { name: description },
-          unit_amount: unitAmountCents,
-        },
-        quantity: 1,
-      }],
+      line_items: lineItems,
       metadata,
       success_url: `${origin}/?checkout=success`,
       cancel_url: `${origin}/?checkout=cancelled`,

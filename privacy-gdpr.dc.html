@@ -37,7 +37,7 @@
 </helmet>
 
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
+  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
   <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
     <a href="{{ n.href }}" aria-current="{{ n.current }}">{{ n.label }}</a>
   </sc-for>
@@ -46,7 +46,7 @@
 
 <main class="idx-wrap legal" style="padding-top:var(--space-8);padding-bottom:var(--space-8);">
   <nav aria-label="Breadcrumb" style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:var(--space-6);">
-    <a href="tipografia-roma-eur.dc.html">Home</a> / Privacy & GDPR
+    <a href="tipografia-roma-eur.dc.html">Tipografia Online Roma EUR</a> / Privacy & GDPR
   </nav>
 
   <h1 style="font-size:36px;margin:0 0 var(--space-4);">Politica sulla Protezione dei Dati</h1>
@@ -91,7 +91,6 @@
 const CURRENT = 'privacy-gdpr.dc.html';
 
 const NAV = [
-  { label: 'Home', href: 'tipografia-roma-eur.dc.html' },
   { label: 'Rollup', href: 'stampa-rollup-roma-eur-24h.dc.html' },
   { label: 'Abbigliamento', href: 'abbigliamento-personalizzato-roma.dc.html' },
   { label: 'Foto & Canvas', href: 'realizzazione-foto-quadri-roma-eur.dc.html' },

@@ -50,6 +50,7 @@
 <nav class="nav">
   <span class="nav-brand" id="logoHome" style="cursor:pointer;">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></span>
   <a href="stampa-rollup-roma-eur-24h.dc.html">Rollup</a>
+  <a href="blog.dc.html">Tipografia Online Blog Posts</a>
   <a href="abbigliamento-personalizzato-roma.dc.html">Abbigliamento</a>
   <a href="realizzazione-foto-quadri-roma-eur.dc.html">Foto & Canvas</a>
   <a href="centro-stampa-tipografia-roma-eur.dc.html">Chi siamo</a>
@@ -765,7 +766,7 @@ function priceFrom(p){
     const minStruttura = Math.min(...p.pricing.strutturaChoices.map(c => c.rate));
     return 1 * (p.pricing.rollupRate(1) + minStruttura);
   }
-  if (p.pricing.type === 'locandine250') return p.pricing.formatRates[0] * 1 * p.pricing.cartaMultiplier[0];
+  if (p.pricing.type === 'locandine250') return p.pricing.formatRates[0] * 1 * p.pricing.cartaMultiplier[0] * 1.22;
   if (p.pricing.type === 'quote' && p.pricing.basePrice != null) return p.pricing.basePrice;
   return null;
 }
@@ -992,7 +993,7 @@ function locandineState(p){
   return fresh;
 }
 function computeLocandinePrice(p, f){
-  return Math.round(p.pricing.formatRates[f.formatIdx] * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 100) / 100;
+  return Math.round(p.pricing.formatRates[f.formatIdx] * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 1.22 * 100) / 100;
 }
 function computeBv24hPrice(p, f){
   const bv = p.pricing.cartaMultiplier[f.cartaIdx];
