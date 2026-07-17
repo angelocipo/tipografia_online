@@ -106,6 +106,14 @@ module.exports = async (req, res) => {
       const i = Math.min(Math.max(idx, 0), product.swatches.length - 1);
       unitAmountCents = Math.round(product.price * 100);
       description = `${product.nome} — ${product.swatches[i]}`;
+    } else if (product.type === 'locandine250') {
+    const { formatIdx, cartaIdx, qty } = formula || {};
+    const fIdx = Math.min(Math.max(Number.isInteger(formatIdx) ? formatIdx : 0, 0), product.formatRates.length - 1);
+    const cIdx = Math.min(Math.max(Number.isInteger(cartaIdx) ? cartaIdx : 2, 0), product.cartaMultiplier.length - 1);
+    const q = Math.max(1, parseInt(qty, 10) || 1);
+    const total = Math.round(product.formatRates[fIdx] * q * product.cartaMultiplier[cIdx] * 100) / 100;
+    unitAmountCents = Math.round(total * 100);
+    description = `${product.nome} — ${product.formatChoices[fIdx]}, ${product.cartaChoices[cIdx]}, ${q}pz`;
     } else if (product.type === 'flat') {
       unitAmountCents = Math.round(product.price * 100);
       description = product.nome;

@@ -49,7 +49,6 @@
 
 <nav class="nav">
   <span class="nav-brand" id="logoHome" style="cursor:pointer;">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></span>
-  <a href="tipografia-roma-eur.dc.html">Home</a>
   <a href="stampa-rollup-roma-eur-24h.dc.html">Rollup</a>
   <a href="abbigliamento-personalizzato-roma.dc.html">Abbigliamento</a>
   <a href="realizzazione-foto-quadri-roma-eur.dc.html">Foto & Canvas</a>
@@ -484,11 +483,14 @@ const PRODUCTS = [
     intro:'Locandine e manifesti stampati in 24H a Roma EUR, 7 formati disponibili, carta usomano o sintetica.',
     features:['7 formati: 35×50, 50×70, 70×100 cm, A3, A2, A1, A0','Carta Usomano gr. 80, Usomano gr. 180 o Sintetica gr. 160','Stampa in 24 ore'],
     specs:{'Formati':'35×50, 50×70, 70×100 cm, A3, A2, A1, A0','Carta':'Usomano gr. 80/180, Sintetica gr. 160'},
-    pricing:{type:'quote', options:[
-      { key:'formato', label:'Formato Locandine', choices:['35 x 50 cm','50 x 70 cm','70 x 100 cm','A3','A2','A1','A0'] },
-      { key:'quantita', label:'Quantità', choices:['1','5','10','25','50','100'] },
-      { key:'carta', label:'Carta', choices:['Usomano gr 80','Usomano gr 180','Carta Sintetica gr 160'] },
-    ] } },
+    // Reconstructed 1:1 from the real Advanced Product Fields config for this product (Formato × Quantità × Carta).
+    pricing:{ type:'locandine250',
+      formatChoices:['35 x 50 cm','50 x 70 cm','70 x 100 cm','A3','A2','A1','A0'],
+      formatRates:[2.8,5.3,8.3,2.8,5.3,8,10],
+      cartaChoices:['Usomano gr 80','Usomano gr 180','Carta Sintetica gr 160'],
+      cartaMultiplier:[0.8,1.1,1.4],
+      qty:{min:1,max:500,default:1},
+    } },
   { id:'271', nome:'Quadro Statua Libertà stile Andy Warhol', categoria:'Quadri',
     img:'img/angelocipo_Lady_liberty_black_white_with_light_blue_with_Andy_w_43cdb390-52f7-4a7d-8d44-4ce515991d29.jpg',
     gallery:['img/angelocipo_Lady_liberty_black_white_with_light_blue_with_Andy_w_43cdb390-52f7-4a7d-8d44-4ce515991d29.jpg'],
@@ -763,6 +765,7 @@ function priceFrom(p){
     const minStruttura = Math.min(...p.pricing.strutturaChoices.map(c => c.rate));
     return 1 * (p.pricing.rollupRate(1) + minStruttura);
   }
+  if (p.pricing.type === 'locandine250') return p.pricing.formatRates[0] * 1 * p.pricing.cartaMultiplier[0];
   if (p.pricing.type === 'quote' && p.pricing.basePrice != null) return p.pricing.basePrice;
   return null;
 }
@@ -821,6 +824,11 @@ async function startStripeCheckout(btn){
       const p = PRODUCTS.find(x => x.id === productId);
       const f = bv24hState(p);
       body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx };
+    }
+    if (pricingType === 'locandine250') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = locandineState(p);
+      body.formula = { formatIdx: f.formatIdx, cartaIdx: f.cartaIdx, qty: f.qty };
     }
     if (pricingType === 'businessCardRilievo') {
       const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
@@ -890,6 +898,7 @@ let state = {
   adesivoById: {},
   prespaziatiById: {},
   bv24hById: {},
+  locandineById: {},
   quoteSelById: {},
   formulaById: {},
 };
@@ -975,6 +984,16 @@ function bv24hState(p){
   state.bv24hById[p.id] = fresh;
   return fresh;
 }
+function locandineState(p){
+  const cur = state.locandineById[p.id];
+  if (cur) return cur;
+  const fresh = { formatIdx: 0, cartaIdx: 2, qty: p.pricing.qty.default };
+  state.locandineById[p.id] = fresh;
+  return fresh;
+}
+function computeLocandinePrice(p, f){
+  return Math.round(p.pricing.formatRates[f.formatIdx] * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 100) / 100;
+}
 function computeBv24hPrice(p, f){
   const bv = p.pricing.cartaMultiplier[f.cartaIdx];
   const soggetti = p.pricing.soggettiMultiplier[f.soggettiIdx];
@@ -984,8 +1003,32 @@ function computeBv24hPrice(p, f){
 
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
-document.getElementById('logoHome').addEventListener('click', () => { state.selectedId = null; render(); });
-backBtn.addEventListener('click', () => { state.selectedId = null; render(); });
+function openProduct(id, push){
+  state.selectedId = id;
+  state.mainImageOverride = null;
+  if (push !== false) history.pushState({ productId: id }, '', id ? ('#' + id) : location.pathname);
+  render();
+}
+function closeProduct(push){
+  state.selectedId = null;
+  if (push !== false) history.pushState({}, '', location.pathname);
+  render();
+}
+document.getElementById('logoHome').addEventListener('click', () => closeProduct());
+backBtn.addEventListener('click', () => closeProduct());
+window.addEventListener('popstate', (e) => {
+  const id = e.state && e.state.productId;
+  state.selectedId = id || null;
+  state.mainImageOverride = null;
+  render();
+});
+{
+  const initialId = location.hash ? location.hash.slice(1) : null;
+  if (initialId && PRODUCTS.some(p => p.id === initialId)) {
+    state.selectedId = initialId;
+    history.replaceState({ productId: initialId }, '', '#' + initialId);
+  }
+}
 
 function render(){
   backBtn.style.display = state.selectedId ? 'block' : 'none';
@@ -1064,7 +1107,7 @@ function renderGrid(){
       ${sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
     </div>`;
   app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; render(); }));
-  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => { state.selectedId = el.dataset.open; state.mainImageOverride = null; render(); }));
+  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openProduct(el.dataset.open)));
 }
 
 function renderDetail(){
@@ -1255,6 +1298,40 @@ function renderDetail(){
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
           <input type="file" class="file-upload">
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'locandine250'){
+    const f = locandineState(p);
+    const total = computeLocandinePrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.formatChoices.map((c,i) => `<button class="pill ${i===f.formatIdx?'active':''}" data-loc-formato="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.cartaChoices.map((c,i) => `<button class="pill ${i===f.cartaIdx?'active':''}" data-loc-carta="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
+          <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="locQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
+          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
+            Scegli file
+            <input type="file" class="file-upload" style="display:none;">
+          </label>
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1626,6 +1703,10 @@ function renderDetail(){
   app.querySelectorAll('[data-bv-lati]').forEach(el => el.addEventListener('click', () => { bv24hState(p).latiIdx = parseInt(el.dataset.bvLati,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-carta]').forEach(el => el.addEventListener('click', () => { bv24hState(p).cartaIdx = parseInt(el.dataset.bvCarta,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-soggetti]').forEach(el => el.addEventListener('click', () => { bv24hState(p).soggettiIdx = parseInt(el.dataset.bvSoggetti,10); renderDetail(); }));
+  const locQty = document.getElementById('locQty');
+  if (locQty) locQty.addEventListener('input', (e) => { locandineState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));
+  app.querySelectorAll('[data-loc-carta]').forEach(el => el.addEventListener('click', () => { locandineState(p).cartaIdx = parseInt(el.dataset.locCarta,10); renderDetail(); }));
   const bcrRange = document.getElementById('bcrQtyRange');
   if (bcrRange) bcrRange.addEventListener('input', (e) => {
     const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
