@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog | Tipografia Online Roma EUR</title>
+<meta name="description" content="Articoli e novità dalla Tipografia Online Roma EUR: stampa, personalizzazione, consigli e prodotti.">
+<link rel="canonical" href="https://www.tipografia.online/blog/">
+<meta name="robots" content="index, follow">
+<link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
+<script src="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/_ds_bundle.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-341HJWRT35"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-341HJWRT35');</script>
+<style>
+.idx-wrap{max-width:1180px;margin:0 auto;padding:0 var(--space-6);}
+.idx-grid{display:grid;gap:var(--space-6);}
+.idx-grid-3{grid-template-columns:repeat(3,1fr);}
+@media (max-width:900px){.idx-grid-3{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:600px){.idx-grid-3{grid-template-columns:1fr;}.nav a{display:none;}}
+</style>
+</helmet>
+
+<nav class="nav">
+  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
+  <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
+    <a href="{{ n.href }}" aria-current="{{ n.current }}">{{ n.label }}</a>
+  </sc-for>
+  <a href="contattateci.dc.html" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi preventivo</a>
+</nav>
+
+<main class="idx-wrap" style="padding-top:var(--space-8);padding-bottom:calc(var(--space-8) * 2);">
+  <nav aria-label="Breadcrumb" style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:var(--space-6);">
+    <a href="tipografia-roma-eur.dc.html">Tipografia Online Roma EUR</a> / Blog
+  </nav>
+
+  <h1 style="font-size:38px;line-height:1.1;margin:0 0 var(--space-6);">Tipografia Online Blog Posts</h1>
+
+  <div class="idx-grid idx-grid-3">
+    <sc-for list="{{ posts }}" as="p" hint-placeholder-count="6">
+      <a href="{{ p.href }}" class="card blueprint" style="display:block;text-decoration:none;color:inherit;padding:var(--space-6);">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="card-title">{{ p.title }}</div>
+      </a>
+    </sc-for>
+  </div>
+</main>
+
+<footer style="border-top:1px solid var(--color-divider);">
+  <div class="idx-wrap" style="padding:var(--space-8) var(--space-6);">
+    <div class="idx-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:var(--space-8);">
+      <sc-for list="{{ footerGroups }}" as="g" hint-placeholder-count="7">
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:var(--space-3);">{{ g.title }}</div>
+          <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <sc-for list="{{ g.links }}" as="l" hint-placeholder-count="4">
+              <a href="{{ l.href }}" style="font-size:13.5px;">{{ l.label }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">© 2026 Tipografia Online Roma EUR · Via Lorenzo Bonincontri, 26, 00147 Roma</div>
+  </div>
+</footer>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CURRENT = 'blog.dc.html';
+const NAV = [
+  { label: 'Rollup', href: 'stampa-rollup-roma-eur-24h.dc.html' },
+  { label: 'Abbigliamento', href: 'abbigliamento-personalizzato-roma.dc.html' },
+  { label: 'Foto & Canvas', href: 'realizzazione-foto-quadri-roma-eur.dc.html' },
+  { label: 'Prezzi', href: 'prezzi-strategici-qualita-professionale-risultati-concreti.dc.html' },
+  { label: 'Chi siamo', href: 'centro-stampa-tipografia-roma-eur.dc.html' },
+];
+const FOOTER_GROUPS = [
+  { title: 'Rollup & Banner', links: [
+    { label: 'Stampa Rollup Roma EUR 24H', href: 'stampa-rollup-roma-eur-24h.dc.html' },
+    { label: 'Rollup Banner Espositore', href: 'stampa-rollup-banner-espositore-roma-eur.dc.html' },
+    { label: 'Roll-up in 24 ore', href: 'roll-up-in-24-ore-roma.dc.html' },
+  ]},
+  { title: 'Abbigliamento personalizzato', links: [
+    { label: 'Stampa su Magliette', href: 'stampa-su-magliette-centro-stampa-roma-eur.dc.html' },
+    { label: 'Felpe Personalizzate', href: 'felpe-personalizzate.dc.html' },
+  ]},
+  { title: 'Azienda', links: [
+    { label: 'Centro Stampa Roma EUR', href: 'centro-stampa-tipografia-roma-eur.dc.html' },
+    { label: 'Contattateci', href: 'contattateci.dc.html' },
+    { label: 'Blog', href: 'blog.dc.html' },
+  ]},
+  { title: 'Legale', links: [
+    { label: 'Termini di servizio', href: 'termini-di-servizio-terms-of-service.dc.html' },
+    { label: 'Privacy Policy', href: 'privacy-policy.dc.html' },
+  ]},
+];
+const POSTS = [
+  { title: 'Maglietta personalizzata in tempi record', href: 'blog-maglietta-personalizzata-in-tempi-record.dc.html' },
+  { title: 'Modifica documenti professionale, 30 anni di Photoshop', href: 'blog-modifica-documenti-photoshop.dc.html' },
+  { title: 'Biglietti da Visita Roma Eur 24H', href: 'blog-biglietti-da-visita-roma-eur-24h.dc.html' },
+  { title: "Festeggia con T-shirt per addio al celibato personalizzate", href: 'blog-addio-al-celibato-magliette-personalizzate.dc.html' },
+  { title: 'Canvas con Foto effetto Pittura ad Olio', href: 'blog-canvas-effetto-pittura-ad-olio.dc.html' },
+  { title: 'Tele personalizzate effetto Pop Art alla Warhol', href: 'blog-tele-pop-art-warhol.dc.html' },
+  { title: 'Copia stampata Van Gogh Notte stellata', href: 'blog-van-gogh-notte-stellata.dc.html' },
+  { title: 'Need Printing services in Italy?', href: 'blog-printing-services-in-italy.dc.html' },
+  { title: "La Rivoluzione della Stampa: T-Shirt Personalizzate in 24 Ore", href: 'blog-rivoluzione-stampa-tshirt-24-ore.dc.html' },
+  { title: "Stampe su tela della Statua della Libertà in stile Warhol", href: 'blog-statua-della-liberta-warhol.dc.html' },
+];
+class Component extends DCLogic {
+  renderVals() {
+    const navLinks = NAV.map(n => ({ ...n, current: n.href === CURRENT ? 'page' : 'false' }));
+    return { navLinks, footerGroups: FOOTER_GROUPS, posts: POSTS };
+  }
+}
+
+</script>
+</body>
+</html>

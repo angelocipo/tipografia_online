@@ -27,7 +27,7 @@
 </helmet>
 
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
+  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
   <a href="order-tracking.dc.html">Traccia ordine</a>
 </nav>
 
@@ -41,7 +41,10 @@
         <div class="card-kicker">Il tuo ordine</div>
         <div class="card-title">{{ productName }}</div>
       </div>
-      <div style="font-family:var(--font-heading);font-size:28px;">€{{ productPrice }}</div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
+        <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
+      </div>
     </div>
   </sc-if>
   <sc-if value="{{ noProduct }}" hint-placeholder-val="{{ false }}">
@@ -110,6 +113,16 @@
       <label class="radio" style="margin-bottom:var(--space-4);"><input type="radio" name="shipMode" checked="{{ shipSame }}" onChange="{{ setShipSameTrue }}"><span class="dot"></span>Spedisci allo stesso indirizzo di fatturazione</label>
       <label class="radio" style="margin-bottom:var(--space-4);"><input type="radio" name="shipMode" checked="{{ shipDifferent }}" onChange="{{ setShipSameFalse }}"><span class="dot"></span>Usa un indirizzo di spedizione diverso</label>
 
+      <div class="field" style="margin:var(--space-4) 0;">
+        <label id="ship-zone-label">Consegna</label>
+        <div class="seg" role="radiogroup" aria-labelledby="ship-zone-label">
+          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_centro" checked="{{ isZoneRomaCentro }}" onChange="{{ setShipZone }}">Roma Sud/EUR/Centro — € 20</label>
+          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30</label>
+          <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25</label>
+        </div>
+        <p class="card-body" style="margin:var(--space-2) 0 0;">Nessuna consegna in Vaticano. Spedizione gratuita per ordini da € 50.</p>
+      </div>
+
       <sc-if value="{{ shipDifferent }}" hint-placeholder-val="{{ false }}">
         <div class="co-grid">
           <div class="field"><label for="ship-name">Nome destinatario</label><input class="input" id="ship-name" value="{{ ship.name }}" onChange="{{ setShipName }}"></div>
@@ -162,6 +175,7 @@ class Component extends DCLogic {
     invType: 'privato',
     inv: { name: '', email: '', company: '', vat: '', cf: '', pec: '', sdi: '', address: '', city: '', cap: '', country: '' },
     shipSame: true,
+    shipZone: 'roma_centro',
     ship: { name: '', phone: '', address: '', city: '', cap: '', notes: '' },
     useSender: false,
     sender: { company: '', phone: '', address: '', city: '', cap: '' },
@@ -182,6 +196,13 @@ class Component extends DCLogic {
     if (id) this.setState({ productId: id, productName: name || '', productPrice: price || '', orderBody });
   }
 
+  computeShippingFee() {
+    const price = parseFloat(this.state.productPrice) || 0;
+    if (price >= 50) return 0;
+    const rates = { roma_centro: 20, roma_resto: 30, italia: 25 };
+    return rates[this.state.shipZone] ?? 20;
+  }
+
   validate() {
     const { invType, inv } = this.state;
     if (!inv.name || !inv.email) return 'Inserisci nome e email.';
@@ -198,13 +219,16 @@ class Component extends DCLogic {
     const err = this.validate();
     if (err) { this.setState({ errorMsg: err }); return; }
     this.setState({ submitting: true, errorMsg: null });
-    const { productId, invType, inv, shipSame, ship, useSender, sender, orderBody } = this.state;
+    const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody } = this.state;
+    const shippingFee = this.computeShippingFee();
     try {
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...(orderBody || { productId }),
+          shippingFee,
+          shippingZone: shipZone,
           customer: { invType, ...inv },
           shipping: shipSame ? { sameAsBilling: true } : { sameAsBilling: false, ...ship },
           sender: useSender ? { use: true, ...sender } : { use: false },
@@ -220,11 +244,19 @@ class Component extends DCLogic {
 
   renderVals() {
     const s = this.state;
+    const shippingFee = this.computeShippingFee();
+    const orderTotal = (parseFloat(s.productPrice) || 0) + shippingFee;
     return {
       hasProduct: !!s.productId,
       noProduct: !s.productId,
       productName: s.productName,
       productPrice: s.productPrice,
+      orderTotal: orderTotal.toFixed(2).replace(/\.00$/, ''),
+      shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + shippingFee),
+      isZoneRomaCentro: s.shipZone === 'roma_centro',
+      isZoneRomaResto: s.shipZone === 'roma_resto',
+      isZoneItalia: s.shipZone === 'italia',
+      setShipZone: (e) => this.setState({ shipZone: e.target.value }),
       isPrivato: s.invType === 'privato',
       isAzienda: s.invType === 'azienda',
       isEstero: s.invType === 'estero',
