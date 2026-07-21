@@ -75,11 +75,39 @@
   </section>
 
   <section>
-    <div class="card blueprint" style="padding:var(--space-8);text-align:center;">
+    <div class="card blueprint" style="padding:var(--space-8);">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <h2 style="margin-bottom:var(--space-3);">Rispondiamo a tutte le vostre domande</h2>
-      <p style="color:color-mix(in srgb, var(--color-text) 78%, transparent);max-width:56ch;margin:0 auto var(--space-5);">Scrivici il prodotto e le specifiche del tuo ordine: ti rispondiamo con tempi e prezzo entro poche ore lavorative.</p>
-      <a href="mailto:info@tipografia.online" class="btn btn-primary blueprint" style="display:inline-flex;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>info@tipografia.online</a>
+      <div style="text-align:center;margin-bottom:var(--space-6);">
+        <h2 style="margin-bottom:var(--space-3);">Rispondiamo a tutte le vostre domande</h2>
+        <p style="color:color-mix(in srgb, var(--color-text) 78%, transparent);max-width:56ch;margin:0 auto;">Scrivici il prodotto e le specifiche del tuo ordine: ti rispondiamo con tempi e prezzo entro poche ore lavorative.</p>
+      </div>
+
+      <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:520px;margin:0 auto;text-align:center;padding:var(--space-6) 0;">
+          <p style="font-size:16px;font-weight:600;margin:0 0 var(--space-2);">Messaggio pronto per l'invio!</p>
+          <p style="color:color-mix(in srgb, var(--color-text) 78%, transparent);margin:0;">Ti risponderemo il prima possibile.</p>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+        <form onSubmit="{{ handleSubmit }}" style="max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:var(--space-4);">
+          <div class="idx-grid idx-grid-2" style="gap:var(--space-4);">
+            <div class="field"><label for="ct-name">Nome e Cognome</label><input class="input" id="ct-name" required="{{ true }}" value="{{ f.name }}" onChange="{{ setName }}"></div>
+            <div class="field"><label for="ct-email">Email</label><input class="input" id="ct-email" type="email" required="{{ true }}" value="{{ f.email }}" onChange="{{ setEmail }}"></div>
+          </div>
+          <div class="idx-grid idx-grid-2" style="gap:var(--space-4);">
+            <div class="field"><label for="ct-phone">Telefono (opzionale)</label><input class="input" id="ct-phone" value="{{ f.phone }}" onChange="{{ setPhone }}"></div>
+            <div class="field"><label for="ct-product">Prodotto / Servizio</label><input class="input" id="ct-product" placeholder="Es. Rollup 85x200, Biglietti da visita..." value="{{ f.product }}" onChange="{{ setProduct }}"></div>
+          </div>
+          <div class="field">
+            <label for="ct-message">Messaggio</label>
+            <textarea class="input" id="ct-message" rows="5" required="{{ true }}" value="{{ f.message }}" onChange="{{ setMessage }}" style="resize:vertical;font-family:inherit;"></textarea>
+          </div>
+          <sc-if value="{{ errorMsg }}" hint-placeholder-val="{{ null }}">
+            <p style="color:#b23b3b;font-size:14px;margin:0;">{{ errorMsg }}</p>
+          </sc-if>
+          <button type="submit" class="btn btn-primary blueprint" style="align-self:center;" disabled="{{ submitting }}"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ submitLabel }}</button>
+        </form>
+      </sc-if>
     </div>
   </section>
 </main>
@@ -98,7 +126,7 @@
         </div>
       </sc-for>
     </div>
-    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">© 2026 Tipografia Online Roma EUR · Via Lorenzo Bonincontri, 26, 00147 Roma</div>
+    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online Roma EUR · Via Lorenzo Bonincontri, 26, 00147 Roma · P.IVA 02452700590</div>
   </div>
 </footer>
 
@@ -148,6 +176,35 @@ const FOOTER_GROUPS = [
 ];
 
 class Component extends DCLogic {
+  state = {
+    f: { name: '', email: '', phone: '', product: '', message: '' },
+    sent: false,
+    submitting: false,
+    errorMsg: null,
+  };
+
+  async submit(e) {
+    e.preventDefault();
+    const { name, email, phone, product, message } = this.state.f;
+    if (!name || !email || !message) {
+      this.setState({ errorMsg: 'Compila nome, email e messaggio.' });
+      return;
+    }
+    this.setState({ errorMsg: null, submitting: true });
+    const subject = product ? `Richiesta preventivo — ${product}` : 'Richiesta informazioni';
+    try {
+      const res = await fetch('https://formspree.io/f/mnjezqyr', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, product, message, _subject: subject }),
+      });
+      if (!res.ok) throw new Error('Invio non riuscito, riprova.');
+      this.setState({ sent: true, submitting: false });
+    } catch (ex) {
+      this.setState({ errorMsg: ex.message || 'Invio non riuscito, riprova.', submitting: false });
+    }
+  }
+
   renderVals() {
     const navLinks = NAV.map(n => ({ ...n, current: n.href === CURRENT ? 'page' : 'false' }));
     const jsonLd = JSON.stringify([
@@ -160,7 +217,20 @@ class Component extends DCLogic {
         { '@type': 'ListItem', position: 2, name: 'Contattateci', item: 'https://www.tipografia.online/contattateci/' },
       ]},
     ]);
-    return { navLinks, footerGroups: FOOTER_GROUPS, jsonLd };
+    return { navLinks, footerGroups: FOOTER_GROUPS, jsonLd,
+      f: this.state.f,
+      sent: this.state.sent,
+      notSent: !this.state.sent,
+      errorMsg: this.state.errorMsg,
+      submitting: this.state.submitting,
+      setName: (e) => this.setState({ f: { ...this.state.f, name: e.target.value } }),
+      setEmail: (e) => this.setState({ f: { ...this.state.f, email: e.target.value } }),
+      setPhone: (e) => this.setState({ f: { ...this.state.f, phone: e.target.value } }),
+      setProduct: (e) => this.setState({ f: { ...this.state.f, product: e.target.value } }),
+      setMessage: (e) => this.setState({ f: { ...this.state.f, message: e.target.value } }),
+      submitLabel: this.state.submitting ? 'Invio…' : 'Invia messaggio',
+      handleSubmit: (e) => this.submit(e),
+    };
   }
 }
 

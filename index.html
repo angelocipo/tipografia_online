@@ -54,6 +54,7 @@
   <a href="abbigliamento-personalizzato-roma.dc.html">Abbigliamento</a>
   <a href="realizzazione-foto-quadri-roma-eur.dc.html">Foto & Canvas</a>
   <a href="centro-stampa-tipografia-roma-eur.dc.html">Chi siamo</a>
+  <a href="checkout.dc.html">Checkout</a>
   <button id="backBtn" class="btn btn-secondary blueprint" style="display:none;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>← Tutti i prodotti</button>
   <a href="contattateci.dc.html" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi preventivo</a>
 </nav>
@@ -121,7 +122,7 @@
         </div>
       </div>
     </div>
-    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">© 2026 Tipografia Online Roma EUR · Via Lorenzo Bonincontri, 26, 00147 Roma</div>
+    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online Roma EUR · Via Lorenzo Bonincontri, 26, 00147 Roma · P.IVA 02452700590</div>
   </div>
 </footer>
 
@@ -933,8 +934,10 @@ async function startStripeCheckout(btn){
     }
     const name = btn.dataset.name || '';
     const price = btn.dataset.price || '';
+    const p = PRODUCTS.find(x => x.id === productId);
+    const col = p && p.collection === 'strategici' ? 'strategici' : 'misura';
     const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
-    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&cfg=${cfg}`;
+    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${col}&cfg=${cfg}`;
   } catch (err) {
     errorEl.textContent = 'Checkout non disponibile — ' + err.message;
     errorEl.style.display = 'block';
