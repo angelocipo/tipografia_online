@@ -28,23 +28,34 @@
 
 <nav class="nav">
   <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">Roma EUR</span></a>
-  <a href="order-tracking.dc.html">Traccia ordine</a>
 </nav>
 
 <main class="idx-wrap" style="padding-top:var(--space-8);padding-bottom:calc(var(--space-8) * 2);">
   <h1 style="font-size:32px;margin:0 0 var(--space-6);">Checkout</h1>
 
   <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
-    <div class="card blueprint co-section" style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);">
+    <div class="card blueprint co-section">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div>
-        <div class="card-kicker">Il tuo ordine</div>
-        <div class="card-title">{{ productName }}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-bottom:{{ detailsMarginBottom }};">
+        <div>
+          <div class="card-kicker">Il tuo ordine</div>
+          <div class="card-title">{{ productName }}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
+          <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
+        </div>
       </div>
-      <div style="text-align:right;">
-        <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
-        <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
-      </div>
+      <sc-if value="{{ hasDetails }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);display:grid;grid-template-columns:repeat(auto-fit, minmax(160px,1fr));gap:var(--space-3);">
+          <sc-for list="{{ orderDetails }}" as="d" hint-placeholder-count="4">
+            <div>
+              <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:2px;">{{ d.label }}</div>
+              <div style="font-size:13.5px;font-weight:600;">{{ d.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
     </div>
   </sc-if>
   <sc-if value="{{ noProduct }}" hint-placeholder-val="{{ false }}">
@@ -183,6 +194,29 @@ class Component extends DCLogic {
     errorMsg: null,
   };
 
+  humanizeKey(key) {
+    const map = {
+      lato_lungo: 'Lato lungo', lato_corto: 'Lato corto', pagCol: 'Pagine a colori', pagBn: 'Pagine bianco/nero',
+      latiIdx: 'Lati', cartaIdx: 'Carta', misuraIdx: 'Misura', coloreIdx: 'Colore', qty: 'Quantità',
+      formatIdx: 'Formato', soggettiIdx: 'Soggetti', larghezza: 'Larghezza', altezza: 'Altezza',
+      sagomaIdx: 'Forma', materialeIdx: 'Materiale', lavorazioneIdx: 'Lavorazione', altroColore: 'Altro colore',
+      base: 'Base', copie: 'Copie', swatchIdx: 'Variante', unit: 'Unità', formato: 'Formato', pannelli: 'Pannelli',
+      creazione: 'Creazione file', creazione_file: 'Creazione file', spessore: 'Spessore', holder: 'Porta badge',
+      stampa: 'Stampa', plastificazione: 'Plastificazione', cordino: 'Cordino', colore_cordino: 'Colore cordino',
+      quantita: 'Quantità', facciate: 'Facciate', tierIndex: 'Opzione', sizeIndex: 'Formato', deliveryIndex: 'Consegna',
+    };
+    return map[key] || key.replace(/Idx$/, '').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+  }
+
+  buildOrderDetails(orderBody) {
+    if (!orderBody) return [];
+    const skip = new Set(['productId']);
+    const src = orderBody.formula && typeof orderBody.formula === 'object' ? orderBody.formula : orderBody;
+    return Object.entries(src)
+      .filter(([k, v]) => !skip.has(k) && v !== undefined && v !== null && v !== '' && typeof v !== 'object')
+      .map(([k, v]) => ({ label: this.humanizeKey(k), value: String(v) }));
+  }
+
   componentDidMount() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
@@ -246,9 +280,13 @@ class Component extends DCLogic {
     const s = this.state;
     const shippingFee = this.computeShippingFee();
     const orderTotal = (parseFloat(s.productPrice) || 0) + shippingFee;
+    const orderDetails = this.buildOrderDetails(s.orderBody);
     return {
       hasProduct: !!s.productId,
       noProduct: !s.productId,
+      hasDetails: orderDetails.length > 0,
+      orderDetails,
+      detailsMarginBottom: orderDetails.length > 0 ? 'var(--space-4)' : '0',
       productName: s.productName,
       productPrice: s.productPrice,
       orderTotal: orderTotal.toFixed(2).replace(/\.00$/, ''),
