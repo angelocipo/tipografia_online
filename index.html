@@ -678,6 +678,28 @@ const PRODUCTS = [
         ] },
       ],
     } },
+  { id:'205', nome:'Biglietti da visita con oro/argento lucido', categoria:'Biglietti da Visita',
+    img:'img/bv-oro-argento-lucido.png',
+    gallery:['img/bv-oro-argento-lucido.png'],
+    intro:'Biglietti da visita con stampa a caldo oro o argento lucido: un tocco di eleganza per il tuo brand, su carta patinata opaca gr. 300 o gr. 400.',
+    features:['Stampa a caldo oro o argento lucido','Carta patinata opaca gr. 300 o gr. 400','3 formati disponibili: 5,5×5,5 cm, 8,5×5,5 cm, 9×5 cm','Da 100 a 10.000 copie','Tempi di realizzazione: 1 settimana'],
+    specs:{'Tecnica':'Stampa a caldo oro/argento','Carta':'gr. 300 · gr. 400','Tempi':'1 settimana'},
+    pricing:{ type:'businessCardRilievo', unit:'copie', colorChoices:['Oro Lucido','Argento Lucido'],
+      formats: [
+        { label: 'Quadrato 5,5×5,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:68},{qty:250,price:80},{qty:500,price:87},{qty:1000,price:93},{qty:2500,price:132},{qty:5000,price:196},{qty:7500,price:271},{qty:10000,price:347}] },
+          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:75},{qty:250,price:88},{qty:500,price:93},{qty:1000,price:110},{qty:2500,price:132},{qty:5000,price:173},{qty:7500,price:226},{qty:10000,price:281}] },
+        ] },
+        { label: 'Orizzontale 8,5×5,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:86},{qty:250,price:101},{qty:500,price:113},{qty:1000,price:124},{qty:2500,price:176},{qty:5000,price:279},{qty:7500,price:396},{qty:10000,price:511}] },
+          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:94},{qty:250,price:111},{qty:500,price:122},{qty:1000,price:147},{qty:2500,price:176},{qty:5000,price:241},{qty:7500,price:326},{qty:10000,price:410}] },
+        ] },
+        { label: 'Orizzontale 9×5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:84},{qty:250,price:99},{qty:500,price:110},{qty:1000,price:121},{qty:2500,price:171},{qty:5000,price:271},{qty:7500,price:383},{qty:10000,price:494}] },
+          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:92},{qty:250,price:108},{qty:500,price:119},{qty:1000,price:143},{qty:2500,price:173},{qty:5000,price:233},{qty:7500,price:316},{qty:10000,price:397}] },
+        ] },
+      ],
+    } },
   { id:'217', nome:'Forex PVC Stampato', categoria:'Forex',
     img:'img/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif',
     gallery:['img/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif'],
@@ -819,6 +841,8 @@ function priceLabelFor(p){
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function paymentBlockHtml(p, price, selectionIdx, formula){
+  const quoteConfig = (typeof formula === 'object' && formula) ? Object.entries(formula).filter(([k,v]) => k !== 'qty' && (typeof v === 'string' || typeof v === 'number')).map(([,v]) => v).join(', ') : '';
+  const quoteQty = (formula && formula.qty) ? `${formula.qty} ${p.pricing.unit || 'pz'}` : '';
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
       <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price)}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
@@ -826,6 +850,9 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
       </button>
       <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
+      <a href="preventivo.dc.html?prodotto=${encodeURIComponent(p.nome)}${quoteConfig ? '&config=' + encodeURIComponent(quoteConfig) : ''}${quoteQty ? '&quantita=' + encodeURIComponent(quoteQty) : ''}&prezzo=${price}" target="_blank" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
+        Richiedi un preventivo ufficiale
+      </a>
     </div>`;
 }
 
@@ -908,8 +935,8 @@ async function startStripeCheckout(btn){
       body.formula = { formato: sel.formato || '50 x 25 cm' };
     }
     if (pricingType === 'businessCardRilievo') {
-      const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx };
+      const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0 };
       body.tierIndex = cur.qtyIdx;
     }
     if (pricingType === 'businessCardStrategici') {
@@ -1607,12 +1634,19 @@ function renderDetail(){
       </div>
       ${paymentBlockHtml(p, variants[idx].price, idx)}`;
   } else if (p.pricing.type === 'businessCardRilievo'){
-    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
     const format = p.pricing.formats[cur.formatIdx];
     const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
     const idx = Math.min(cur.qtyIdx, paper.tiers.length-1);
     const tier = paper.tiers[idx];
     pricingHtml = `
+      ${p.pricing.colorChoices ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Colore</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${p.pricing.colorChoices.map((c,i) => `<button class="pill ${i===(cur.colorIdx||0)?'active':''}" data-bcr-color="${i}">${esc(c)}</button>`).join('')}
+        </div>
+      </div>` : ''}
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1644,7 +1678,7 @@ function renderDetail(){
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
       </div>
       <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(tier.price/tier.qty).toFixed(3)} / copia · IVA inclusa</div>
-      ${paymentBlockHtml(p, tier.price, idx)}`;
+      ${paymentBlockHtml(p, tier.price, idx, p.pricing.colorChoices ? { formato: format.label, carta: paper.label, colore: p.pricing.colorChoices[cur.colorIdx||0], qty: tier.qty } : null)}`;
   } else if (p.pricing.type === 'businessCardStrategici'){
     const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
     const format = p.pricing.formats[cur.formatIdx];
@@ -1998,8 +2032,13 @@ function renderDetail(){
     renderDetail();
   }));
   app.querySelectorAll('[data-bcr-paper]').forEach(el => el.addEventListener('click', () => {
-    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
     state.bcrIdxById[p.id] = { ...cur, paperIdx: parseInt(el.dataset.bcrPaper,10), qtyIdx: 0 };
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-bcr-color]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+    state.bcrIdxById[p.id] = { ...cur, colorIdx: parseInt(el.dataset.bcrColor,10) };
     renderDetail();
   }));
   const bcsRange = document.getElementById('bcsQtyRange');

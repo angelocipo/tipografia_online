@@ -50,7 +50,7 @@
 
 <main class="idx-wrap" style="padding-top:var(--space-8);padding-bottom:var(--space-8);">
   <nav aria-label="Breadcrumb" style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:var(--space-6);">
-    <a href="tipografia-roma-eur.dc.html">Tipografia Online Roma EUR</a> / Contattateci
+    <a href="tipografia-roma-eur.dc.html">Tipografia Online by Printing Italy</a> / Contattateci
   </nav>
 
   <section style="max-width:800px;margin:0 0 calc(var(--space-8) * 1.5);">
@@ -176,6 +176,17 @@ const FOOTER_GROUPS = [
 ];
 
 class Component extends DCLogic {
+  componentDidMount() {
+    const params = new URLSearchParams(window.location.search);
+    const prodotto = params.get('prodotto');
+    const dettagli = params.get('dettagli');
+    if (prodotto || dettagli) {
+      this.setState(s => ({ f: { ...s.f,
+        product: prodotto || s.f.product,
+        message: dettagli ? `Richiedo un preventivo ufficiale per: ${dettagli}` : s.f.message,
+      } }));
+    }
+  }
   state = {
     f: { name: '', email: '', phone: '', product: '', message: '' },
     sent: false,
