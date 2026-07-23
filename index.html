@@ -128,7 +128,7 @@
   </div>
 </footer>
 
-<script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=EUR"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=AcfKh7__fZxzxaPOuwNjQqF3dvY1bUeLjfv7IoVp907QW3GrH_-6Vw8IdJ6EfjZ2Brokd6HF7_mtbAPI&currency=EUR"></script>
 <script>
 // ---- Payment: Stripe checkout is created dynamically by /api/create-checkout-session (see DEPLOY.md). ----
 // ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
@@ -884,6 +884,7 @@ async function startStripeCheckout(btn){
   btn.textContent = 'Attendere…';
   try {
     const body = { productId };
+    let human = null;
     if (pricingType === 'tiers') body.tierIndex = idx;
     if (pricingType === 'tiersDelivery') {
       const cur = state.deliveryIdxById[productId] || { deliveryIdx: 0, qtyIdx: 0 };
@@ -896,36 +897,45 @@ async function startStripeCheckout(btn){
       const p = PRODUCTS.find(x => x.id === productId);
       const f = swatchQtyState(p);
       body.formula = { swatchIdx: f.swatchIdx, qty: f.qty };
+      human = { 'Design': p.pricing.swatches[f.swatchIdx].label, 'Quantità': f.qty };
     }
     if (pricingType === 'adesivoInterno') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = adesivoState(p);
       body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, sagomaIdx: f.sagomaIdx };
+      human = { 'Larghezza': f.larghezza + ' mm', 'Altezza': f.altezza + ' mm', 'Quantità': f.qty, 'Sagoma': p.pricing.sagomaChoices[f.sagomaIdx] };
     }
     if (pricingType === 'adesiviPrespaziati') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = prespaziatiState(p);
       body.formula = { base: f.base, altezza: f.altezza, copie: f.copie, lavorazioneIdx: f.lavorazioneIdx, coloreIdx: f.coloreIdx, materialeIdx: f.materialeIdx, altroColore: f.altroColore };
+      const colOptions = p.pricing.coloreByMateriale[f.materialeIdx === 1 ? 1 : 0];
+      human = { 'Base': f.base + ' cm', 'Altezza': f.altezza + ' cm', 'Copie': f.copie, 'Lavorazione': p.pricing.lavorazioni[f.lavorazioneIdx].label, 'Materiale': p.pricing.materialeChoices[f.materialeIdx === 1 ? 1 : 0], 'Colore': colOptions[f.coloreIdx] === 'Altro' ? (f.altroColore || 'Altro') : colOptions[f.coloreIdx] };
     }
     if (pricingType === 'bv24h') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = bv24hState(p);
-      body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx, angoliArrotondati: !!state.angoliById[productId] };
+      const angoliOn = !!state.angoliById[productId];
+      body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx, angoliArrotondati: angoliOn };
+      human = { 'Larghezza': f.larghezza + ' mm', 'Altezza': f.altezza + ' mm', 'Quantità': f.qty, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': 'gr. ' + p.pricing.cartaChoices[f.cartaIdx], 'Soggetti diversi': p.pricing.soggettiChoices[f.soggettiIdx], ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
     }
     if (pricingType === 'locandine250') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = locandineState(p);
       body.formula = { formatIdx: f.formatIdx, cartaIdx: f.cartaIdx, qty: f.qty };
+      human = { 'Formato': p.pricing.formatChoices[f.formatIdx], 'Carta': p.pricing.cartaChoices[f.cartaIdx], 'Quantità': f.qty };
     }
     if (pricingType === 'scatolaGioielli') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = scatolaState(p);
       body.formula = { misuraIdx: f.misuraIdx, coloreIdx: f.coloreIdx, qty: f.qty };
+      human = { 'Misura': p.pricing.misuraChoices[f.misuraIdx], 'Colore': p.pricing.coloreChoices[f.coloreIdx], 'Quantità': f.qty };
     }
     if (pricingType === 'rilegature') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = rilegatureState(p);
       body.formula = { qty: f.qty, pagCol: f.pagCol, pagBn: f.pagBn, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx };
+      human = { 'Quantità': f.qty, 'Pagine a colori': f.pagCol, 'Pagine B/N': f.pagBn, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': p.pricing.cartaChoices[f.cartaIdx] };
     }
     if (pricingType === 'quote' && productId === '215') {
       const sel = state.quoteSelById[productId] || {};
@@ -953,18 +963,32 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'businessCardRilievo') {
       const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0, angoliArrotondati: !!state.angoliById[productId] };
+      const p = PRODUCTS.find(x => x.id === productId);
+      const format = p.pricing.formats[cur.formatIdx];
+      const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
+      const tier = paper.tiers[Math.min(cur.qtyIdx, paper.tiers.length-1)];
+      const angoliOn = !!state.angoliById[productId];
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0, angoliArrotondati: angoliOn };
       body.tierIndex = cur.qtyIdx;
+      human = { 'Formato': format.label, 'Carta': paper.label, ...(p.pricing.colorChoices ? { 'Colore': p.pricing.colorChoices[cur.colorIdx||0] } : {}), 'Quantità': tier.qty, ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
     }
     if (pricingType === 'businessCardStrategici') {
       const cur = state.bcsIdxById[productId] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx, angoliArrotondati: !!state.angoliById[productId] };
+      const p = PRODUCTS.find(x => x.id === productId);
+      const format = p.pricing.formats[cur.formatIdx];
+      const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
+      const delivery = paper.deliveries[Math.min(cur.deliveryIdx, paper.deliveries.length-1)];
+      const qty = p.pricing.qtyLabels[Math.min(cur.qtyIdx, delivery.prices.length-1)];
+      const angoliOn = !!state.angoliById[productId];
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx, angoliArrotondati: angoliOn };
       body.tierIndex = cur.qtyIdx;
+      human = { 'Formato': format.label, 'Carta': paper.label, 'Consegna': delivery.label, 'Quantità': qty, ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
     }
     if (pricingType === 'forexPvc') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = forexState(p);
       body.formula = { spessoreIdx: f.spessoreIdx, stampaIdx: f.stampaIdx, consegnaIdx: f.consegnaIdx, formatIdx: f.formatIdx, qty: f.qty };
+      human = { 'Formato': p.pricing.formats[f.formatIdx], 'Spessore': p.pricing.spessoreChoices[f.spessoreIdx], 'Stampa': p.pricing.stampaChoices[f.stampaIdx], 'Consegna': p.pricing.consegnaChoices[f.consegnaIdx], 'Quantità': f.qty };
     }
     if (pricingType === 'striscioniPvc') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -975,11 +999,13 @@ async function startStripeCheckout(btn){
       const p = PRODUCTS.find(x => x.id === productId);
       const f = formulaState(p);
       body.formula = { qty: f.qty, tempi: f.tempi, strutturaIdx: f.strutturaIdx };
+      human = { 'Quantità': f.qty, 'Tempi': f.tempi, 'Struttura': (p.pricing.strutturaChoices || [])[f.strutturaIdx]?.label ?? f.strutturaIdx };
     }
     const name = btn.dataset.name || '';
     const price = btn.dataset.price || '';
     const p = PRODUCTS.find(x => x.id === productId);
     const col = p && p.collection === 'strategici' ? 'strategici' : 'misura';
+    if (human) body.human = human;
     const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
     window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${col}&cfg=${cfg}`;
   } catch (err) {

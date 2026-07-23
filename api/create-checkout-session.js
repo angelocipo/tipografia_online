@@ -341,7 +341,7 @@ module.exports = async (req, res) => {
       customer_email: c.email || undefined,
       line_items: lineItems,
       metadata,
-      success_url: `${origin}/?checkout=success`,
+      success_url: `${origin}/grazie.dc.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?checkout=cancelled`,
     });
 

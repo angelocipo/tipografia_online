@@ -19,6 +19,7 @@
 <link rel="canonical" href="https://www.tipografia.online/checkout/">
 <link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
 <script src="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/_ds_bundle.js"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=AcfKh7__fZxzxaPOuwNjQqF3dvY1bUeLjfv7IoVp907QW3GrH_-6Vw8IdJ6EfjZ2Brokd6HF7_mtbAPI&currency=EUR"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-341HJWRT35"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-341HJWRT35');</script>
 <style>
@@ -181,6 +182,15 @@
     </button>
     <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin-top:var(--space-4);">Pagamento sicuro tramite Stripe. Riceverai fattura elettronica via SDI o email secondo i dati inseriti.</p>
   </form>
+
+  <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:var(--space-3);margin:var(--space-6) 0;">
+      <div style="flex:1;height:1px;background:var(--color-divider);"></div>
+      <span style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 55%, transparent);">oppure</span>
+      <div style="flex:1;height:1px;background:var(--color-divider);"></div>
+    </div>
+    <div id="paypal-checkout-slot" style="min-height:45px;"></div>
+  </sc-if>
 </main>
 
 <footer style="border-top:1px solid var(--color-divider);">
@@ -219,6 +229,11 @@ class Component extends DCLogic {
 
   buildOrderDetails(orderBody) {
     if (!orderBody) return [];
+    if (orderBody.human && typeof orderBody.human === 'object') {
+      return Object.entries(orderBody.human)
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => ({ label: k, value: String(v) }));
+    }
     const skip = new Set(['productId']);
     const src = orderBody.formula && typeof orderBody.formula === 'object' ? orderBody.formula : orderBody;
     return Object.entries(src)
@@ -240,6 +255,33 @@ class Component extends DCLogic {
     const priceNum = parseFloat(price) || 0;
     const autoFree = (col === 'strategici') || priceNum >= 50;
     if (id) this.setState({ productId: id, productName: name || '', productPrice: price || '', productCollection: col || 'misura', orderBody, shipZone: autoFree ? 'gratuita' : this.state.shipZone });
+    if (id) this.mountPaypalWhenReady();
+  }
+
+  mountPaypalWhenReady(attempts) {
+    attempts = attempts || 0;
+    if (typeof paypal === 'undefined') {
+      if (attempts > 40) return;
+      setTimeout(() => this.mountPaypalWhenReady(attempts + 1), 250);
+      return;
+    }
+    const el = document.getElementById('paypal-checkout-slot');
+    if (!el) { setTimeout(() => this.mountPaypalWhenReady(attempts + 1), 250); return; }
+    el.innerHTML = '';
+    paypal.Buttons({
+      style: { layout: 'horizontal', color: 'gold', shape: 'rect', height: 45, tagline: false },
+      createOrder: (data, actions) => {
+        const err = this.validate();
+        if (err) { this.setState({ errorMsg: err }); return Promise.reject(new Error(err)); }
+        const shippingFee = this.computeShippingFee();
+        const total = ((parseFloat(this.state.productPrice) || 0) + shippingFee).toFixed(2);
+        return actions.order.create({ purchase_units: [{ amount: { value: total, currency_code: 'EUR' }, description: this.state.productName }] });
+      },
+      onApprove: (data, actions) => actions.order.capture().then((details) => {
+        window.location.href = '/grazie.dc.html?token=' + (details.id || '');
+      }),
+      onError: (err) => this.setState({ errorMsg: 'Pagamento PayPal non riuscito, riprova.' }),
+    }).render('#paypal-checkout-slot');
   }
 
   computeShippingFee() {
