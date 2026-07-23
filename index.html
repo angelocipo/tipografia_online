@@ -2,6 +2,8 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
+<link rel="icon" type="image/png" href="img/favicon.png">
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tipografia Online — Catalogo prodotti</title>
 <link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
@@ -143,6 +145,21 @@ const ROLLUP_FEATURES = [
   'Include borsa da trasporto',
 ];
 const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
+
+const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
+function angoliPrice(qty){
+  const t = ANGOLI_ARROTONDATI_TIERS.find(t => qty <= t.qty);
+  return (t || ANGOLI_ARROTONDATI_TIERS[ANGOLI_ARROTONDATI_TIERS.length-1]).price;
+}
+function angoliCheckboxHtml(p, qty){
+  const checked = !!state.angoliById[p.id];
+  return `<div style="margin-bottom:14px;">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer;">
+      <input type="checkbox" data-angoli-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
+      Angoli arrotondati <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(angoliPrice(qty))})</span>
+    </label>
+  </div>`;
+}
 
 const PRODUCTS = [
   { id:'197', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
@@ -893,7 +910,7 @@ async function startStripeCheckout(btn){
     if (pricingType === 'bv24h') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = bv24hState(p);
-      body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx };
+      body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx, angoliArrotondati: !!state.angoliById[productId] };
     }
     if (pricingType === 'locandine250') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -936,12 +953,12 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'businessCardRilievo') {
       const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0 };
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0, angoliArrotondati: !!state.angoliById[productId] };
       body.tierIndex = cur.qtyIdx;
     }
     if (pricingType === 'businessCardStrategici') {
       const cur = state.bcsIdxById[productId] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx };
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx, angoliArrotondati: !!state.angoliById[productId] };
       body.tierIndex = cur.qtyIdx;
     }
     if (pricingType === 'forexPvc') {
@@ -996,6 +1013,7 @@ let state = {
   deliveryIdxById: {},
   sizeIdxById: {},
   bcrIdxById: {},
+  angoliById: {},
   forexById: {},
   striscioniById: {},
   bcsIdxById: {},
@@ -1401,7 +1419,10 @@ function renderDetail(){
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'bv24h'){
     const f = bv24hState(p);
-    const total = computeBv24hPrice(p, f);
+    const baseTotal = computeBv24hPrice(p, f);
+    const angoliOn = !!state.angoliById[p.id];
+    const angoliSurcharge = angoliOn ? angoliPrice(f.qty) : 0;
+    const total = baseTotal + angoliSurcharge;
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -1436,6 +1457,7 @@ function renderDetail(){
             ${p.pricing.soggettiChoices.map((c,i) => `<button class="pill ${i===f.soggettiIdx?'active':''}" data-bv-soggetti="${i}">${c}</button>`).join('')}
           </div>
         </div>
+        <div>${angoliCheckboxHtml(p, f.qty)}</div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
           <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
@@ -1448,7 +1470,7 @@ function renderDetail(){
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
-      ${paymentBlockHtml(p, total, null, f)}`;
+      ${paymentBlockHtml(p, total, null, { ...f, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}) })}`;
   } else if (p.pricing.type === 'locandine250'){
     const f = locandineState(p);
     const total = computeLocandinePrice(p, f);
@@ -1639,6 +1661,9 @@ function renderDetail(){
     const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
     const idx = Math.min(cur.qtyIdx, paper.tiers.length-1);
     const tier = paper.tiers[idx];
+    const angoliOn = !!state.angoliById[p.id];
+    const angoliSurcharge = angoliOn ? angoliPrice(tier.qty) : 0;
+    const grandTotal = tier.price + angoliSurcharge;
     pricingHtml = `
       ${p.pricing.colorChoices ? `
       <div style="margin-bottom:14px;">
@@ -1673,12 +1698,13 @@ function renderDetail(){
           <input type="file" class="file-upload" style="display:none;">
         </label>
       </div>
+      ${angoliCheckboxHtml(p, tier.qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
-        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(grandTotal)}</span>
       </div>
       <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(tier.price/tier.qty).toFixed(3)} / copia · IVA inclusa</div>
-      ${paymentBlockHtml(p, tier.price, idx, p.pricing.colorChoices ? { formato: format.label, carta: paper.label, colore: p.pricing.colorChoices[cur.colorIdx||0], qty: tier.qty } : null)}`;
+      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, ...(p.pricing.colorChoices ? { colore: p.pricing.colorChoices[cur.colorIdx||0] } : {}), ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), qty: tier.qty })}`;
   } else if (p.pricing.type === 'businessCardStrategici'){
     const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
     const format = p.pricing.formats[cur.formatIdx];
@@ -1688,6 +1714,9 @@ function renderDetail(){
     const idx = Math.min(cur.qtyIdx, delivery.prices.length-1);
     const price = delivery.prices[idx];
     const qty = p.pricing.qtyLabels[idx];
+    const angoliOn = !!state.angoliById[p.id];
+    const angoliSurcharge = angoliOn ? angoliPrice(qty) : 0;
+    const grandTotal = price + angoliSurcharge;
     pricingHtml = `
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
@@ -1721,12 +1750,13 @@ function renderDetail(){
           <input type="file" class="file-upload" style="display:none;">
         </label>
       </div>
+      ${angoliCheckboxHtml(p, qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
-        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(price)}</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(grandTotal)}</span>
       </div>
       <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(price/qty).toFixed(3)} / copia · IVA inclusa</div>
-      ${paymentBlockHtml(p, price, idx)}`;
+      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, consegna: delivery.label, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), qty })}`;
   } else if (p.pricing.type === 'forexPvc'){
     const f = forexState(p);
     const total = computeForexPrice(p, f);
@@ -2005,6 +2035,7 @@ function renderDetail(){
   app.querySelectorAll('[data-bv-lati]').forEach(el => el.addEventListener('click', () => { bv24hState(p).latiIdx = parseInt(el.dataset.bvLati,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-carta]').forEach(el => el.addEventListener('click', () => { bv24hState(p).cartaIdx = parseInt(el.dataset.bvCarta,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-soggetti]').forEach(el => el.addEventListener('click', () => { bv24hState(p).soggettiIdx = parseInt(el.dataset.bvSoggetti,10); renderDetail(); }));
+  app.querySelectorAll('[data-angoli-toggle]').forEach(el => el.addEventListener('change', () => { state.angoliById[el.dataset.angoliToggle] = el.checked; renderDetail(); }));
   const locQty = document.getElementById('locQty');
   if (locQty) locQty.addEventListener('input', (e) => { locandineState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
   app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));

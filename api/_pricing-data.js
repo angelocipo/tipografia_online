@@ -7,6 +7,12 @@ const ROLLUP_VARIANTS = [
   { label: '200 × 200 cm', price: 530 },
 ];
 
+const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
+function angoliArrotondatiPrice(qty) {
+  const t = ANGOLI_ARROTONDATI_TIERS.find(t => qty <= t.qty);
+  return (t || ANGOLI_ARROTONDATI_TIERS[ANGOLI_ARROTONDATI_TIERS.length - 1]).price;
+}
+
 const PRICING = {
   // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
   '197': { nome: 'Stampa Roll-Up 80/85 × 200 cm', type: 'formula',
@@ -100,37 +106,59 @@ const PRICING = {
         { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [29,32,34,38,46,63,99,132,166] } ] },
       ] },
     ] },
-  '198': { nome: 'Foto Quadro Personalizzato', type: 'flat', price: 28 },
-  '199': { nome: 'Marilyn Monroe Warhol', type: 'flat', price: 20 },
-  '200': { nome: 'Quadro Claude Monet', type: 'flat', price: 15 },
-  '201': { nome: 'Quadro Van Gogh "Notte stellata"', type: 'flat', price: 48 },
+  '198': { nome: 'Foto Quadro Personalizzato', type: 'fotoQuadro', basePrice: 30 },
+  '199': { nome: 'Marilyn Monroe Warhol', type: 'size', variants: [
+    { label: '50×40 cm', price: 48 },
+    { label: '70×50 cm', price: 67 },
+  ] },
+  '200': { nome: 'Quadro Claude Monet', type: 'size', variants: [
+    { label: '50×40 cm', price: 48 },
+    { label: '70×50 cm', price: 67 },
+  ] },
+  '201': { nome: 'Quadro Van Gogh "Notte stellata"', type: 'size', variants: [
+    { label: '50×40 cm', price: 48 },
+    { label: '70×50 cm', price: 67 },
+  ] },
   '203': { nome: 'Adesivi Prespaziati Personalizzati', type: 'flat', price: 15 },
   '206': { nome: 'Foto Libro Copertina Flessibile', type: 'flat', price: 15 },
   '209': { nome: '2 Adesivi Jeep Renegade Fango', type: 'flat', price: 49 },
   '210': { nome: '1 Paio di 2 Woodpecker Adesivi Prespaziati', type: 'flat', price: 32 },
-  '212': { nome: 'Wall Stickers Sky Line Città Vinile', type: 'flat', price: 39 },
+  '212': { nome: 'Wall Stickers Sky Line Città Vinile', type: 'skylineFormato' },
   '213': { nome: 'Adesivi frasi romane per decorazione', type: 'imageSwatch', price: 24,
     swatches: ['Mejo','Iddio','Tutte le strade','Omo de Panza',"'ngrassa",'Napoli Orto','Faccia Tosta','A chi tocca'] },
   '214': { nome: 'Decalcomania Hollywood Sticker', type: 'imageSwatchQty', pricePerUnit: 24, defaultSwatchIdx: 2,
     swatches: ['James Dean','Madonna','Marilyn','Audrey','Swift'] },
   '214': { nome: 'Decalcomania Hollywood Sticker', type: 'flat', price: 20 },
-  '215': { nome: 'Struttura Personalizzata per Eventi', type: 'flat', price: 200 },
+  '215': { nome: 'Struttura Personalizzata per Eventi', type: 'strutturaEventi' },
+  '216': { nome: 'Scatola Gioielli + stampa Oro/Argento', type: 'scatolaGioielli',
+    misuraChoices: ['5x5x3cm','7x7x3cm','9x9x3cm','23x4,5x2,4cm','8x8x8cm','17x17x3cm'],
+    misuraRate: [1.6, 1.8, 2.25, 2.4, 3.95, 4.35],
+    coloreChoices: ['Oro Lucido','Argento Lucido','Bianco Opaco'],
+  },
+  '5805': { nome: 'Libretti Chiesa Personalizzati', type: 'libretti' },
+  '284': { nome: 'Rilegature a spirale Roma EUR', type: 'rilegature',
+    cartaChoices: ['gr. 80','gr. 100','gr. 200','gr. 300','gr. 350','gr. 400'],
+    cartaRate: [0.042, 0.065, 0.125, 0.185, 0.215, 0.245],
+  },
   '220': { nome: '2 Adesivi Jeep Renegade Stella Graffiata', type: 'flat', price: 23 },
   '221': { nome: '2 Adesivi Jeep Renegade Stella e Teschio', type: 'flat', price: 23 },
   '223': { nome: '2 Adesivi Jeep Renegade Logo', type: 'flat', price: 49 },
   '224': { nome: '2 Adesivi Jeep Renegade Logo + Montagna', type: 'flat', price: 52 },
   '225': { nome: '2 Adesivi Prespaziati Jeep Renegade Crossfit', type: 'flat', price: 32 },
   '226': { nome: '2 Adesivi Prespaziati Jeep Renegade Cavalli', type: 'flat', price: 32 },
-  '227': { nome: 'Stampa Quadro Van Gogh Autoritratto', type: 'flat', price: 15 },
+  '227': { nome: 'Stampa Quadro Van Gogh Autoritratto', type: 'size', variants: [
+    { label: '50×40 cm', price: 48 },
+    { label: '70×50 cm', price: 67 },
+  ] },
   '250': { nome: 'Locandine Stampate a Roma Eur 24H', type: 'locandine250',
     formatChoices: ['35 x 50 cm','50 x 70 cm','70 x 100 cm','A3','A2','A1','A0'],
     formatRates: [2.8,5.3,8.3,2.8,5.3,8,10],
     cartaChoices: ['Usomano gr 80','Usomano gr 180','Carta Sintetica gr 160'],
     cartaMultiplier: [0.8,1.1,1.4],
   },
-  '271': { nome: 'Quadro Statua Libertà stile Andy Warhol', type: 'flat', price: 28 },
-  '282': { nome: 'Stampe sagomate grandi', type: 'flat', price: 70 },
-  '5849': { nome: 'Quadro Pop Art Personalizzato Warhol', type: 'flat', price: 28 },
+  '5849': { nome: 'Quadro Pop Art Personalizzato Warhol', type: 'quadroWarhol' },
+  '5047': { nome: 'Stampa Badge Personalizzati', type: 'badge' },
+  '5047-en': { nome: 'Custom Printed Badges', type: 'badgeEn' },
   '202': { nome: 'Biglietti da visita a rilievo', type: 'businessCardRilievo',
     formats: [
       { label: 'Quadrato 5,5×5,5 cm', papers: [
@@ -151,6 +179,22 @@ const PRICING = {
       ] },
       { label: 'Verticale 5×9 cm', papers: [
         { label: 'gr. 350 offset', tiers: [{qty:250,price:72},{qty:500,price:92},{qty:1000,price:121},{qty:2500,price:211},{qty:5000,price:355},{qty:10000,price:681}] },
+      ] },
+    ] },
+  '205': { nome: 'Biglietti da visita con oro/argento lucido', type: 'businessCardRilievo',
+    colorChoices: ['Oro Lucido','Argento Lucido'],
+    formats: [
+      { label: 'Quadrato 5,5×5,5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:68},{qty:250,price:80},{qty:500,price:87},{qty:1000,price:93},{qty:2500,price:132},{qty:5000,price:196},{qty:7500,price:271},{qty:10000,price:347}] },
+        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:75},{qty:250,price:88},{qty:500,price:93},{qty:1000,price:110},{qty:2500,price:132},{qty:5000,price:173},{qty:7500,price:226},{qty:10000,price:281}] },
+      ] },
+      { label: 'Orizzontale 8,5×5,5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:86},{qty:250,price:101},{qty:500,price:113},{qty:1000,price:124},{qty:2500,price:176},{qty:5000,price:279},{qty:7500,price:396},{qty:10000,price:511}] },
+        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:94},{qty:250,price:111},{qty:500,price:122},{qty:1000,price:147},{qty:2500,price:176},{qty:5000,price:241},{qty:7500,price:326},{qty:10000,price:410}] },
+      ] },
+      { label: 'Orizzontale 9×5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:84},{qty:250,price:99},{qty:500,price:110},{qty:1000,price:121},{qty:2500,price:171},{qty:5000,price:271},{qty:7500,price:383},{qty:10000,price:494}] },
+        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:92},{qty:250,price:108},{qty:500,price:119},{qty:1000,price:143},{qty:2500,price:173},{qty:5000,price:233},{qty:7500,price:316},{qty:10000,price:397}] },
       ] },
     ] },
   '217': { nome: 'Forex PVC Stampato', type: 'forexPvc',
@@ -201,4 +245,4 @@ const PRICING = {
   },
 };
 
-module.exports = { PRICING };
+module.exports = { PRICING, ANGOLI_ARROTONDATI_TIERS, angoliArrotondatiPrice };
