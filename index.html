@@ -867,7 +867,7 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
       </button>
       <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
-      <a href="preventivo.dc.html?prodotto=${encodeURIComponent(p.nome)}${quoteConfig ? '&config=' + encodeURIComponent(quoteConfig) : ''}${quoteQty ? '&quantita=' + encodeURIComponent(quoteQty) : ''}&prezzo=${price}" target="_blank" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
+      <a id="preventivo-link-${p.id}" href="preventivo.dc.html?prodotto=${encodeURIComponent(p.nome)}${quoteConfig ? '&config=' + encodeURIComponent(quoteConfig) : ''}${quoteQty ? '&quantita=' + encodeURIComponent(quoteQty) : ''}&prezzo=${Math.round(price)}" target="_blank" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
         Richiedi un preventivo ufficiale
       </a>
     </div>`;
@@ -1180,6 +1180,10 @@ function updateRilTotal(p){
   if (el) el.textContent = '€ ' + fmtEUR(total);
   const btn = document.querySelector(`.pay-stripe[data-product-id="${p.id}"]`);
   if (btn) btn.dataset.price = Math.round(total);
+  const pp = document.getElementById(`paypal-btn-${p.id}`);
+  if (pp) pp.dataset.price = total;
+  const link = document.getElementById(`preventivo-link-${p.id}`);
+  if (link) link.href = link.href.replace(/([?&]prezzo=)[^&]*/, `$1${Math.round(total)}`).replace(/([?&]quantita=)[^&]*/, `$1${encodeURIComponent(f.qty + ' ' + (p.pricing.unit || 'pz'))}`);
 }
 function computeBv24hPrice(p, f){
   const bv = p.pricing.cartaMultiplier[f.cartaIdx];
