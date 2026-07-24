@@ -1173,6 +1173,14 @@ function computeRilegaturaPrice(p, f){
   const total = f.qty*f.pagCol*colori + f.qty*f.pagBn*bn + f.qty*f.pagCol*cartaRate/lati + f.qty*f.pagBn*cartaRate/lati + f.qty*ril;
   return Math.round(total * 100) / 100;
 }
+function updateRilTotal(p){
+  const f = rilegatureState(p);
+  const total = computeRilegaturaPrice(p, f);
+  const el = document.getElementById('rilTotal');
+  if (el) el.textContent = '€ ' + fmtEUR(total);
+  const btn = document.querySelector(`.pay-stripe[data-product-id="${p.id}"]`);
+  if (btn) btn.dataset.price = Math.round(total);
+}
 function computeBv24hPrice(p, f){
   const bv = p.pricing.cartaMultiplier[f.cartaIdx];
   const soggetti = p.pricing.soggettiMultiplier[f.soggettiIdx];
@@ -1295,6 +1303,10 @@ function renderDetail(){
     || (p.pricing.type === 'imageSwatch' ? (p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].hero || p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].image) : null)
     || p.img;
   const specsList = Object.entries(p.specs || {});
+  const _active = document.activeElement;
+  const _focusId = _active && _active.tagName === 'INPUT' && _active.type !== 'range' && _active.id ? _active.id : null;
+  const _selStart = _focusId ? _active.selectionStart : null;
+  const _selEnd = _focusId ? _active.selectionEnd : null;
   let pricingHtml = '';
 
   if (p.pricing.type === 'flat'){
@@ -1569,11 +1581,11 @@ function renderDetail(){
             <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="rilQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
-            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine a Colori (${p.pricing.pagCol.min}–${p.pricing.pagCol.max})</div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine a Colori</div>
             <input type="number" min="${p.pricing.pagCol.min}" max="${p.pricing.pagCol.max}" id="rilPagCol" value="${f.pagCol}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
-            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine Bianco Nero (${p.pricing.pagBn.min}–${p.pricing.pagBn.max})</div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine Bianco Nero</div>
             <input type="number" min="${p.pricing.pagBn.min}" max="${p.pricing.pagBn.max}" id="rilPagBn" value="${f.pagBn}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
@@ -1599,7 +1611,7 @@ function renderDetail(){
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
-        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+        <span id="rilTotal" style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'tiers'){
@@ -2016,6 +2028,11 @@ function renderDetail(){
       </div>
     </div>`;
 
+  if (_focusId) {
+    const _el = document.getElementById(_focusId);
+    if (_el) { _el.focus(); try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){} }
+  }
+
   const range = document.getElementById('tierRange');
   if (range) range.addEventListener('input', (e) => { state.tierIdxById[p.id] = parseInt(e.target.value,10); renderDetail(); });
   const deliveryRange = document.getElementById('deliveryQtyRange');
@@ -2071,11 +2088,11 @@ function renderDetail(){
   app.querySelectorAll('[data-scatola-misura]').forEach(el => el.addEventListener('click', () => { scatolaState(p).misuraIdx = parseInt(el.dataset.scatolaMisura,10); renderDetail(); }));
   app.querySelectorAll('[data-scatola-colore]').forEach(el => el.addEventListener('click', () => { scatolaState(p).coloreIdx = parseInt(el.dataset.scatolaColore,10); renderDetail(); }));
   const rilQty = document.getElementById('rilQty');
-  if (rilQty) rilQty.addEventListener('input', (e) => { rilegatureState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (rilQty) rilQty.addEventListener('input', (e) => { rilegatureState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); updateRilTotal(p); });
   const rilPagCol = document.getElementById('rilPagCol');
-  if (rilPagCol) rilPagCol.addEventListener('input', (e) => { rilegatureState(p).pagCol = Math.max(p.pricing.pagCol.min, Math.min(p.pricing.pagCol.max, parseInt(e.target.value,10) || 0)); renderDetail(); });
+  if (rilPagCol) rilPagCol.addEventListener('input', (e) => { rilegatureState(p).pagCol = Math.max(p.pricing.pagCol.min, Math.min(p.pricing.pagCol.max, parseInt(e.target.value,10) || 0)); updateRilTotal(p); });
   const rilPagBn = document.getElementById('rilPagBn');
-  if (rilPagBn) rilPagBn.addEventListener('input', (e) => { rilegatureState(p).pagBn = Math.max(p.pricing.pagBn.min, Math.min(p.pricing.pagBn.max, parseInt(e.target.value,10) || 0)); renderDetail(); });
+  if (rilPagBn) rilPagBn.addEventListener('input', (e) => { rilegatureState(p).pagBn = Math.max(p.pricing.pagBn.min, Math.min(p.pricing.pagBn.max, parseInt(e.target.value,10) || 0)); updateRilTotal(p); });
   app.querySelectorAll('[data-ril-lati]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).latiIdx = parseInt(el.dataset.rilLati,10); renderDetail(); }));
   app.querySelectorAll('[data-ril-carta]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).cartaIdx = parseInt(el.dataset.rilCarta,10); renderDetail(); }));
   const bcrRange = document.getElementById('bcrQtyRange');
