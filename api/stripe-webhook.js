@@ -37,10 +37,6 @@ async function rawBody(req) {
   throw new Error('Body della richiesta vuoto.');
 }
 
-// Records the outcome of the most recent webhook call so /api/webhook-status can show it.
-const lastCall = { at: null, esito: null, dettaglio: null, eventType: null };
-module.exports.lastCall = lastCall;
-
 // Sequential invoice numbering. Swap for a persistent counter (KV/DB) before going live —
 // this in-memory counter resets on every cold start.
 let invoiceCounter = 0;
@@ -64,17 +60,9 @@ module.exports = async (req, res) => {
     event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('Webhook signature verification failed', err);
-    lastCall.at = new Date().toISOString();
-    lastCall.esito = 'FIRMA NON VERIFICATA';
-    lastCall.dettaglio = err.message;
     res.status(400).send(`Webhook Error: ${err.message}`);
     return;
   }
-
-  lastCall.at = new Date().toISOString();
-  lastCall.esito = 'evento ricevuto e firma OK';
-  lastCall.eventType = event.type;
-  lastCall.dettaglio = null;
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -129,7 +117,6 @@ module.exports = async (req, res) => {
         });
       } catch (mailErr) {
         console.error('Confirmation email failed for session', session.id, mailErr);
-        lastCall.dettaglio = `Invio email FALLITO: ${mailErr.message}`;
       }
 
       // Invoicing runs after the emails and in its own try — an Aruba failure must never
