@@ -21,6 +21,26 @@ function buffer(req) {
   });
 }
 
+// Stripe signs the EXACT bytes it sent, so we need the raw body. Depending on the runtime
+// the body may already have been consumed and parsed — cover every shape we might get.
+async function rawBody(req) {
+  if (req.rawBody) return Buffer.isBuffer(req.rawBody) ? req.rawBody : Buffer.from(req.rawBody);
+  if (Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === 'string') return Buffer.from(req.body);
+  const buf = await buffer(req);
+  if (buf.length > 0) return buf;
+  if (req.body && typeof req.body === 'object') {
+    // Last resort: the runtime parsed and discarded the raw bytes. Re-serialising cannot
+    // reproduce them byte-for-byte, so the signature check WILL fail — surface that clearly.
+    throw new Error('Raw body non disponibile: il runtime ha già parsato la richiesta. La verifica firma Stripe non è possibile.');
+  }
+  throw new Error('Body della richiesta vuoto.');
+}
+
+// Records the outcome of the most recent webhook call so /api/webhook-status can show it.
+const lastCall = { at: null, esito: null, dettaglio: null, eventType: null };
+module.exports.lastCall = lastCall;
+
 // Sequential invoice numbering. Swap for a persistent counter (KV/DB) before going live —
 // this in-memory counter resets on every cold start.
 let invoiceCounter = 0;
@@ -39,14 +59,22 @@ module.exports = async (req, res) => {
 
   let event;
   try {
-    const buf = await buffer(req);
+    const buf = await rawBody(req);
     const sig = req.headers['stripe-signature'];
     event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('Webhook signature verification failed', err);
+    lastCall.at = new Date().toISOString();
+    lastCall.esito = 'FIRMA NON VERIFICATA';
+    lastCall.dettaglio = err.message;
     res.status(400).send(`Webhook Error: ${err.message}`);
     return;
   }
+
+  lastCall.at = new Date().toISOString();
+  lastCall.esito = 'evento ricevuto e firma OK';
+  lastCall.eventType = event.type;
+  lastCall.dettaglio = null;
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -101,6 +129,7 @@ module.exports = async (req, res) => {
         });
       } catch (mailErr) {
         console.error('Confirmation email failed for session', session.id, mailErr);
+        lastCall.dettaglio = `Invio email FALLITO: ${mailErr.message}`;
       }
 
       // Invoicing runs after the emails and in its own try — an Aruba failure must never
