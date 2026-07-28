@@ -12,8 +12,6 @@ const { sendEmail } = require('./_email-client');
 
 const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_EMAIL || 'info@tipografia.online';
 
-module.exports.config = { api: { bodyParser: false } };
-
 function buffer(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -31,6 +29,8 @@ function nextInvoiceNumber() {
   return String(invoiceCounter).padStart(5, '0');
 }
 
+// NOTE: the config assignment lives at the BOTTOM of this file — assigning it before
+// `module.exports = handler` would be wiped out by that reassignment.
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).end();
@@ -80,8 +80,6 @@ module.exports = async (req, res) => {
           vatRate: 22, // adjust if any product carries a different aliquota
         })),
       };
-      await createInvoiceForOrder(order);
-
       const buyerEmail = md.inv_email || session.customer_details?.email;
       const lineRows = order.lines.map((l) => `<tr><td style="padding:4px 8px;border-bottom:1px solid #eee;">${l.description}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;">€ ${l.unitPrice.toFixed(2)}</td></tr>`).join('');
       const summaryHtml = `
@@ -105,6 +103,14 @@ module.exports = async (req, res) => {
         console.error('Confirmation email failed for session', session.id, mailErr);
       }
 
+      // Invoicing runs after the emails and in its own try — an Aruba failure must never
+      // suppress the customer's order confirmation.
+      try {
+        await createInvoiceForOrder(order);
+      } catch (invErr) {
+        console.error('Invoice creation failed for session', session.id, invErr);
+      }
+
       // Shipping/sender details aren't part of the invoice — they drive the packing slip
       // and courier label. Logged here for now; wire to your fulfillment email/sheet/CRM.
       console.log('Shipping for session', session.id, md.ship_same === '0'
@@ -114,10 +120,14 @@ module.exports = async (req, res) => {
         console.log('Custom sender for session', session.id, { company: md.sender_company, phone: md.sender_phone, address: md.sender_address, city: md.sender_city, cap: md.sender_cap });
       }
     } catch (err) {
-      // Don't fail the webhook response for Stripe's sake — log and handle/retry invoicing separately.
-      console.error('Invoice creation failed for session', session.id, err);
+      // Don't fail the webhook response for Stripe's sake — log and handle/retry separately.
+      console.error('Order processing failed for session', session.id, err);
     }
   }
 
   res.status(200).json({ received: true });
 };
+
+// Raw body is required for Stripe signature verification. Must be assigned AFTER the
+// handler above, otherwise `module.exports = handler` discards it.
+module.exports.config = { api: { bodyParser: false } };
