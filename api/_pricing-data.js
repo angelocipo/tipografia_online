@@ -59,14 +59,6 @@ const PRICING = {
   '5515': { nome: 'Biglietti da Visita Prezzi Strategici', type: 'businessCardStrategici',
     qtyLabels: [100,250,500,1000,2500,5000,10000,15000,20000],
     formats: [
-      { label: 'Quadrato 5,5×5,5 cm', papers: [
-        { label: 'gr. 300 (classico)', deliveries: [
-          { label: '1 Settimana', prices: [34,39,41,41,45,56,78,97,114] },
-          { label: '2 Giorni lavorativi', prices: [67,72,75,73,78,89,110,129,147] },
-        ] },
-        { label: 'gr. 400', deliveries: [ { label: '1 Settimana', prices: [37,40,41,43,49,62,89,115,138] } ] },
-        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
-      ] },
       { label: 'Orizzontale 5,5×8,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
           { label: '1 Settimana', prices: [35,37,40,45,54,71,105,136,165] },
@@ -103,6 +95,16 @@ const PRICING = {
           { label: '2 Giorni lavorativi', prices: [68,75,76,79,85,100,131,157,182] },
         ] },
         { label: 'gr. 400', deliveries: [ { label: '1 Settimana', prices: [39,43,45,48,57,76,113,150,200] } ] },
+        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
+      ] },
+      // Order of `formats` MUST match index.html exactly — the client sends a numeric
+      // formatIndex, so a different order here charges the price of a different format.
+      { label: 'Quadrato 5,5×5,5 cm', papers: [
+        { label: 'gr. 300 (classico)', deliveries: [
+          { label: '1 Settimana', prices: [34,39,41,41,45,56,78,97,114] },
+          { label: '2 Giorni lavorativi', prices: [67,72,75,73,78,89,110,129,147] },
+        ] },
+        { label: 'gr. 400', deliveries: [ { label: '1 Settimana', prices: [37,40,41,43,49,62,89,115,138] } ] },
         { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
       ] },
     ] },
