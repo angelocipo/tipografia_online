@@ -1349,6 +1349,26 @@ function renderGrid(){
   app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openProduct(el.dataset.open)));
 }
 
+// Blocco "materiale da stampare" — identico su tutte le schede prodotto.
+// NB: è un blocco di raccolta, non un upload: il file resta nel browser finché non viene
+// inviato con l'ordine. Nessun file viene caricato su un server da questa pagina.
+function uploadBlockHtml(){
+  return `
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file</div>
+          <label style="display:block; border:1.5px solid oklch(0.88 0.005 90); border-radius:8px; padding:14px 16px; cursor:pointer; background:oklch(0.99 0.002 90);">
+            <span style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:14px; font-weight:600;">Carica il tuo design</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto; opacity:.65;"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg>
+            </span>
+            <input type="file" class="file-upload" multiple style="display:none;" onchange="var n=Array.prototype.map.call(this.files,function(f){return f.name;}).join(', '); this.parentNode.nextElementSibling.textContent = n ? 'Selezionati: ' + n : '';">
+          </label>
+          <div style="font-size:12px; color:oklch(0.45 0.01 90); margin-top:6px;"></div>
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 4 MB per file. File più grandi: inviaceli via email dopo l'ordine.</div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin:14px 0 6px;">Oppure incolla un link al file</div>
+          <input type="text" class="file-link" placeholder="Canva, SwissTransfer, WeTransfer, Drive…" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:6px;">Canva e Drive: condividi il link già sbloccato, senza password.</div>`;
+}
+
 function renderDetail(){
   const p = PRODUCTS.find(x => x.id === state.selectedId);
   const mainImage = state.mainImageOverride
@@ -1435,11 +1455,7 @@ function renderDetail(){
           </div>
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1499,11 +1515,7 @@ function renderDetail(){
           </div>
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1553,11 +1565,7 @@ function renderDetail(){
         </div>
         <div>${angoliCheckboxHtml(p, f.qty)}</div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1587,11 +1595,7 @@ function renderDetail(){
           <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="locQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1658,11 +1662,7 @@ function renderDetail(){
           </div>
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1683,11 +1683,7 @@ function renderDetail(){
         <input type="range" min="0" max="${tiers.length-1}" step="1" value="${idx}" id="tierRange">
       </div>
       <div style="margin-bottom:18px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-        <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-          Scegli file
-          <input type="file" class="file-upload" style="display:none;">
-        </label>
+        ${uploadBlockHtml()}
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale stimato</span>
@@ -1715,11 +1711,7 @@ function renderDetail(){
         <input type="range" min="0" max="${tiers.length-1}" step="1" value="${idx}" id="deliveryQtyRange">
       </div>
       <div style="margin-bottom:18px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-        <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-          Scegli file
-          <input type="file" class="file-upload" style="display:none;">
-        </label>
+        ${uploadBlockHtml()}
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
@@ -1738,11 +1730,7 @@ function renderDetail(){
           </div>`).join('')}
       </div>
       <div style="margin-bottom:18px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-        <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-          Scegli file
-          <input type="file" class="file-upload" style="display:none;">
-        </label>
+        ${uploadBlockHtml()}
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Prezzo</span>
@@ -1786,11 +1774,7 @@ function renderDetail(){
         <input type="range" min="0" max="${paper.tiers.length-1}" step="1" value="${idx}" id="bcrQtyRange">
       </div>
       <div style="margin-bottom:18px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-        <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-          Scegli file
-          <input type="file" class="file-upload" style="display:none;">
-        </label>
+        ${uploadBlockHtml()}
       </div>
       ${angoliCheckboxHtml(p, tier.qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1838,11 +1822,7 @@ function renderDetail(){
         <input type="range" min="0" max="${delivery.prices.length-1}" step="1" value="${idx}" id="bcsQtyRange">
       </div>
       <div style="margin-bottom:18px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-        <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-          Scegli file
-          <input type="file" class="file-upload" style="display:none;">
-        </label>
+        ${uploadBlockHtml()}
       </div>
       ${angoliCheckboxHtml(p, qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1889,11 +1869,7 @@ function renderDetail(){
           <input type="text" id="forexCanva" value="${esc(f.canva)}" placeholder="https://www.canva.com/design/..." style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -1933,11 +1909,7 @@ function renderDetail(){
           <input type="text" id="formulaCanva" value="${esc(f.canva)}" placeholder="https://www.canva.com/design/..." style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-          <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-            Scegli file
-            <input type="file" class="file-upload" style="display:none;">
-          </label>
+          ${uploadBlockHtml()}
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -2016,11 +1988,7 @@ function renderDetail(){
         }).join('')}
       </div>
       <div style="margin-top:16px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file <span style="opacity:.6;">(dopo il pagamento riceverai istruzioni per l'invio)</span></div>
-        <label style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:13.5px; font-weight:600; cursor:pointer; background:oklch(0.98 0.002 90);">
-          Scegli file
-          <input type="file" class="file-upload" style="display:none;">
-        </label>
+        ${uploadBlockHtml()}
       </div>
       <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90);">
         ${p.id === '215' ? (() => {
@@ -2086,7 +2054,16 @@ function renderDetail(){
 
   if (_focusId) {
     const _el = document.getElementById(_focusId);
-    if (_el) { _el.focus(); try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){} }
+    if (_el) {
+      _el.focus();
+      // On type="number" the browser reports selectionStart as null. Passing that to
+      // setSelectionRange is read as 0 and parks the caret at the start of the field, so
+      // typing "100" jumped back before every digit. With no caret info, plain focus()
+      // already leaves the caret at the end — which is what we want.
+      if (_selStart !== null && _selEnd !== null) {
+        try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){}
+      }
+    }
   }
 
   // Campi numerici: nessun clamp mentre si digita (altrimenti il primo carattere
@@ -2105,6 +2082,10 @@ function renderDetail(){
       apply(n); done();
     });
     el.addEventListener('blur', (e) => {
+      // Re-rendering detaches the focused input, and removing a focused element fires blur on
+      // the DETACHED node. Acting on that would clamp + renderDetail() again, which detaches
+      // the next one, and so on — an infinite loop that froze the page. Ignore dead nodes.
+      if (!e.target.isConnected) return;
       const raw = e.target.value.trim();
       let n = parseInt(raw, 10);
       if (isNaN(n) || (min != null && n < min)) n = (min != null ? min : 1);

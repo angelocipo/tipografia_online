@@ -1272,7 +1272,16 @@ function renderDetail(){
 
   if (_focusId) {
     const _el = document.getElementById(_focusId);
-    if (_el) { _el.focus(); try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){} }
+    if (_el) {
+      _el.focus();
+      // On type="number" the browser reports selectionStart as null. Passing that to
+      // setSelectionRange is read as 0 and parks the caret at the start of the field, so
+      // typing "100" jumped back before every digit. With no caret info, plain focus()
+      // already leaves the caret at the end — which is what we want.
+      if (_selStart !== null && _selEnd !== null) {
+        try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){}
+      }
+    }
   }
 
   // Numeric fields: no clamping while typing (otherwise the first digit is
@@ -1291,6 +1300,10 @@ function renderDetail(){
       apply(n); done();
     });
     el.addEventListener('blur', (e) => {
+      // Re-rendering detaches the focused input, and removing a focused element fires blur on
+      // the DETACHED node. Acting on that would clamp + renderDetail() again, which detaches
+      // the next one, and so on — an infinite loop that froze the page. Ignore dead nodes.
+      if (!e.target.isConnected) return;
       const raw = e.target.value.trim();
       let n = parseInt(raw, 10);
       if (isNaN(n) || (min != null && n < min)) n = (min != null ? min : 1);
