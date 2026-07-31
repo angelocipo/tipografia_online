@@ -52,10 +52,33 @@
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = { orderRef: '' };
+
+  // Character-for-character copy of orderRef() in api/stripe-webhook.js. Change one, change
+  // the other: this is the code the customer reads on screen and the one printed in the
+  // confirmation email, and they must be identical. (Before, this page showed a 12-character
+  // slice of the Stripe session id while the email carried a counter — two different numbers
+  // for the same order.)
+  refFromSessionId(sessionId) {
+    const REF_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const src = String(sessionId || '');
+    let h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (let i = 0; i < src.length; i++) {
+      h1 = Math.imul(h1 ^ src.charCodeAt(i), 16777619) >>> 0;
+      h2 = Math.imul(h2 + src.charCodeAt(i) * (i + 7), 2654435761) >>> 0;
+    }
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      const mix = i < 3 ? (h1 >>> (i * 5)) : (h2 >>> ((i - 3) * 5));
+      out += REF_ALPHABET[mix % 32];
+    }
+    return out;
+  }
+
   componentDidMount() {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id');
-    const orderRef = sessionId ? sessionId.replace(/^cs_(test_|live_)?/, '').slice(0, 12).toUpperCase() : (params.get('token') || '');
+    const token = params.get('token');
+    const orderRef = sessionId ? this.refFromSessionId(sessionId) : (token ? String(token).slice(-6).toUpperCase() : '');
     this.setState({ orderRef });
   }
   renderVals() {

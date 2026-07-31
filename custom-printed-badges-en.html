@@ -565,6 +565,10 @@ function renderDetail(){
     || (p.pricing.type === 'imageSwatch' ? (p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].hero || p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].image) : null)
     || p.img;
   const specsList = Object.entries(p.specs || {});
+  const _active = document.activeElement;
+  const _focusId = _active && _active.tagName === 'INPUT' && _active.type !== 'range' && _active.id ? _active.id : null;
+  const _selStart = _focusId ? _active.selectionStart : null;
+  const _selEnd = _focusId ? _active.selectionEnd : null;
   let pricingHtml = '';
 
   if (p.pricing.type === 'flat'){
@@ -1266,6 +1270,37 @@ function renderDetail(){
       </div>
     </div>`;
 
+  if (_focusId) {
+    const _el = document.getElementById(_focusId);
+    if (_el) { _el.focus(); try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){} }
+  }
+
+  // Numeric fields: no clamping while typing (otherwise the first digit is
+  // immediately rewritten as the minimum). The minimum is applied on blur.
+  function bindNum(id, min, max, apply, after) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const done = after || renderDetail;
+    el.addEventListener('input', (e) => {
+      const raw = e.target.value.trim();
+      if (raw === '') return;
+      let n = parseInt(raw, 10);
+      if (isNaN(n)) return;
+      if (max != null && n > max) { n = max; e.target.value = String(n); }
+      if (min != null && n < min) return;
+      apply(n); done();
+    });
+    el.addEventListener('blur', (e) => {
+      const raw = e.target.value.trim();
+      let n = parseInt(raw, 10);
+      if (isNaN(n) || (min != null && n < min)) n = (min != null ? min : 1);
+      if (max != null && n > max) n = max;
+      if (String(n) === raw) return; // valore gia' valido: nessun re-render
+      e.target.value = String(n);
+      apply(n); done();
+    });
+  }
+
   const range = document.getElementById('tierRange');
   if (range) range.addEventListener('input', (e) => { state.tierIdxById[p.id] = parseInt(e.target.value,10); renderDetail(); });
   const deliveryRange = document.getElementById('deliveryQtyRange');
@@ -1281,50 +1316,35 @@ function renderDetail(){
   }));
   app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
   app.querySelectorAll('[data-swatch]').forEach(el => el.addEventListener('click', () => { state.swatchIdxById[p.id] = parseInt(el.dataset.swatch,10); state.mainImageOverride = null; renderDetail(); }));
-  const swQtyInput = document.getElementById('swQtyInput');
-  if (swQtyInput) swQtyInput.addEventListener('input', (e) => { swatchQtyState(p).qty = Math.max(1, parseInt(e.target.value,10) || 1); renderDetail(); });
+  bindNum('swQtyInput', 1, null, (n) => { swatchQtyState(p).qty = n; });
   app.querySelectorAll('[data-swqty-swatch]').forEach(el => el.addEventListener('click', () => { swatchQtyState(p).swatchIdx = parseInt(el.dataset.swqtySwatch,10); renderDetail(); }));
-  const adesLarghezza = document.getElementById('adesLarghezza');
-  if (adesLarghezza) adesLarghezza.addEventListener('input', (e) => { adesivoState(p).larghezza = Math.max(p.pricing.larghezza.min, Math.min(p.pricing.larghezza.max, parseInt(e.target.value,10) || p.pricing.larghezza.min)); renderDetail(); });
-  const adesAltezza = document.getElementById('adesAltezza');
-  if (adesAltezza) adesAltezza.addEventListener('input', (e) => { adesivoState(p).altezza = Math.max(p.pricing.altezza.min, Math.min(p.pricing.altezza.max, parseInt(e.target.value,10) || p.pricing.altezza.min)); renderDetail(); });
-  const adesQty = document.getElementById('adesQty');
-  if (adesQty) adesQty.addEventListener('input', (e) => { adesivoState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.larghezza) bindNum('adesLarghezza', p.pricing.larghezza.min, p.pricing.larghezza.max, (n) => { adesivoState(p).larghezza = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('adesAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { adesivoState(p).altezza = n; });
+  if (p.pricing && p.pricing.qty) bindNum('adesQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { adesivoState(p).qty = n; });
   app.querySelectorAll('[data-ades-sagoma]').forEach(el => el.addEventListener('click', () => { adesivoState(p).sagomaIdx = parseInt(el.dataset.adesSagoma,10); renderDetail(); }));
   app.querySelectorAll('[data-presp-materiale]').forEach(el => el.addEventListener('click', () => { const f = prespaziatiState(p); f.materialeIdx = parseInt(el.dataset.prespMateriale,10); f.coloreIdx = 0; renderDetail(); }));
   app.querySelectorAll('[data-presp-colore]').forEach(el => el.addEventListener('click', () => { prespaziatiState(p).coloreIdx = parseInt(el.dataset.prespColore,10); renderDetail(); }));
   const prespAltroColore = document.getElementById('prespAltroColore');
   if (prespAltroColore) prespAltroColore.addEventListener('input', (e) => { prespaziatiState(p).altroColore = e.target.value; });
-  const prespBase = document.getElementById('prespBase');
-  if (prespBase) prespBase.addEventListener('input', (e) => { prespaziatiState(p).base = Math.max(p.pricing.base.min, Math.min(p.pricing.base.max, parseInt(e.target.value,10) || p.pricing.base.min)); renderDetail(); });
-  const prespAltezza = document.getElementById('prespAltezza');
-  if (prespAltezza) prespAltezza.addEventListener('input', (e) => { prespaziatiState(p).altezza = Math.max(p.pricing.altezza.min, Math.min(p.pricing.altezza.max, parseInt(e.target.value,10) || p.pricing.altezza.min)); renderDetail(); });
-  const prespCopie = document.getElementById('prespCopie');
-  if (prespCopie) prespCopie.addEventListener('input', (e) => { prespaziatiState(p).copie = Math.max(p.pricing.copie.min, parseInt(e.target.value,10) || p.pricing.copie.min); renderDetail(); });
+  if (p.pricing && p.pricing.base) bindNum('prespBase', p.pricing.base.min, p.pricing.base.max, (n) => { prespaziatiState(p).base = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('prespAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { prespaziatiState(p).altezza = n; });
+  if (p.pricing && p.pricing.copie) bindNum('prespCopie', p.pricing.copie.min, null, (n) => { prespaziatiState(p).copie = n; });
   app.querySelectorAll('[data-presp-lavorazione]').forEach(el => el.addEventListener('click', () => { prespaziatiState(p).lavorazioneIdx = parseInt(el.dataset.prespLavorazione,10); renderDetail(); }));
-  const bvLarghezza = document.getElementById('bvLarghezza');
-  if (bvLarghezza) bvLarghezza.addEventListener('input', (e) => { bv24hState(p).larghezza = Math.max(p.pricing.larghezza.min, Math.min(p.pricing.larghezza.max, parseInt(e.target.value,10) || p.pricing.larghezza.min)); renderDetail(); });
-  const bvAltezza = document.getElementById('bvAltezza');
-  if (bvAltezza) bvAltezza.addEventListener('input', (e) => { bv24hState(p).altezza = Math.max(p.pricing.altezza.min, Math.min(p.pricing.altezza.max, parseInt(e.target.value,10) || p.pricing.altezza.min)); renderDetail(); });
-  const bvQty = document.getElementById('bvQty');
-  if (bvQty) bvQty.addEventListener('input', (e) => { bv24hState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.larghezza) bindNum('bvLarghezza', p.pricing.larghezza.min, p.pricing.larghezza.max, (n) => { bv24hState(p).larghezza = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('bvAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { bv24hState(p).altezza = n; });
+  if (p.pricing && p.pricing.qty) bindNum('bvQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { bv24hState(p).qty = n; });
   app.querySelectorAll('[data-bv-lati]').forEach(el => el.addEventListener('click', () => { bv24hState(p).latiIdx = parseInt(el.dataset.bvLati,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-carta]').forEach(el => el.addEventListener('click', () => { bv24hState(p).cartaIdx = parseInt(el.dataset.bvCarta,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-soggetti]').forEach(el => el.addEventListener('click', () => { bv24hState(p).soggettiIdx = parseInt(el.dataset.bvSoggetti,10); renderDetail(); }));
-  const locQty = document.getElementById('locQty');
-  if (locQty) locQty.addEventListener('input', (e) => { locandineState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.qty) bindNum('locQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { locandineState(p).qty = n; });
   app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));
   app.querySelectorAll('[data-loc-carta]').forEach(el => el.addEventListener('click', () => { locandineState(p).cartaIdx = parseInt(el.dataset.locCarta,10); renderDetail(); }));
-  const scatolaQty = document.getElementById('scatolaQty');
-  if (scatolaQty) scatolaQty.addEventListener('input', (e) => { scatolaState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.qty) bindNum('scatolaQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { scatolaState(p).qty = n; });
   app.querySelectorAll('[data-scatola-misura]').forEach(el => el.addEventListener('click', () => { scatolaState(p).misuraIdx = parseInt(el.dataset.scatolaMisura,10); renderDetail(); }));
   app.querySelectorAll('[data-scatola-colore]').forEach(el => el.addEventListener('click', () => { scatolaState(p).coloreIdx = parseInt(el.dataset.scatolaColore,10); renderDetail(); }));
-  const rilQty = document.getElementById('rilQty');
-  if (rilQty) rilQty.addEventListener('input', (e) => { rilegatureState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
-  const rilPagCol = document.getElementById('rilPagCol');
-  if (rilPagCol) rilPagCol.addEventListener('input', (e) => { rilegatureState(p).pagCol = Math.max(p.pricing.pagCol.min, Math.min(p.pricing.pagCol.max, parseInt(e.target.value,10) || 0)); renderDetail(); });
-  const rilPagBn = document.getElementById('rilPagBn');
-  if (rilPagBn) rilPagBn.addEventListener('input', (e) => { rilegatureState(p).pagBn = Math.max(p.pricing.pagBn.min, Math.min(p.pricing.pagBn.max, parseInt(e.target.value,10) || 0)); renderDetail(); });
+  if (p.pricing && p.pricing.qty) bindNum('rilQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { rilegatureState(p).qty = n; });
+  if (p.pricing && p.pricing.pagCol) bindNum('rilPagCol', p.pricing.pagCol.min, p.pricing.pagCol.max, (n) => { rilegatureState(p).pagCol = n; });
+  if (p.pricing && p.pricing.pagBn) bindNum('rilPagBn', p.pricing.pagBn.min, p.pricing.pagBn.max, (n) => { rilegatureState(p).pagBn = n; });
   app.querySelectorAll('[data-ril-lati]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).latiIdx = parseInt(el.dataset.rilLati,10); renderDetail(); }));
   app.querySelectorAll('[data-ril-carta]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).cartaIdx = parseInt(el.dataset.rilCarta,10); renderDetail(); }));
   const bcrRange = document.getElementById('bcrQtyRange');
@@ -1362,16 +1382,14 @@ function renderDetail(){
     state.bcsIdxById[p.id] = { ...cur, deliveryIdx: parseInt(el.dataset.bcsDelivery,10), qtyIdx: 0 };
     renderDetail();
   }));
-  const forexQtyInput = document.getElementById('forexQty');
-  if (forexQtyInput) forexQtyInput.addEventListener('input', (e) => { forexState(p).qty = Math.max(1, Math.min(100, parseInt(e.target.value,10) || 1)); renderDetail(); });
+  bindNum('forexQty', 1, 100, (n) => { forexState(p).qty = n; });
   const forexCanvaInput = document.getElementById('forexCanva');
   if (forexCanvaInput) forexCanvaInput.addEventListener('input', (e) => { forexState(p).canva = e.target.value; });
   app.querySelectorAll('[data-forex-spessore]').forEach(el => el.addEventListener('click', () => { forexState(p).spessoreIdx = parseInt(el.dataset.forexSpessore,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-stampa]').forEach(el => el.addEventListener('click', () => { forexState(p).stampaIdx = parseInt(el.dataset.forexStampa,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-consegna]').forEach(el => el.addEventListener('click', () => { forexState(p).consegnaIdx = parseInt(el.dataset.forexConsegna,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-formato]').forEach(el => el.addEventListener('click', () => { forexState(p).formatIdx = parseInt(el.dataset.forexFormato,10); renderDetail(); }));
-  const strQtyInput = document.getElementById('strQty');
-  if (strQtyInput) strQtyInput.addEventListener('input', (e) => { striscioniState(p).qty = Math.max(1, Math.min(100, parseInt(e.target.value,10) || 1)); renderDetail(); });
+  bindNum('strQty', 1, 100, (n) => { striscioniState(p).qty = n; });
   app.querySelectorAll('[data-str-consegna]').forEach(el => el.addEventListener('click', () => { striscioniState(p).consegnaIdx = parseInt(el.dataset.strConsegna,10); renderDetail(); }));
   app.querySelectorAll('[data-str-occhielli]').forEach(el => el.addEventListener('click', () => { striscioniState(p).occhielliIdx = parseInt(el.dataset.strOcchielli,10); renderDetail(); }));
   app.querySelectorAll('[data-str-formato]').forEach(el => el.addEventListener('click', () => { striscioniState(p).formatIdx = parseInt(el.dataset.strFormato,10); renderDetail(); }));
@@ -1384,8 +1402,7 @@ function renderDetail(){
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.value };
     renderDetail();
   }));
-  const qtyInput = document.getElementById('formulaQty');
-  if (qtyInput) qtyInput.addEventListener('input', (e) => { formulaState(p).qty = Math.max(1, parseInt(e.target.value,10) || 1); renderDetail(); });
+  bindNum('formulaQty', 1, null, (n) => { formulaState(p).qty = n; });
   const canvaInput = document.getElementById('formulaCanva');
   if (canvaInput) canvaInput.addEventListener('input', (e) => { formulaState(p).canva = e.target.value; });
   app.querySelectorAll('[data-formula-formato]').forEach(el => el.addEventListener('click', () => { formulaState(p).formato = el.dataset.formulaFormato; renderDetail(); }));

@@ -28,6 +28,12 @@
 @media (max-width:640px){.co-grid{grid-template-columns:1fr;}.nav a{display:none;}}
 .co-section{padding:var(--space-6);margin-bottom:var(--space-6);}
 .co-h{font-size:20px;margin:0 0 var(--space-4);}
+/* The DS .input sets appearance:none and a fixed 36.5px height, which erases the native
+   file-picker button. Restore the control and skin its button like .btn-secondary. */
+#design-files{appearance:auto;-webkit-appearance:auto;height:auto;min-height:0;padding:var(--space-2) var(--space-3);cursor:pointer;}
+#design-files::file-selector-button{font:inherit;font-size:14px;line-height:1.2;color:var(--color-text);margin-right:var(--space-3);padding:var(--space-2) calc(var(--space-3) * 1.2);border:1px solid var(--color-divider);border-radius:var(--radius-md);background:transparent;cursor:pointer;}
+#design-files::file-selector-button:hover{background:color-mix(in srgb, var(--color-text) 7%, transparent);}
+#design-files::file-selector-button:active{background:color-mix(in srgb, var(--color-text) 14%, transparent);}
 </style>
 </helmet>
 
@@ -169,6 +175,22 @@
       </sc-if>
     </section>
 
+    <section class="card blueprint co-section">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 class="co-h">Materiale da stampare</h2>
+      <p class="card-body" style="margin:0 0 var(--space-4);">Allega qui il file da stampare, oppure incolla un link (WeTransfer, Drive, Dropbox). Puoi anche inviarlo dopo, rispondendo all'email di conferma.</p>
+      <div class="co-grid">
+        <div class="field" style="grid-column:1/-1;"><label for="design-files">File — massimo 3 MB in totale</label><input class="input" type="file" id="design-files" multiple="{{ multipleFiles }}" onChange="{{ setDesignFiles }}"></div>
+        <div class="field" style="grid-column:1/-1;"><label for="design-link">Oppure link al file</label><input class="input" id="design-link" placeholder="https://we.tl/…" value="{{ designLink }}" onChange="{{ setDesignLink }}"></div>
+      </div>
+      <sc-if value="{{ designNames }}" hint-placeholder-val="{{ '' }}">
+        <p style="font-size:13px;color:color-mix(in srgb, var(--color-text) 65%, transparent);margin:var(--space-3) 0 0;">Allegati: {{ designNames }}</p>
+      </sc-if>
+      <sc-if value="{{ designError }}" hint-placeholder-val="{{ null }}">
+        <p style="color:#b23b3b;font-size:13px;margin:var(--space-3) 0 0;">{{ designError }}</p>
+      </sc-if>
+    </section>
+
     <sc-if value="{{ errorMsg }}" hint-placeholder-val="{{ null }}">
       <p style="color:#b23b3b;font-size:14px;margin:0 0 var(--space-4);">{{ errorMsg }}</p>
     </sc-if>
@@ -209,9 +231,54 @@ class Component extends DCLogic {
     ship: { name: '', phone: '', address: '', city: '', cap: '', notes: '' },
     useSender: false,
     sender: { company: '', phone: '', address: '', city: '', cap: '' },
+    designFiles: [],
+    designNames: '',
+    designLink: '',
+    designError: null,
     submitting: false,
     errorMsg: null,
   };
+
+  // Character-for-character copy of orderRef() in api/stripe-webhook.js. The code shown on the
+  // thank-you page and emailed with the artwork MUST match the one in the confirmation email.
+  orderRefFromSessionId(sessionId) {
+    const REF_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const src = String(sessionId || '');
+    let h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (let i = 0; i < src.length; i++) {
+      h1 = Math.imul(h1 ^ src.charCodeAt(i), 16777619) >>> 0;
+      h2 = Math.imul(h2 + src.charCodeAt(i) * (i + 7), 2654435761) >>> 0;
+    }
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      const mix = i < 3 ? (h1 >>> (i * 5)) : (h2 >>> ((i - 3) * 5));
+      out += REF_ALPHABET[mix % 32];
+    }
+    return out;
+  }
+
+  // Files are never stored: they are read here, posted once to /api/send-design-files and
+  // delivered as email attachments. Vercel caps a request body at 4.5 MB and base64 adds ~33%,
+  // so 3 MB of real files is the ceiling — beyond that the customer uses the link field.
+  async uploadDesign(ref) {
+    const { designFiles, designLink, inv } = this.state;
+    if (!designFiles.length && !designLink) return;
+    const files = [];
+    for (const f of designFiles) {
+      const b64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',')[1] || '');
+        r.onerror = reject;
+        r.readAsDataURL(f);
+      });
+      files.push({ name: f.name, type: f.type, b64 });
+    }
+    await fetch('/api/send-design-files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref, customerName: inv.name, customerEmail: inv.email, link: designLink, files }),
+    });
+  }
 
   humanizeKey(key) {
     const map = {
@@ -277,7 +344,8 @@ class Component extends DCLogic {
         const total = ((parseFloat(this.state.productPrice) || 0) + shippingFee).toFixed(2);
         return actions.order.create({ purchase_units: [{ amount: { value: total, currency_code: 'EUR' }, description: this.state.productName }] });
       },
-      onApprove: (data, actions) => actions.order.capture().then((details) => {
+      onApprove: (data, actions) => actions.order.capture().then(async (details) => {
+        try { await this.uploadDesign(String(details.id || '').slice(-6).toUpperCase()); } catch (e) { console.error('Invio file non riuscito', e); }
         window.location.href = '/grazie.dc.html?token=' + (details.id || '');
       }),
       onError: (err) => this.setState({ errorMsg: 'Pagamento PayPal non riuscito, riprova.' }),
@@ -309,7 +377,7 @@ class Component extends DCLogic {
     const err = this.validate();
     if (err) { this.setState({ errorMsg: err }); return; }
     this.setState({ submitting: true, errorMsg: null });
-    const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody } = this.state;
+    const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody, designNames, designLink } = this.state;
     const shippingFee = this.computeShippingFee();
     try {
       const res = await fetch('/api/create-checkout-session', {
@@ -322,10 +390,14 @@ class Component extends DCLogic {
           customer: { invType, ...inv },
           shipping: shipSame ? { sameAsBilling: true } : { sameAsBilling: false, ...ship },
           sender: useSender ? { use: true, ...sender } : { use: false },
+          design: { names: designNames, link: designLink },
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Errore');
+      // Send the artwork BEFORE leaving for Stripe — this page is about to be unloaded.
+      // A failure here must not block the payment, so it only logs.
+      try { await this.uploadDesign(this.orderRefFromSessionId(data.sessionId)); } catch (e) { console.error('Invio file non riuscito', e); }
       window.location.href = data.url;
     } catch (ex) {
       this.setState({ submitting: false, errorMsg: ex.message || 'Errore nel pagamento, riprova.' });
@@ -352,6 +424,20 @@ class Component extends DCLogic {
       isZoneRomaResto: s.shipZone === 'roma_resto',
       isZoneItalia: s.shipZone === 'italia',
       setShipZone: (e) => this.setState({ shipZone: e.target.value }),
+      multipleFiles: true,
+      designNames: s.designNames,
+      designLink: s.designLink,
+      designError: s.designError,
+      setDesignLink: (e) => this.setState({ designLink: e.target.value }),
+      setDesignFiles: (e) => {
+        const files = Array.from(e.target.files || []);
+        const total = files.reduce((n, f) => n + f.size, 0);
+        if (total > 3 * 1024 * 1024) {
+          this.setState({ designFiles: [], designNames: '', designError: 'I file superano i 3 MB complessivi. Incolla un link (WeTransfer, Drive, Dropbox) oppure inviali rispondendo all\u2019email di conferma.' });
+          return;
+        }
+        this.setState({ designFiles: files, designNames: files.map((f) => f.name).join(', '), designError: null });
+      },
       isPrivato: s.invType === 'privato',
       isAzienda: s.invType === 'azienda',
       isEstero: s.invType === 'estero',

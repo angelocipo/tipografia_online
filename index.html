@@ -161,6 +161,54 @@ function angoliCheckboxHtml(p, qty){
   </div>`;
 }
 
+// Cartella colori ORACAL 751C High Performance Cast — 117 colori.
+// Codici e nomi dalla mazzetta ufficiale ORAFOL; tinte campionate dalle tavole
+// (img/oracal-751c-1..3.jpeg). Ordine identico alla mazzetta.
+const ORACAL_751 = [
+  { code:'020', nome:'Giallo Oro', hex:'#fcab01' }, { code:'219', nome:'Giallo Tuorlo', hex:'#f9b202' }, { code:'203', nome:'Giallo Paglia', hex:'#fdbc00' },
+  { code:'211', nome:'Giallo Sole', hex:'#fcba01' }, { code:'019', nome:'Giallo Segnale', hex:'#e5aa01' }, { code:'208', nome:'Giallo Postale', hex:'#e7aa02' },
+  { code:'209', nome:'Giallo Mais', hex:'#fcc300' }, { code:'021', nome:'Giallo', hex:'#f9c400' }, { code:'216', nome:'Giallo Traffico', hex:'#f9c900' },
+  { code:'022', nome:'Giallo Chiaro', hex:'#f2d200' }, { code:'025', nome:'Giallo Zolfo', hex:'#efe410' }, { code:'026', nome:'Rosso Porpora', hex:'#63101e' },
+  { code:'361', nome:'Rosso Mela', hex:'#810017' }, { code:'030', nome:'Rosso Scuro', hex:'#8c0f1a' }, { code:'348', nome:'Rosso Scarlatto', hex:'#9c0018' },
+  { code:'306', nome:'Cremisi', hex:'#ac0001' }, { code:'031', nome:'Rosso', hex:'#b11812' }, { code:'027', nome:'Rosso Pomodoro', hex:'#b8020e' },
+  { code:'028', nome:'Rosso Cardinale', hex:'#c10619' }, { code:'325', nome:'Rosso Medio', hex:'#cb0c01' }, { code:'324', nome:'Rosso Sangue', hex:'#d00000' },
+  { code:'032', nome:'Rosso Chiaro', hex:'#ca1706' }, { code:'326', nome:'Rosso Segnale', hex:'#cc1d02' }, { code:'047', nome:'Rosso Arancio', hex:'#d43502' },
+  { code:'033', nome:'Arancio Rosso', hex:'#d63400' }, { code:'335', nome:'Rosso Marte', hex:'#e13c00' }, { code:'333', nome:'Arancio Puro', hex:'#e95913' },
+  { code:'034', nome:'Arancione', hex:'#ed5602' }, { code:'332', nome:'Arancio Intenso', hex:'#e96501' }, { code:'035', nome:'Arancio Pastello', hex:'#f26600' },
+  { code:'340', nome:'Castagna', hex:'#4a1524' }, { code:'048', nome:'Bordeaux', hex:'#6d002e' }, { code:'415', nome:'Prugna', hex:'#622356' },
+  { code:'040', nome:'Viola', hex:'#5a2e6b' }, { code:'403', nome:'Viola Chiaro', hex:'#592c86' }, { code:'043', nome:'Lavanda', hex:'#7b62a4' },
+  { code:'042', nome:'Lilla', hex:'#b58fbc' }, { code:'041', nome:'Rosa', hex:'#bd1662' }, { code:'077', nome:'Telemagenta', hex:'#c12c6e' },
+  { code:'044', nome:'Magenta', hex:'#cc5180' }, { code:'045', nome:'Rosa Tenue', hex:'#ea7fb5' }, { code:'532', nome:'Blu Nero', hex:'#111723' },
+  { code:'588', nome:'Blu Alpha', hex:'#001336' }, { code:'590', nome:'Mirtillo', hex:'#0b1735' }, { code:'518', nome:'Blu Acciaio', hex:'#0c163f' },
+  { code:'591', nome:'Blu Mezzanotte', hex:'#012158' }, { code:'050', nome:'Blu Scuro', hex:'#132d5a' }, { code:'058', nome:'Blu Oltremare', hex:'#022c6d' },
+  { code:'537', nome:'Blu Profondo', hex:'#021559' }, { code:'065', nome:'Blu Cobalto', hex:'#051e6c' }, { code:'049', nome:'Blu Reale', hex:'#182f7d' },
+  { code:'918', nome:'Nichel', hex:'#575753' }, { code:'592', nome:'Blu Marino', hex:'#0c237e' }, { code:'593', nome:'Blu Deciso', hex:'#0e2180' },
+  { code:'150', nome:'Blu Brillante L', hex:'#0531ad' }, { code:'536', nome:'Blu Medio', hex:'#002778' }, { code:'510', nome:'Blu Clematide', hex:'#023086' },
+  { code:'067', nome:'Blu', hex:'#023e7d' }, { code:'595', nome:'Blu Verde', hex:'#014c79' }, { code:'057', nome:'Blu Traffico', hex:'#004394' },
+  { code:'051', nome:'Blu Genziana', hex:'#01509f' }, { code:'509', nome:'Blu Mare', hex:'#00499d' }, { code:'508', nome:'Blu Segnale', hex:'#0054aa' },
+  { code:'052', nome:'Azzurro', hex:'#0367bb' }, { code:'507', nome:'Blu Capri', hex:'#0065b0' }, { code:'555', nome:'Blu Ghiacciaio', hex:'#4579be' },
+  { code:'594', nome:'Blu Pastello', hex:'#0076b4' }, { code:'517', nome:'Blu Euro', hex:'#027db9' }, { code:'053', nome:'Blu Chiaro', hex:'#0288cf' },
+  { code:'056', nome:'Blu Ghiaccio', hex:'#37a1d3' }, { code:'549', nome:'Blu Tortora', hex:'#7390a1' }, { code:'608', nome:'Petrolio', hex:'#005b6a' },
+  { code:'066', nome:'Blu Turchese', hex:'#006d88' }, { code:'054', nome:'Turchese', hex:'#019a97' }, { code:'055', nome:'Menta', hex:'#5bc6b8' },
+  { code:'599', nome:'Turchese Pastello', hex:'#7ecfd5' }, { code:'060', nome:'Verde Scuro', hex:'#01332a' }, { code:'661', nome:'Verde Foglia', hex:'#013329' },
+  { code:'078', nome:'Verde Fogliame', hex:'#305d41' }, { code:'617', nome:'Smeraldo', hex:'#33705a' }, { code:'607', nome:'Verde Turchese', hex:'#317a74' },
+  { code:'604', nome:'Verde Cactus', hex:'#247e6a' }, { code:'061', nome:'Verde', hex:'#1f7b64' }, { code:'068', nome:'Verde Erba', hex:'#107f5e' },
+  { code:'619', nome:'Verde Traffico', hex:'#148f69' }, { code:'062', nome:'Verde Chiaro', hex:'#169154' }, { code:'064', nome:'Verde Giallo', hex:'#31ab31' },
+  { code:'063', nome:'Verde Tiglio', hex:'#6dcb3d' }, { code:'080', nome:'Marrone', hex:'#423332' }, { code:'803', nome:'Marrone Cioccolato', hex:'#3c2628' },
+  { code:'828', nome:'Marrone Terra', hex:'#44302a' }, { code:'079', nome:'Marrone Rosso', hex:'#653938' }, { code:'083', nome:'Marrone Nocciola', hex:'#bf6340' },
+  { code:'801', nome:'Marrone Argilla', hex:'#84644b' }, { code:'811', nome:'Beige Sahara', hex:'#a98d56' }, { code:'081', nome:'Marrone Chiaro', hex:'#a88d64' },
+  { code:'818', nome:'Zafferano', hex:'#e1be8b' }, { code:'804', nome:'Beige Marrone', hex:'#dfc888' }, { code:'023', nome:'Crema', hex:'#e8d38f' },
+  { code:'813', nome:'Crema Chiaro', hex:'#e3caa8' }, { code:'018', nome:'Avorio Chiaro', hex:'#ddcdaa' }, { code:'070', nome:'Nero', hex:'#1a1a1a' },
+  { code:'720', nome:'Grigio Komatsu', hex:'#232a33' }, { code:'073', nome:'Grigio Scuro', hex:'#3b4242' }, { code:'713', nome:'Grigio Ferro', hex:'#5f6363' },
+  { code:'071', nome:'Grigio', hex:'#747772' }, { code:'721', nome:'Grigio Ardesia', hex:'#7e878c' }, { code:'076', nome:'Telegrigio', hex:'#8c8f8b' },
+  { code:'074', nome:'Grigio Medio', hex:'#92958c' }, { code:'724', nome:'Grigio Ghiaccio', hex:'#a6a599' }, { code:'072', nome:'Grigio Chiaro', hex:'#c2c2ba' },
+  { code:'109', nome:'Bianco Scafo', hex:'#d5d5d0' }, { code:'010', nome:'Bianco', hex:'#ffffff' }, { code:'090', nome:'Grigio Argento', hex:'#b5b1a4' },
+  { code:'930', nome:'Oro L', hex:'#9c753a' }, { code:'093', nome:'Antracite', hex:'#363938' }, { code:'932', nome:'Grafite Metallizzato', hex:'#4a4c4c' },
+];
+const oracalLabel = (c) => `${c.code} ${c.nome}`;
+const ORACAL_HEX = Object.fromEntries(ORACAL_751.map(c => [oracalLabel(c), c.hex]));
+const ORACAL_LABELS = ORACAL_751.slice().sort((a, b) => Number(a.code) - Number(b.code)).map(oracalLabel);
+
 const PRODUCTS = [
   { id:'197', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
     img:'img/rollup.jpg',
@@ -350,7 +398,7 @@ const PRODUCTS = [
     ] } },
   { id:'203', nome:'Adesivi Prespaziati Personalizzati', categoria:'Adesivi Sagomati',
     img:'img/adesivi_prespaziati-scaled-450.jpg',
-    gallery:['img/adesivi_prespaziati-scaled-450.jpg', 'uploads/oracal_colori_1_10-8-2017.jpg', 'uploads/oracal_colori_2_10-8-2017.jpg', 'uploads/oracal_colori_3_10-8-2017.jpg'],
+    gallery:['img/adesivi_prespaziati-scaled-450.jpg', 'img/oracal-751c-1.jpeg', 'img/oracal-751c-2.jpeg', 'img/oracal-751c-3.jpeg'],
     intro:'Adesivi Oracal ritagliati su misura, sagomatura precisa e consegna in 24 ore.',
     features:['Sagomatura di precisione millimetrica','Materiale Oracal lucido o opaco, vari colori','Sagomatura semplice, prespaziato semplice o complesso'],
     specs:{},
@@ -358,7 +406,7 @@ const PRODUCTS = [
     pricing:{ type:'adesiviPrespaziati',
       materialeChoices: ['Lucido', 'Opaco'],
       coloreByMateriale: [
-        ['010 Bianco', '070 Nero', '030 Rosso', '034 Arancione', '060 Verde', '067 Blue', 'Altro'],
+        [...ORACAL_LABELS, 'Altro'],
         ['010 Bianco', '070 Nero'],
       ],
       base: { min:5, max:300, default:14 },
@@ -1406,15 +1454,19 @@ function renderDetail(){
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Materiale</div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Finitura</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${p.pricing.materialeChoices.map((c,i) => `<button class="pill ${i===f.materialeIdx?'active':''}" data-presp-materiale="${i}">${esc(c)}</button>`).join('')}
           </div>
+          <div style="font-size:11.5px; color:oklch(0.5 0.01 90); margin-top:6px;">La finitura opaca è disponibile solo in Bianco e Nero.</div>
         </div>
         <div>
-          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Colore</div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            ${coloreOptions.map((c,i) => `<button class="pill ${i===f.coloreIdx?'active':''}" data-presp-colore="${i}">${esc(c)}</button>`).join('')}
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Colore <span style="opacity:.6;">(cartella Oracal 751)</span></div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span style="flex:0 0 auto; width:38px; height:38px; border-radius:8px; border:1.5px solid oklch(0.85 0.005 90); background:${ORACAL_HEX[coloreOptions[f.coloreIdx]] || 'repeating-linear-gradient(45deg, oklch(0.93 0.005 90) 0 6px, oklch(0.85 0.005 90) 6px 12px)'};"></span>
+            <select id="prespColore" style="flex:1 1 auto; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit; background:#fff;">
+              ${coloreOptions.map((c,i) => `<option value="${i}" ${i===f.coloreIdx?'selected':''}>${esc(c)}</option>`).join('')}
+            </select>
           </div>
         </div>
         ${coloreOptions[f.coloreIdx] === 'Altro' ? `
@@ -2037,6 +2089,32 @@ function renderDetail(){
     if (_el) { _el.focus(); try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){} }
   }
 
+  // Campi numerici: nessun clamp mentre si digita (altrimenti il primo carattere
+  // viene subito riscritto col minimo). Il minimo si applica solo su blur.
+  function bindNum(id, min, max, apply, after) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const done = after || renderDetail;
+    el.addEventListener('input', (e) => {
+      const raw = e.target.value.trim();
+      if (raw === '') return;
+      let n = parseInt(raw, 10);
+      if (isNaN(n)) return;
+      if (max != null && n > max) { n = max; e.target.value = String(n); }
+      if (min != null && n < min) return; // sta ancora digitando
+      apply(n); done();
+    });
+    el.addEventListener('blur', (e) => {
+      const raw = e.target.value.trim();
+      let n = parseInt(raw, 10);
+      if (isNaN(n) || (min != null && n < min)) n = (min != null ? min : 1);
+      if (max != null && n > max) n = max;
+      if (String(n) === raw) return; // valore gia' valido: nessun re-render
+      e.target.value = String(n);
+      apply(n); done();
+    });
+  }
+
   const range = document.getElementById('tierRange');
   if (range) range.addEventListener('input', (e) => { state.tierIdxById[p.id] = parseInt(e.target.value,10); renderDetail(); });
   const deliveryRange = document.getElementById('deliveryQtyRange');
@@ -2052,51 +2130,38 @@ function renderDetail(){
   }));
   app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
   app.querySelectorAll('[data-swatch]').forEach(el => el.addEventListener('click', () => { state.swatchIdxById[p.id] = parseInt(el.dataset.swatch,10); state.mainImageOverride = null; renderDetail(); }));
-  const swQtyInput = document.getElementById('swQtyInput');
-  if (swQtyInput) swQtyInput.addEventListener('input', (e) => { swatchQtyState(p).qty = Math.max(1, parseInt(e.target.value,10) || 1); renderDetail(); });
+  bindNum('swQtyInput', 1, null, (n) => { swatchQtyState(p).qty = n; });
   app.querySelectorAll('[data-swqty-swatch]').forEach(el => el.addEventListener('click', () => { swatchQtyState(p).swatchIdx = parseInt(el.dataset.swqtySwatch,10); renderDetail(); }));
-  const adesLarghezza = document.getElementById('adesLarghezza');
-  if (adesLarghezza) adesLarghezza.addEventListener('input', (e) => { adesivoState(p).larghezza = Math.max(p.pricing.larghezza.min, Math.min(p.pricing.larghezza.max, parseInt(e.target.value,10) || p.pricing.larghezza.min)); renderDetail(); });
-  const adesAltezza = document.getElementById('adesAltezza');
-  if (adesAltezza) adesAltezza.addEventListener('input', (e) => { adesivoState(p).altezza = Math.max(p.pricing.altezza.min, Math.min(p.pricing.altezza.max, parseInt(e.target.value,10) || p.pricing.altezza.min)); renderDetail(); });
-  const adesQty = document.getElementById('adesQty');
-  if (adesQty) adesQty.addEventListener('input', (e) => { adesivoState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.larghezza) bindNum('adesLarghezza', p.pricing.larghezza.min, p.pricing.larghezza.max, (n) => { adesivoState(p).larghezza = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('adesAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { adesivoState(p).altezza = n; });
+  if (p.pricing && p.pricing.qty) bindNum('adesQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { adesivoState(p).qty = n; });
   app.querySelectorAll('[data-ades-sagoma]').forEach(el => el.addEventListener('click', () => { adesivoState(p).sagomaIdx = parseInt(el.dataset.adesSagoma,10); renderDetail(); }));
   app.querySelectorAll('[data-presp-materiale]').forEach(el => el.addEventListener('click', () => { const f = prespaziatiState(p); f.materialeIdx = parseInt(el.dataset.prespMateriale,10); f.coloreIdx = 0; renderDetail(); }));
-  app.querySelectorAll('[data-presp-colore]').forEach(el => el.addEventListener('click', () => { prespaziatiState(p).coloreIdx = parseInt(el.dataset.prespColore,10); renderDetail(); }));
+  const prespColore = document.getElementById('prespColore');
+  if (prespColore) prespColore.addEventListener('change', (e) => { prespaziatiState(p).coloreIdx = parseInt(e.target.value,10); renderDetail(); });
   const prespAltroColore = document.getElementById('prespAltroColore');
   if (prespAltroColore) prespAltroColore.addEventListener('input', (e) => { prespaziatiState(p).altroColore = e.target.value; });
-  const prespBase = document.getElementById('prespBase');
-  if (prespBase) prespBase.addEventListener('input', (e) => { prespaziatiState(p).base = Math.max(p.pricing.base.min, Math.min(p.pricing.base.max, parseInt(e.target.value,10) || p.pricing.base.min)); renderDetail(); });
-  const prespAltezza = document.getElementById('prespAltezza');
-  if (prespAltezza) prespAltezza.addEventListener('input', (e) => { prespaziatiState(p).altezza = Math.max(p.pricing.altezza.min, Math.min(p.pricing.altezza.max, parseInt(e.target.value,10) || p.pricing.altezza.min)); renderDetail(); });
-  const prespCopie = document.getElementById('prespCopie');
-  if (prespCopie) prespCopie.addEventListener('input', (e) => { prespaziatiState(p).copie = Math.max(p.pricing.copie.min, parseInt(e.target.value,10) || p.pricing.copie.min); renderDetail(); });
+  if (p.pricing && p.pricing.base) bindNum('prespBase', p.pricing.base.min, p.pricing.base.max, (n) => { prespaziatiState(p).base = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('prespAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { prespaziatiState(p).altezza = n; });
+  if (p.pricing && p.pricing.copie) bindNum('prespCopie', p.pricing.copie.min, null, (n) => { prespaziatiState(p).copie = n; });
   app.querySelectorAll('[data-presp-lavorazione]').forEach(el => el.addEventListener('click', () => { prespaziatiState(p).lavorazioneIdx = parseInt(el.dataset.prespLavorazione,10); renderDetail(); }));
-  const bvLarghezza = document.getElementById('bvLarghezza');
-  if (bvLarghezza) bvLarghezza.addEventListener('input', (e) => { bv24hState(p).larghezza = Math.max(p.pricing.larghezza.min, Math.min(p.pricing.larghezza.max, parseInt(e.target.value,10) || p.pricing.larghezza.min)); renderDetail(); });
-  const bvAltezza = document.getElementById('bvAltezza');
-  if (bvAltezza) bvAltezza.addEventListener('input', (e) => { bv24hState(p).altezza = Math.max(p.pricing.altezza.min, Math.min(p.pricing.altezza.max, parseInt(e.target.value,10) || p.pricing.altezza.min)); renderDetail(); });
-  const bvQty = document.getElementById('bvQty');
-  if (bvQty) bvQty.addEventListener('input', (e) => { bv24hState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.larghezza) bindNum('bvLarghezza', p.pricing.larghezza.min, p.pricing.larghezza.max, (n) => { bv24hState(p).larghezza = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('bvAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { bv24hState(p).altezza = n; });
+  if (p.pricing && p.pricing.qty) bindNum('bvQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { bv24hState(p).qty = n; });
   app.querySelectorAll('[data-bv-lati]').forEach(el => el.addEventListener('click', () => { bv24hState(p).latiIdx = parseInt(el.dataset.bvLati,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-carta]').forEach(el => el.addEventListener('click', () => { bv24hState(p).cartaIdx = parseInt(el.dataset.bvCarta,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-soggetti]').forEach(el => el.addEventListener('click', () => { bv24hState(p).soggettiIdx = parseInt(el.dataset.bvSoggetti,10); renderDetail(); }));
   app.querySelectorAll('[data-angoli-toggle]').forEach(el => el.addEventListener('change', () => { state.angoliById[el.dataset.angoliToggle] = el.checked; renderDetail(); }));
-  const locQty = document.getElementById('locQty');
-  if (locQty) locQty.addEventListener('input', (e) => { locandineState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.qty) bindNum('locQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { locandineState(p).qty = n; });
   app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));
   app.querySelectorAll('[data-loc-carta]').forEach(el => el.addEventListener('click', () => { locandineState(p).cartaIdx = parseInt(el.dataset.locCarta,10); renderDetail(); }));
-  const scatolaQty = document.getElementById('scatolaQty');
-  if (scatolaQty) scatolaQty.addEventListener('input', (e) => { scatolaState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); renderDetail(); });
+  if (p.pricing && p.pricing.qty) bindNum('scatolaQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { scatolaState(p).qty = n; });
   app.querySelectorAll('[data-scatola-misura]').forEach(el => el.addEventListener('click', () => { scatolaState(p).misuraIdx = parseInt(el.dataset.scatolaMisura,10); renderDetail(); }));
   app.querySelectorAll('[data-scatola-colore]').forEach(el => el.addEventListener('click', () => { scatolaState(p).coloreIdx = parseInt(el.dataset.scatolaColore,10); renderDetail(); }));
-  const rilQty = document.getElementById('rilQty');
-  if (rilQty) rilQty.addEventListener('input', (e) => { rilegatureState(p).qty = Math.max(p.pricing.qty.min, Math.min(p.pricing.qty.max, parseInt(e.target.value,10) || p.pricing.qty.min)); updateRilTotal(p); });
-  const rilPagCol = document.getElementById('rilPagCol');
-  if (rilPagCol) rilPagCol.addEventListener('input', (e) => { rilegatureState(p).pagCol = Math.max(p.pricing.pagCol.min, Math.min(p.pricing.pagCol.max, parseInt(e.target.value,10) || 0)); updateRilTotal(p); });
-  const rilPagBn = document.getElementById('rilPagBn');
-  if (rilPagBn) rilPagBn.addEventListener('input', (e) => { rilegatureState(p).pagBn = Math.max(p.pricing.pagBn.min, Math.min(p.pricing.pagBn.max, parseInt(e.target.value,10) || 0)); updateRilTotal(p); });
+  const rilUpdate = () => updateRilTotal(p);
+  if (p.pricing && p.pricing.qty) bindNum('rilQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { rilegatureState(p).qty = n; }, rilUpdate);
+  if (p.pricing && p.pricing.pagCol) bindNum('rilPagCol', p.pricing.pagCol.min, p.pricing.pagCol.max, (n) => { rilegatureState(p).pagCol = n; }, rilUpdate);
+  if (p.pricing && p.pricing.pagBn) bindNum('rilPagBn', p.pricing.pagBn.min, p.pricing.pagBn.max, (n) => { rilegatureState(p).pagBn = n; }, rilUpdate);
   app.querySelectorAll('[data-ril-lati]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).latiIdx = parseInt(el.dataset.rilLati,10); renderDetail(); }));
   app.querySelectorAll('[data-ril-carta]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).cartaIdx = parseInt(el.dataset.rilCarta,10); renderDetail(); }));
   const bcrRange = document.getElementById('bcrQtyRange');
@@ -2139,16 +2204,14 @@ function renderDetail(){
     state.bcsIdxById[p.id] = { ...cur, deliveryIdx: parseInt(el.dataset.bcsDelivery,10), qtyIdx: 0 };
     renderDetail();
   }));
-  const forexQtyInput = document.getElementById('forexQty');
-  if (forexQtyInput) forexQtyInput.addEventListener('input', (e) => { forexState(p).qty = Math.max(1, Math.min(100, parseInt(e.target.value,10) || 1)); renderDetail(); });
+  bindNum('forexQty', 1, 100, (n) => { forexState(p).qty = n; });
   const forexCanvaInput = document.getElementById('forexCanva');
   if (forexCanvaInput) forexCanvaInput.addEventListener('input', (e) => { forexState(p).canva = e.target.value; });
   app.querySelectorAll('[data-forex-spessore]').forEach(el => el.addEventListener('click', () => { forexState(p).spessoreIdx = parseInt(el.dataset.forexSpessore,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-stampa]').forEach(el => el.addEventListener('click', () => { forexState(p).stampaIdx = parseInt(el.dataset.forexStampa,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-consegna]').forEach(el => el.addEventListener('click', () => { forexState(p).consegnaIdx = parseInt(el.dataset.forexConsegna,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-formato]').forEach(el => el.addEventListener('click', () => { forexState(p).formatIdx = parseInt(el.dataset.forexFormato,10); renderDetail(); }));
-  const strQtyInput = document.getElementById('strQty');
-  if (strQtyInput) strQtyInput.addEventListener('input', (e) => { striscioniState(p).qty = Math.max(1, Math.min(100, parseInt(e.target.value,10) || 1)); renderDetail(); });
+  bindNum('strQty', 1, 100, (n) => { striscioniState(p).qty = n; });
   app.querySelectorAll('[data-str-consegna]').forEach(el => el.addEventListener('click', () => { striscioniState(p).consegnaIdx = parseInt(el.dataset.strConsegna,10); renderDetail(); }));
   app.querySelectorAll('[data-str-occhielli]').forEach(el => el.addEventListener('click', () => { striscioniState(p).occhielliIdx = parseInt(el.dataset.strOcchielli,10); renderDetail(); }));
   app.querySelectorAll('[data-str-formato]').forEach(el => el.addEventListener('click', () => { striscioniState(p).formatIdx = parseInt(el.dataset.strFormato,10); renderDetail(); }));
@@ -2168,8 +2231,7 @@ function renderDetail(){
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.value };
     renderDetail();
   }));
-  const qtyInput = document.getElementById('formulaQty');
-  if (qtyInput) qtyInput.addEventListener('input', (e) => { formulaState(p).qty = Math.max(1, parseInt(e.target.value,10) || 1); renderDetail(); });
+  bindNum('formulaQty', 1, null, (n) => { formulaState(p).qty = n; });
   const canvaInput = document.getElementById('formulaCanva');
   if (canvaInput) canvaInput.addEventListener('input', (e) => { formulaState(p).canva = e.target.value; });
   app.querySelectorAll('[data-formula-formato]').forEach(el => el.addEventListener('click', () => { formulaState(p).formato = el.dataset.formulaFormato; renderDetail(); }));
