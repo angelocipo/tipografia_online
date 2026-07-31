@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender, shippingFee, shippingZone } = req.body || {};
+    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender, shippingFee, shippingZone, design } = req.body || {};
     const product = PRICING[productId];
     if (!product) {
       res.status(400).json({ error: 'Prodotto sconosciuto' });
@@ -335,6 +335,13 @@ module.exports = async (req, res) => {
     metadata.shipping_fee = String(shipFee);
     metadata.shipping_zone = shippingZone || '';
 
+    // Artwork the customer attached at checkout. Only the file NAMES and any pasted link go
+    // into Stripe metadata (values are capped at 500 chars) — the files themselves are emailed
+    // separately by /api/send-design-files and never stored.
+    const dg = design || {};
+    if (dg.names) metadata.design_files = String(dg.names).slice(0, 480);
+    if (dg.link) metadata.design_link = String(dg.link).slice(0, 480);
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -345,7 +352,7 @@ module.exports = async (req, res) => {
       cancel_url: `${origin}/?checkout=cancelled`,
     });
 
-    res.status(200).json({ url: session.url });
+    res.status(200).json({ url: session.url, sessionId: session.id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Errore nella creazione del pagamento' });
