@@ -46,6 +46,7 @@
     <text x="50" y="58" font-size="34" text-anchor="middle" font-family="sans-serif" font-weight="700" fill="#2f6b46">T</text>
   </svg>
 </template>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
@@ -915,7 +916,7 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
       </button>
       <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
-      <a id="preventivo-link-${p.id}" href="preventivo.dc.html?prodotto=${encodeURIComponent(p.nome)}${quoteConfig ? '&config=' + encodeURIComponent(quoteConfig) : ''}${quoteQty ? '&quantita=' + encodeURIComponent(quoteQty) : ''}&prezzo=${Math.round(price)}" target="_blank" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
+      <a id="preventivo-link-${p.id}" href="preventivo.dc.html?prodotto=${encodeURIComponent(p.nome)}${quoteConfig ? '&config=' + encodeURIComponent(quoteConfig) : ''}${quoteQty ? '&quantita=' + encodeURIComponent(quoteQty) : ''}&prezzo=${Math.round(price)}&pid=${encodeURIComponent(p.id)}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
         Richiedi un preventivo ufficiale
       </a>
     </div>`;
