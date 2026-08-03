@@ -906,8 +906,78 @@ function priceLabelFor(p){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+const QUOTE_LABELS = {
+  copie:'Copie stesso soggetto', base:'Base (cm)', larghezza:'Larghezza (cm)', altezza:'Altezza (cm)',
+  pagCol:'Pagine a colori', pagBn:'Pagine b/n', altroColore:'Altro colore', canva:'Link file / Canva',
+  formato:'Formato', tempi:'Tempi di consegna', carta:'Carta', colore:'Colore', consegna:'Consegna',
+  angoli:'Finitura', unit:'Unità di misura', spessore:'Spessore telaio', citta:'Città', creazione:'Creazione file',
+  lato_lungo:'Lato lungo (cm)', lato_corto:'Lato corto (cm)', holder:'Porta badge',
+};
+const QUOTE_IDX = {
+  strutturaIdx:['Struttura','strutturaChoices'],
+  spessoreIdx:['Spessore','spessoreChoices'],
+  stampaIdx:['Stampa','stampaChoices'],
+  consegnaIdx:['Consegna','consegnaChoices'],
+  formatIdx:['Formato', (p) => p.pricing.formatChoices || p.pricing.formats || p.pricing.variants],
+  occhielliIdx:['Occhielli','occhielliChoices'],
+  sagomaIdx:['Sagomatura','sagomaChoices'],
+  materialeIdx:['Finitura','materialeChoices'],
+  lavorazioneIdx:['Lavorazione','lavorazioni'],
+  latiIdx:['Stampa','latiChoices'],
+  cartaIdx:['Carta','cartaChoices'],
+  soggettiIdx:['Soggetti diversi','soggettiChoices'],
+  misuraIdx:['Misura','misuraChoices'],
+  swatchIdx:['Soggetto','swatches'],
+  coloreIdx:['Colore', (p,f) => p.pricing.coloreByMateriale ? p.pricing.coloreByMateriale[f.materialeIdx || 0] : p.pricing.coloreChoices],
+  paperIdx:['Carta','papers'],
+  deliveryIdx:['Consegna','deliveryChoices'],
+};
+function quoteVariantLabel(p, idx){
+  const pr = p.pricing;
+  if (idx == null) return '';
+  if (pr.variants && pr.variants[idx]) return 'Formato: ' + pr.variants[idx].label;
+  if (pr.swatches && pr.swatches[idx]) return 'Soggetto: ' + pr.swatches[idx].label;
+  if (pr.tiers && pr.tiers[idx]) return 'Quantità: ' + pr.tiers[idx].qty + ' ' + (pr.unit || 'pz');
+  return '';
+}
+function quoteConfigText(p, f, selectionIdx){
+  const parts = [];
+  if (f && typeof f === 'object'){
+    const opts = p.pricing.options || [];
+    for (const [k, v] of Object.entries(f)){
+      if (k === 'qty') continue;
+      if (QUOTE_IDX[k]){
+        const [lab, src] = QUOTE_IDX[k];
+        const list = typeof src === 'function' ? src(p, f) : p.pricing[src];
+        const item = list && list[v];
+        const txt = (item && typeof item === 'object') ? item.label : item;
+        if (txt !== undefined && txt !== null && txt !== '') parts.push(lab + ': ' + txt);
+        continue;
+      }
+      if (typeof v !== 'string' && typeof v !== 'number') continue;
+      if (v === '' || v === 0) continue;
+      const opt = opts.find(o => o.key === k);
+      parts.push(((opt && opt.label) || QUOTE_LABELS[k] || k) + ': ' + v);
+    }
+  }
+  if (!parts.length){
+    const vl = quoteVariantLabel(p, selectionIdx);
+    if (vl) parts.push(vl);
+  }
+  return parts.join(' · ');
+}
+function quoteHref(p, price, selectionIdx, formula){
+  const cfg = quoteConfigText(p, formula, selectionIdx);
+  const qty = (formula && formula.qty) ? `${formula.qty} ${p.pricing.unit || 'pz'}` : '';
+  return 'preventivo.dc.html?prodotto=' + encodeURIComponent(p.nome)
+    + (cfg ? '&config=' + encodeURIComponent(cfg) : '')
+    + (qty ? '&quantita=' + encodeURIComponent(qty) : '')
+    + '&prezzo=' + Math.round(price)
+    + '&pid=' + encodeURIComponent(p.id);
+}
 function paymentBlockHtml(p, price, selectionIdx, formula){
-  const quoteConfig = (typeof formula === 'object' && formula) ? Object.entries(formula).filter(([k,v]) => k !== 'qty' && (typeof v === 'string' || typeof v === 'number')).map(([,v]) => v).join(', ') : '';
+  const quoteHrefStr = quoteHref(p, price, selectionIdx, formula);
+  const quoteConfig = '' : '';
   const quoteQty = (formula && formula.qty) ? `${formula.qty} ${p.pricing.unit || 'pz'}` : '';
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
@@ -916,7 +986,7 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
       </button>
       <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
-      <a id="preventivo-link-${p.id}" href="preventivo.dc.html?prodotto=${encodeURIComponent(p.nome)}${quoteConfig ? '&config=' + encodeURIComponent(quoteConfig) : ''}${quoteQty ? '&quantita=' + encodeURIComponent(quoteQty) : ''}&prezzo=${Math.round(price)}&pid=${encodeURIComponent(p.id)}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
+      <a id="preventivo-link-${p.id}" href="${quoteHrefStr}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
         Richiedi un preventivo ufficiale
       </a>
     </div>`;
@@ -1232,7 +1302,7 @@ function updateRilTotal(p){
   const pp = document.getElementById(`paypal-btn-${p.id}`);
   if (pp) pp.dataset.price = total;
   const link = document.getElementById(`preventivo-link-${p.id}`);
-  if (link) link.href = link.href.replace(/([?&]prezzo=)[^&]*/, `$1${Math.round(total)}`).replace(/([?&]quantita=)[^&]*/, `$1${encodeURIComponent(f.qty + ' ' + (p.pricing.unit || 'pz'))}`);
+  if (link) link.href = quoteHref(p, total, null, f);
 }
 function computeBv24hPrice(p, f){
   const bv = p.pricing.cartaMultiplier[f.cartaIdx];

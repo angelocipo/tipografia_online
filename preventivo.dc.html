@@ -64,7 +64,9 @@
         <tr style="border-bottom:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);">
           <td style="padding:14px 6px;vertical-align:top;">
             <div style="font-weight:600;"><a href="{{ productUrl }}" target="_blank" rel="noopener" style="color:var(--color-accent-700);text-decoration:none;">{{ prodotto }}</a></div>
-            <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 65%, transparent);margin-top:3px;">{{ configurazione }}</div>
+            <sc-for list="{{ dettagli }}" as="d" hint-placeholder-count="4">
+              <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);margin-top:3px;">{{ d }}</div>
+            </sc-for>
           </td>
           <td style="padding:14px 6px;text-align:right;vertical-align:top;">{{ quantita }}</td>
           <td style="padding:14px 6px;text-align:right;vertical-align:top;font-weight:600;font-family:ui-monospace,monospace;">€ {{ prezzoFmt }}</td>
@@ -120,6 +122,7 @@ class Component extends DCLogic {
       prodotto: this.state.prodotto || '',
       productUrl: this.state.productUrl || 'index.html',
       configurazione: this.state.configurazione || '',
+      dettagli: (this.state.configurazione || '').split(' · ').map(s => s.trim()).filter(Boolean),
       quantita: this.state.quantita || '-',
       quoteNumber: this.state.quoteNumber || '',
       dateStr: this.state.dateStr || '',
