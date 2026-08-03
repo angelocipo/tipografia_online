@@ -951,9 +951,17 @@ function quoteConfigText(p, f, selectionIdx){
         const list = typeof src === 'function' ? src(p, f) : p.pricing[src];
         const item = list && list[v];
         const txt = (item && typeof item === 'object') ? item.label : item;
-        if (txt !== undefined && txt !== null && txt !== '') parts.push(lab + ': ' + txt);
+        if (txt !== undefined && txt !== null && txt !== ''){
+          if (k === 'coloreIdx' && txt === 'Altro'){
+            const altro = (f.altroColore || '').trim();
+            parts.push(lab + ': ' + (altro ? 'Altro – ' + altro : 'Altro (da specificare)'));
+          } else {
+            parts.push(lab + ': ' + txt);
+          }
+        }
         continue;
       }
+      if (k === 'altroColore') continue;
       if (typeof v !== 'string' && typeof v !== 'number') continue;
       if (v === '' || v === 0) continue;
       const opt = opts.find(o => o.key === k);
@@ -977,8 +985,6 @@ function quoteHref(p, price, selectionIdx, formula){
 }
 function paymentBlockHtml(p, price, selectionIdx, formula){
   const quoteHrefStr = quoteHref(p, price, selectionIdx, formula);
-  const quoteConfig = '' : '';
-  const quoteQty = (formula && formula.qty) ? `${formula.qty} ${p.pricing.unit || 'pz'}` : '';
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
       <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price)}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
