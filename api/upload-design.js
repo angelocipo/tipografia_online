@@ -5,7 +5,10 @@
 // I file arrivano in base64 (+33%), quindi il client limita il totale a 2,5 MB reali.
 // Per file più grandi il cliente incolla un link (WeTransfer, Drive, Canva…).
 
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'ordini@tipografia.online';
+// Stesso indirizzo usato dalle notifiche d'ordine in stripe-webhook.js: prima questo file
+// leggeva OWNER_EMAIL (variabile che su Vercel non esiste) e ripiegava su
+// ordini@tipografia.online, casella diversa da quella dove arrivano gli ordini.
+const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_EMAIL || process.env.OWNER_EMAIL || 'info@tipografia.online';
 const RESEND_FROM = process.env.RESEND_FROM || 'Tipografia Online <ordini@tipografia.online>';
 
 const MAX_TOTAL_B64 = 4.2 * 1024 * 1024;
@@ -15,6 +18,17 @@ function esc(s) {
 }
 
 module.exports = async (req, res) => {
+  // Diagnostica: apri /api/upload-design nel browser per verificare la configurazione.
+  // Non espone nessun valore, solo se le variabili esistono.
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      ok: true,
+      resendKey: !!process.env.RESEND_API_KEY,
+      destinatario: OWNER_EMAIL,
+      mittente: RESEND_FROM,
+      maxMb: +(MAX_TOTAL_B64 / 1024 / 1024).toFixed(1),
+    });
+  }
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -79,9 +93,10 @@ module.exports = async (req, res) => {
     });
     const text = await r.text();
     if (!r.ok) {
-      console.error('Resend upload-design failed', r.status, text);
-      return res.status(502).json({ error: 'Invio materiale non riuscito' });
+      console.error(`Resend upload-design failed → to=${OWNER_EMAIL} from=${RESEND_FROM} status=${r.status} body=${text}`);
+      return res.status(502).json({ error: `Invio materiale non riuscito (Resend ${r.status})` });
     }
+    console.log(`Materiale inviato a ${OWNER_EMAIL} — rif ${cleanRef || 'nessuno'}, ${list.length} allegato/i`);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('upload-design error', err);
