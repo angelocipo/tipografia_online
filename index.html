@@ -1427,16 +1427,26 @@ function renderGrid(){
 }
 
 // Blocco "materiale da stampare" — identico su tutte le schede prodotto.
-// I file scelti vengono letti in base64 e conservati in sessionStorage; la pagina di
-// checkout li invia a /api/upload-design, che li inoltra al titolare come allegato email.
-// Limite: il body di una funzione serverless Vercel è ~4,5 MB → max 2,5 MB reali in totale.
-var TP_MAX_TOTAL = 2.5 * 1024 * 1024;
+// I file scelti vengono inviati SUBITO a /api/upload-design, che li inoltra al titolare
+// come allegati email con un codice di riferimento. In sessionStorage restano solo il
+// codice, i nomi dei file e l'eventuale link: nessun dato binario, quindi nessun rischio
+// di superare la quota del browser (era la causa dei caricamenti falliti).
+// Limite: il body di una funzione serverless Vercel è ~4,5 MB → max 3 MB reali in totale.
+var TP_MAX_TOTAL = 3 * 1024 * 1024;
 
 function tpDesign(){
   try { return JSON.parse(sessionStorage.getItem('tp_design') || '{}'); } catch (e) { return {}; }
 }
 function tpSaveDesign(d){
   try { sessionStorage.setItem('tp_design', JSON.stringify(d)); return true; } catch (e) { return false; }
+}
+function tpRef(){
+  var d = tpDesign();
+  if (!d.ref) {
+    d.ref = 'TP-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    tpSaveDesign(d);
+  }
+  return d.ref;
 }
 function tpStatusEls(input){
   var wrap = input.closest('[data-upload-block]');
@@ -1446,46 +1456,59 @@ function tpSetLink(input){
   var d = tpDesign(); d.link = input.value.trim(); tpSaveDesign(d);
   document.querySelectorAll('.file-link').forEach(function(el){ if (el !== input) el.value = input.value; });
 }
+function tpReadFile(f){
+  return new Promise(function(resolve, reject){
+    var r = new FileReader();
+    r.onload = function(){ resolve({ name: f.name, type: f.type, data: String(r.result).split(',')[1] }); };
+    r.onerror = function(){ reject(new Error('Lettura del file non riuscita')); };
+    r.readAsDataURL(f);
+  });
+}
 async function tpSelectFiles(input){
   var els = tpStatusEls(input);
   var files = Array.prototype.slice.call(input.files || []);
   els.error.textContent = '';
-  if (!files.length) { var d0 = tpDesign(); delete d0.files; tpSaveDesign(d0); els.status.textContent = ''; return; }
+  if (!files.length) { els.status.textContent = ''; return; }
   var total = files.reduce(function(n, f){ return n + f.size; }, 0);
   if (total > TP_MAX_TOTAL) {
     input.value = '';
     els.status.textContent = '';
-    els.error.textContent = 'Totale ' + (total/1048576).toFixed(1) + ' MB: troppo grande. Massimo 2,5 MB — per file più pesanti usa il campo link qui sotto.';
+    els.error.textContent = 'Totale ' + (total/1048576).toFixed(1) + ' MB: troppo grande. Massimo 3 MB — per file più pesanti usa il campo link qui sotto.';
     return;
   }
-  els.status.textContent = 'Caricamento…';
+  els.status.textContent = 'Invio in corso…';
   try {
-    var encoded = await Promise.all(files.map(function(f){
-      return new Promise(function(resolve, reject){
-        var r = new FileReader();
-        r.onload = function(){ resolve({ name: f.name, type: f.type, data: String(r.result).split(',')[1] }); };
-        r.onerror = function(){ reject(new Error('Lettura del file non riuscita')); };
-        r.readAsDataURL(f);
-      });
-    }));
-    var d = tpDesign(); d.files = encoded;
-    if (!tpSaveDesign(d)) {
-      input.value = '';
-      els.status.textContent = '';
-      els.error.textContent = 'Spazio insufficiente nel browser per allegare questi file. Riprova con file pi\u00f9 leggeri oppure usa il campo link qui sotto.';
-      return;
+    var encoded = await Promise.all(files.map(tpReadFile));
+    var d = tpDesign();
+    var ref = tpRef();
+    var res = await fetch('/api/upload-design', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: encoded, ref: ref, link: d.link || '', product: (state.selectedId || '') }),
+    });
+    if (!res.ok) {
+      var msg = '';
+      try { msg = (await res.json()).error || ''; } catch (e) {}
+      throw new Error(msg || ('errore ' + res.status));
     }
-    els.status.textContent = 'Allegati: ' + encoded.map(function(f){ return f.name; }).join(', ');
+    var names = encoded.map(function(f){ return f.name; });
+    d = tpDesign();
+    d.names = (d.names || []).concat(names);
+    d.ref = ref;
+    tpSaveDesign(d);
+    input.value = '';
+    els.status.textContent = 'Ricevuto: ' + d.names.join(', ') + ' — riferimento ' + ref;
+    document.querySelectorAll('[data-upload-status]').forEach(function(el){ el.textContent = els.status.textContent; });
   } catch (err) {
     input.value = '';
     els.status.textContent = '';
-    els.error.textContent = err.message;
+    els.error.textContent = 'Invio non riuscito (' + err.message + '). Riprova con file più leggeri oppure incolla un link qui sotto.';
   }
 }
 
 function uploadBlockHtml(){
   const d = tpDesign();
-  const names = (d.files || []).map(f => f.name).join(', ');
+  const names = (d.names || []).join(', ');
   const link = (d.link || '').replace(/"/g, '&quot;');
   return `
           <div data-upload-block>
@@ -1497,9 +1520,9 @@ function uploadBlockHtml(){
             </span>
             <input type="file" class="file-upload" multiple style="display:none;" onchange="tpSelectFiles(this)">
           </label>
-          <div data-upload-status style="font-size:12px; color:oklch(0.42 0.12 155); font-weight:600; margin-top:6px;">${names ? 'Allegati: ' + names : ''}</div>
+          <div data-upload-status style="font-size:12px; color:oklch(0.42 0.12 155); font-weight:600; margin-top:6px;">${names ? 'Ricevuto: ' + names + (d.ref ? ' — riferimento ' + d.ref : '') : ''}</div>
           <div data-upload-error style="font-size:12px; color:oklch(0.5 0.19 25); margin-top:6px;"></div>
-          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 2,5 MB in totale. File più grandi: usa il link qui sotto.</div>
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 3 MB in totale. File più grandi: usa il link qui sotto.</div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin:14px 0 6px;">Oppure incolla un link al file</div>
           <input type="text" class="file-link" value="${link}" oninput="tpSetLink(this)" placeholder="Canva, SwissTransfer, WeTransfer, Drive…" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:6px;">Canva e Drive: condividi il link già sbloccato, senza password.</div>

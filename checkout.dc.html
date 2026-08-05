@@ -308,39 +308,9 @@ class Component extends DCLogic {
     return null;
   }
 
-  // Inoltra al titolare il materiale raccolto sulla scheda prodotto (allegati + link).
-  // Non blocca il pagamento: se fallisce, il cliente prosegue e il link resta comunque
-  // nei metadati Stripe, quindi nell'email d'ordine.
-  async sendDesign() {
-    const d = this.state.design || {};
-    const files = d.files || [];
-    if (!files.length && !d.link) return;
-    try {
-      const res = await fetch('/api/upload-design', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          files,
-          link: d.link || '',
-          product: this.state.productName,
-          customer: { name: this.state.inv.name, email: this.state.inv.email, phone: this.state.ship.phone, company: this.state.inv.company },
-        }),
-      });
-      if (!res.ok) {
-        let msg = '';
-        try { msg = (await res.json()).error || ''; } catch (e) {}
-        throw new Error(msg || ('HTTP ' + res.status));
-      }
-      sessionStorage.removeItem('tp_design');
-      return true;
-    } catch (ex) {
-      // Il materiale resta in sessionStorage: non lo perdiamo e il cliente viene avvisato.
-      console.error('Invio materiale non riuscito', ex);
-      this.setState({ submitting: false, errorMsg: 'Non siamo riusciti a inviare il tuo file (' + (ex.message || 'errore') + '). Torna alla scheda prodotto e incolla un link al materiale, oppure scrivici a ordini@tipografia.online. Nessun pagamento è stato addebitato.' });
-      return false;
-    }
-  }
-
+  // I file sono già stati inviati al titolare al momento della selezione sulla scheda
+  // prodotto (/api/upload-design). Qui viaggiano solo nomi, link e codice di riferimento,
+  // che finiscono nei metadati Stripe e quindi nell'email d'ordine.
   async submit(e) {
     e.preventDefault();
     const err = this.validate();
@@ -360,12 +330,12 @@ class Component extends DCLogic {
           shipping: shipSame ? { sameAsBilling: true } : { sameAsBilling: false, ...ship },
           sender: useSender ? { use: true, ...sender } : { use: false },
           designLink: (this.state.design && this.state.design.link) || '',
-          designFiles: ((this.state.design && this.state.design.files) || []).map((f) => f.name),
+          designFiles: (this.state.design && this.state.design.names) || [],
+          designRef: (this.state.design && this.state.design.ref) || '',
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Errore');
-      if ((await this.sendDesign()) === false) return;
       window.location.href = data.url;
     } catch (ex) {
       this.setState({ submitting: false, errorMsg: ex.message || 'Errore nel pagamento, riprova.' });
@@ -378,7 +348,8 @@ class Component extends DCLogic {
     const orderTotal = (parseFloat(s.productPrice) || 0) + shippingFee;
     const orderDetails = this.buildOrderDetails(s.orderBody);
     const dz = s.design || {};
-    if ((dz.files || []).length) orderDetails.push({ label: 'File allegati', value: dz.files.map((f) => f.name).join(', ') });
+    if ((dz.names || []).length) orderDetails.push({ label: 'File ricevuti', value: dz.names.join(', ') });
+    if (dz.ref) orderDetails.push({ label: 'Riferimento materiale', value: dz.ref });
     if (dz.link) orderDetails.push({ label: 'Link al file', value: dz.link });
     return {
       hasProduct: !!s.productId,
