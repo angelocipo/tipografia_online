@@ -276,6 +276,7 @@ function orderEmailHtml(order, total, md) {
   // /api/send-design-files) and/or a link the customer pasted.
   const designRows = [];
   if (md.design_files) designRows.push(`File caricati: <strong style="color:${INK};">${md.design_files}</strong>`);
+  if (md.design_ref) designRows.push(`Riferimento materiale: <strong style="color:${INK};">${md.design_ref}</strong>`);
   if (md.design_link) designRows.push(`Link file: <a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`);
   const designBlock = designRows.length
     ? `<tr><td style="padding:22px 32px 0;">
@@ -368,7 +369,7 @@ function ownerBlockHtml(order, buyerEmail, session) {
     rowsData.push(['Mittente sul pacco', [md.sender_company, md.sender_address, md.sender_cap, md.sender_city].filter(Boolean).join(', ') || '—']);
   }
   if (md.design_files) {
-    rowsData.push(['File design', `${md.design_files} (in arrivo come allegati, email separata)`]);
+    rowsData.push(['File design', `${md.design_files}${md.design_ref ? ' — rif. ' + md.design_ref : ''} (ricevuti come allegati in email separata)`]);
   }
   if (md.design_link) {
     rowsData.push(['Link file', `<a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`]);

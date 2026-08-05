@@ -8,7 +8,7 @@
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'ordini@tipografia.online';
 const RESEND_FROM = process.env.RESEND_FROM || 'Tipografia Online <ordini@tipografia.online>';
 
-const MAX_TOTAL_B64 = 4 * 1024 * 1024;
+const MAX_TOTAL_B64 = 4.2 * 1024 * 1024;
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { files, link, customer, product, note } = req.body || {};
+    const { files, link, customer, product, note, ref } = req.body || {};
     const list = Array.isArray(files) ? files.filter((f) => f && f.name && f.data) : [];
     const cleanLink = typeof link === 'string' ? link.trim().slice(0, 500) : '';
 
@@ -38,7 +38,9 @@ module.exports = async (req, res) => {
     }
 
     const c = customer || {};
+    const cleanRef = typeof ref === 'string' ? ref.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20) : '';
     const rows = [
+      ['Riferimento', cleanRef || '—'],
       ['Prodotto', product || '—'],
       ['Cliente', c.name || '—'],
       ['Email', c.email || '—'],
@@ -51,7 +53,7 @@ module.exports = async (req, res) => {
 
     const html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#1d1f20;">
       <h2 style="font-size:18px;margin:0 0 4px;">Materiale da stampare ricevuto</h2>
-      <p style="font-size:13px;color:#666;margin:0 0 16px;">Inviato dalla scheda prodotto al momento del checkout. Il pagamento potrebbe non essere ancora confermato: verifica l'ordine corrispondente su Stripe.</p>
+      <p style="font-size:13px;color:#666;margin:0 0 16px;">Inviato dalla scheda prodotto nel momento in cui il cliente ha scelto il file. L'ordine potrebbe non essere ancora stato pagato: cerca su Stripe l'ordine con lo stesso riferimento.</p>
       <table style="border-collapse:collapse;font-size:14px;">
         ${rows.map(([k, v]) => `<tr><td style="padding:4px 14px 4px 0;color:#666;">${esc(k)}</td><td style="padding:4px 0;">${k === 'Link fornito' ? v : esc(v)}</td></tr>`).join('')}
       </table>
@@ -60,7 +62,7 @@ module.exports = async (req, res) => {
     const payload = {
       from: RESEND_FROM,
       to: OWNER_EMAIL,
-      subject: `Materiale da stampare — ${product || 'ordine'}${c.name ? ' — ' + c.name : ''}`,
+      subject: `Materiale da stampare${cleanRef ? ' ' + cleanRef : ''} — ${product || 'ordine'}${c.name ? ' — ' + c.name : ''}`,
       html,
     };
     if (list.length) {
