@@ -16,7 +16,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // returns 200, Stripe retries forever and no confirmation is ever sent. Keeping it inline means
 // this endpoint has no local dependency that can go missing. (api/_email-client.js still exists
 // and is used by the endpoints that need attachments.)
-const RESEND_FROM = process.env.RESEND_FROM || 'Tipografia Online <ordini@tipografia.online>';
+// Il mittente DEVE stare su un dominio verificato in Resend. Su Vercel RESEND_FROM era
+// impostata su un indirizzo gmail.com: Resend rifiutava ogni invio con 403, quindi né il
+// cliente né il titolare ricevevano le email d'ordine. Se la variabile non punta al dominio
+// verificato la ignoriamo.
+const VERIFIED_DOMAIN = 'tipografia.online';
+function safeFrom() {
+  const raw = (process.env.RESEND_FROM || '').trim();
+  const addr = (raw.match(/<([^>]+)>/) || [null, raw])[1] || '';
+  if (addr.toLowerCase().endsWith('@' + VERIFIED_DOMAIN)) return raw;
+  if (raw) console.warn(`RESEND_FROM "${raw}" non è su @${VERIFIED_DOMAIN}: ignorata.`);
+  return `Tipografia Online <admin@${VERIFIED_DOMAIN}>`;
+}
+const RESEND_FROM = safeFrom();
 
 async function sendEmail({ to, subject, html }) {
   const r = await fetch('https://api.resend.com/emails', {

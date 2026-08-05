@@ -9,7 +9,18 @@
 // leggeva OWNER_EMAIL (variabile che su Vercel non esiste) e ripiegava su
 // ordini@tipografia.online, casella diversa da quella dove arrivano gli ordini.
 const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_EMAIL || process.env.OWNER_EMAIL || 'info@tipografia.online';
-const RESEND_FROM = process.env.RESEND_FROM || 'Tipografia Online <ordini@tipografia.online>';
+// Il mittente DEVE stare su un dominio verificato in Resend. Su Vercel RESEND_FROM era
+// impostata su un indirizzo gmail.com: Resend rifiutava ogni invio con 403. Se la variabile
+// non punta a tipografia.online la ignoriamo e usiamo il dominio verificato.
+const VERIFIED_DOMAIN = 'tipografia.online';
+function safeFrom() {
+  const raw = (process.env.RESEND_FROM || '').trim();
+  const addr = (raw.match(/<([^>]+)>/) || [null, raw])[1] || '';
+  if (addr.toLowerCase().endsWith('@' + VERIFIED_DOMAIN)) return raw;
+  if (raw) console.warn(`RESEND_FROM "${raw}" non è su @${VERIFIED_DOMAIN}: ignorata.`);
+  return `Tipografia Online <admin@${VERIFIED_DOMAIN}>`;
+}
+const RESEND_FROM = safeFrom();
 
 const MAX_TOTAL_B64 = 4.2 * 1024 * 1024;
 
@@ -94,7 +105,11 @@ module.exports = async (req, res) => {
     const text = await r.text();
     if (!r.ok) {
       console.error(`Resend upload-design failed → to=${OWNER_EMAIL} from=${RESEND_FROM} status=${r.status} body=${text}`);
-      return res.status(502).json({ error: `Invio materiale non riuscito (Resend ${r.status})` });
+      // Riportiamo il messaggio esatto di Resend: un 403 nudo non dice se il dominio non
+      // è verificato, se la chiave è limitata o se il destinatario non è ammesso.
+      let detail = '';
+      try { const j = JSON.parse(text); detail = j.message || j.error || ''; } catch (e) { detail = text; }
+      return res.status(502).json({ error: `Resend ${r.status}: ${String(detail).slice(0, 300)}` });
     }
     console.log(`Materiale inviato a ${OWNER_EMAIL} — rif ${cleanRef || 'nessuno'}, ${list.length} allegato/i`);
     return res.status(200).json({ ok: true });
