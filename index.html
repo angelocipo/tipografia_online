@@ -1464,6 +1464,10 @@ function tpReadFile(f){
     r.readAsDataURL(f);
   });
 }
+function tpProductName(){
+  var p = PRODUCTS.find(function(x){ return x.id === state.selectedId; });
+  return p ? (p.nome + ' (' + p.id + ')') : (state.selectedId || '');
+}
 async function tpSelectFiles(input){
   var els = tpStatusEls(input);
   var files = Array.prototype.slice.call(input.files || []);
@@ -1484,7 +1488,7 @@ async function tpSelectFiles(input){
     var res = await fetch('/api/upload-design', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: encoded, ref: ref, link: d.link || '', product: (state.selectedId || '') }),
+      body: JSON.stringify({ files: encoded, ref: ref, link: d.link || '', product: tpProductName() }),
     });
     if (!res.ok) {
       var msg = '';
