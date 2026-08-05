@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender, shippingFee, shippingZone } = req.body || {};
+    const { productId, tierIndex, sizeIndex, formula, deliveryIndex, customer, shipping, sender, shippingFee, shippingZone, designLink, designFiles } = req.body || {};
     const product = PRICING[productId];
     if (!product) {
       res.status(400).json({ error: 'Prodotto sconosciuto' });
@@ -334,6 +334,8 @@ module.exports = async (req, res) => {
     }
     metadata.shipping_fee = String(shipFee);
     metadata.shipping_zone = shippingZone || '';
+    metadata.design_link = typeof designLink === 'string' ? designLink.slice(0, 490) : '';
+    metadata.design_files = Array.isArray(designFiles) ? designFiles.join(', ').slice(0, 490) : '';
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
