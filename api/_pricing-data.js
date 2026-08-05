@@ -52,8 +52,8 @@ const PRICING = {
     ] },
   '5606': { nome: 'Locandine 70×100 cm', type: 'tiersDelivery',
     tiersByDelivery: [
-      [{qty:50,price:97},{qty:100,price:151},{qty:150,price:175},{qty:200,price:190},{qty:250,price:204},{qty:300,price:222},{qty:400,price:268},{qty:500,price:295},{qty:750,price:385},{qty:1000,price:454},{qty:1500,price:633},{qty:2000,price:792},{qty:3000,price:1118},{qty:4000,price:1437},{qty:5000,price:1770},{qty:6000,price:2104}],
-      [{qty:50,price:129},{qty:100,price:183},{qty:150,price:222},{qty:200,price:236},{qty:250,price:236},{qty:300,price:254},{qty:400,price:325},{qty:500,price:352},{qty:750,price:466},{qty:1000,price:534},{qty:1500,price:768},{qty:2000,price:954},{qty:3000,price:1366},{qty:4000,price:1737},{qty:5000,price:2149},{qty:6000,price:2521}],
+      [{qty:20,price:52},{qty:30,price:66},{qty:40,price:82},{qty:50,price:97},{qty:55,price:103},{qty:60,price:109},{qty:65,price:116},{qty:70,price:122},{qty:75,price:128},{qty:80,price:133},{qty:85,price:139},{qty:90,price:144},{qty:95,price:148},{qty:100,price:151},{qty:150,price:175},{qty:200,price:190},{qty:250,price:204},{qty:300,price:222},{qty:400,price:268},{qty:500,price:295},{qty:750,price:385},{qty:1000,price:454},{qty:1500,price:633},{qty:2000,price:792},{qty:3000,price:1118},{qty:4000,price:1437},{qty:5000,price:1770},{qty:6000,price:2104}],
+      [{qty:20,price:129},{qty:30,price:129},{qty:40,price:129},{qty:50,price:129},{qty:55,price:135},{qty:60,price:142},{qty:65,price:148},{qty:70,price:154},{qty:75,price:160},{qty:80,price:166},{qty:85,price:171},{qty:90,price:177},{qty:95,price:180},{qty:100,price:183},{qty:150,price:207},{qty:200,price:222},{qty:250,price:236},{qty:300,price:254},{qty:400,price:325},{qty:500,price:352},{qty:750,price:466},{qty:1000,price:534},{qty:1500,price:768},{qty:2000,price:954},{qty:3000,price:1366},{qty:4000,price:1737},{qty:5000,price:2149},{qty:6000,price:2521}],
     ] },
   // Reconstructed 1:1 from the real APF config for this product (conditional Formato → Carta → Quantità chain).
   '5515': { nome: 'Biglietti da Visita Prezzi Strategici', type: 'businessCardStrategici',
