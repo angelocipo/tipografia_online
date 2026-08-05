@@ -125,7 +125,7 @@
         </div>
       </div>
     </div>
-    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online by Printing Italy · Via Lorenzo Bonincontri, 26, 00147 Roma · Lun-Ven: 8-12/15-18, Sab: chiuso • P.IVA 02452700590</div>
+    <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online by Printing Italy • Via Lorenzo Bonincontri, 26, 00147 Roma • Lun-Ven: 8-12/15-18, Sab: chiuso • P.IVA 02452700590</div>
   </div>
 </footer>
 
@@ -1427,23 +1427,83 @@ function renderGrid(){
 }
 
 // Blocco "materiale da stampare" — identico su tutte le schede prodotto.
-// NB: è un blocco di raccolta, non un upload: il file resta nel browser finché non viene
-// inviato con l'ordine. Nessun file viene caricato su un server da questa pagina.
+// I file scelti vengono letti in base64 e conservati in sessionStorage; la pagina di
+// checkout li invia a /api/upload-design, che li inoltra al titolare come allegato email.
+// Limite: il body di una funzione serverless Vercel è ~4,5 MB → max 2,5 MB reali in totale.
+var TP_MAX_TOTAL = 2.5 * 1024 * 1024;
+
+function tpDesign(){
+  try { return JSON.parse(sessionStorage.getItem('tp_design') || '{}'); } catch (e) { return {}; }
+}
+function tpSaveDesign(d){
+  try { sessionStorage.setItem('tp_design', JSON.stringify(d)); return true; } catch (e) { return false; }
+}
+function tpStatusEls(input){
+  var wrap = input.closest('[data-upload-block]');
+  return { status: wrap.querySelector('[data-upload-status]'), error: wrap.querySelector('[data-upload-error]') };
+}
+function tpSetLink(input){
+  var d = tpDesign(); d.link = input.value.trim(); tpSaveDesign(d);
+  document.querySelectorAll('.file-link').forEach(function(el){ if (el !== input) el.value = input.value; });
+}
+async function tpSelectFiles(input){
+  var els = tpStatusEls(input);
+  var files = Array.prototype.slice.call(input.files || []);
+  els.error.textContent = '';
+  if (!files.length) { var d0 = tpDesign(); delete d0.files; tpSaveDesign(d0); els.status.textContent = ''; return; }
+  var total = files.reduce(function(n, f){ return n + f.size; }, 0);
+  if (total > TP_MAX_TOTAL) {
+    input.value = '';
+    els.status.textContent = '';
+    els.error.textContent = 'Totale ' + (total/1048576).toFixed(1) + ' MB: troppo grande. Massimo 2,5 MB — per file più pesanti usa il campo link qui sotto.';
+    return;
+  }
+  els.status.textContent = 'Caricamento…';
+  try {
+    var encoded = await Promise.all(files.map(function(f){
+      return new Promise(function(resolve, reject){
+        var r = new FileReader();
+        r.onload = function(){ resolve({ name: f.name, type: f.type, data: String(r.result).split(',')[1] }); };
+        r.onerror = function(){ reject(new Error('Lettura del file non riuscita')); };
+        r.readAsDataURL(f);
+      });
+    }));
+    var d = tpDesign(); d.files = encoded;
+    if (!tpSaveDesign(d)) {
+      input.value = '';
+      els.status.textContent = '';
+      els.error.textContent = 'Spazio insufficiente nel browser per allegare questi file. Riprova con file pi\u00f9 leggeri oppure usa il campo link qui sotto.';
+      return;
+    }
+    els.status.textContent = 'Allegati: ' + encoded.map(function(f){ return f.name; }).join(', ');
+  } catch (err) {
+    input.value = '';
+    els.status.textContent = '';
+    els.error.textContent = err.message;
+  }
+}
+
 function uploadBlockHtml(){
+  const d = tpDesign();
+  const names = (d.files || []).map(f => f.name).join(', ');
+  const link = (d.link || '').replace(/"/g, '&quot;');
   return `
+          <div data-upload-block>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file</div>
           <label style="display:block; border:1.5px solid oklch(0.88 0.005 90); border-radius:8px; padding:14px 16px; cursor:pointer; background:oklch(0.99 0.002 90);">
             <span style="display:flex; align-items:center; gap:10px;">
               <span style="font-size:14px; font-weight:600;">Carica il tuo design</span>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto; opacity:.65;"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg>
             </span>
-            <input type="file" class="file-upload" multiple style="display:none;" onchange="var n=Array.prototype.map.call(this.files,function(f){return f.name;}).join(', '); this.parentNode.nextElementSibling.textContent = n ? 'Selezionati: ' + n : '';">
+            <input type="file" class="file-upload" multiple style="display:none;" onchange="tpSelectFiles(this)">
           </label>
-          <div style="font-size:12px; color:oklch(0.45 0.01 90); margin-top:6px;"></div>
-          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 4 MB per file. File più grandi: inviaceli via email dopo l'ordine.</div>
+          <div data-upload-status style="font-size:12px; color:oklch(0.42 0.12 155); font-weight:600; margin-top:6px;">${names ? 'Allegati: ' + names : ''}</div>
+          <div data-upload-error style="font-size:12px; color:oklch(0.5 0.19 25); margin-top:6px;"></div>
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 2,5 MB in totale. File più grandi: usa il link qui sotto.</div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin:14px 0 6px;">Oppure incolla un link al file</div>
-          <input type="text" class="file-link" placeholder="Canva, SwissTransfer, WeTransfer, Drive…" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
-          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:6px;">Canva e Drive: condividi il link già sbloccato, senza password.</div>`;
+          <input type="text" class="file-link" value="${link}" oninput="tpSetLink(this)" placeholder="Canva, SwissTransfer, WeTransfer, Drive…" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:6px;">Canva e Drive: condividi il link già sbloccato, senza password.</div>
+          </div>`;
 }
 
 function renderDetail(){
