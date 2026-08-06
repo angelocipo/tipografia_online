@@ -1402,7 +1402,8 @@ function renderGrid(){
     </div>`;
 
   const sectionHtml = (title, subtitle, items) => !items.length ? '' : `
-      <div style="margin:${title === 'Prezzi Strategici' ? '0' : '56px'} 0 20px;">
+      <section style="background:${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.10)' : 'oklch(0.55 0.09 245 / 0.13)'}; border:1px solid ${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.22)' : 'oklch(0.55 0.09 245 / 0.28)'}; border-radius:18px; padding:28px 26px 32px; margin-top:${title === 'Prezzi Strategici' ? '0' : '40px'};">
+      <div style="margin:0 0 20px;">
         <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
           ${esc(title)}
           <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
@@ -1413,14 +1414,15 @@ function renderGrid(){
       </div>
       <div class="p-cards">
         ${items.map(cardHtml).join('')}
-      </div>`;
+      </div>
+      </section>`;
 
   app.innerHTML = `
     <div class="p-cat" style="max-width:none; margin:0 auto;">
       <div class="idx-grid idx-grid-2" style="align-items:center;margin-bottom:calc(var(--space-8) * 1.5);">
         <div>
           <h1 style="font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Il nostro catalogo</h1>
-          <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 16px; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione,  controllo file e IVA.</p>
+          <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 16px; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione &amp; controllo file e IVA.</p>
         </div>
         <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
           <figure class="blueprint duotone" style="margin:0;width:84px;height:84px;flex-shrink:0;">
@@ -1447,6 +1449,31 @@ function renderGrid(){
       </div>
       ${sectionHtml('Prezzi Strategici', 'Il nostro listino a prezzo fisso: formati e quantità pronti, senza sorprese.', strategici)}
       ${sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
+      <section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
+        <div style="margin:0 0 20px;">
+          <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
+            Stampa su indumento
+            <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
+          </h2>
+          <p style="font-size:13.5px; color:oklch(0.5 0.01 90); margin:0;">T-shirt, polo e abbigliamento personalizzato: catalogo, taglie e prezzi sul nostro shop dedicato.</p>
+        </div>
+        <div class="p-cards">
+          ${[
+            ['T-shirt Uomo', 'https://www.tshirt-shop.online/tshirt-uomo.html'],
+            ['Beagle', 'https://www.tshirt-shop.online/beagle.html'],
+            ['Polo Uomo', 'https://www.tshirt-shop.online/polo-uomo.html'],
+            ['Austral Polo', 'https://www.tshirt-shop.online/austral-polo.html'],
+            ['Star Polo', 'https://www.tshirt-shop.online/star-polo.html'],
+            ['Promozione 100 Magliette', 'https://www.tshirt-shop.online/promozione-100-magliette.html'],
+            ['Stampa DTF Roma', 'https://www.tshirt-shop.online/stampa-dtf-roma.html'],
+            ['Stampa Oro, Argento, Olografica', 'https://www.tshirt-shop.online/stampa-oro-argento-olografica.html'],
+          ].map(([nome, url]) => `
+            <a href="${url}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; background:#fff; border:1px solid oklch(0.91 0.005 90); border-radius:14px; padding:18px 18px 16px; display:flex; flex-direction:column; gap:8px; transition:transform 0.15s, box-shadow 0.15s;">
+              <div style="font-size:16.5px; font-weight:700; letter-spacing:-0.01em;">${esc(nome)}</div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace;">tshirt-shop.online ↗</div>
+            </a>`).join('')}
+        </div>
+      </section>
     </div>`;
   app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; render(); }));
   app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openProduct(el.dataset.open)));
