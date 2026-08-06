@@ -1420,8 +1420,7 @@ function renderGrid(){
       <div class="idx-grid idx-grid-2" style="align-items:center;margin-bottom:calc(var(--space-8) * 1.5);">
         <div>
           <h1 style="font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Il nostro catalogo</h1>
-          <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 16px; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione e controllo file e IVA.</p>
-          <p style="font-size:15px;color:color-mix(in srgb, var(--color-text) 78%, transparent);max-width:48ch;margin:0;">Rollup, biglietti da visita, volantini, abbigliamento personalizzato, quadri su tela e molto altro: tutto pronto in tempi record.</p>
+          <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 16px; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione,  controllo file e IVA.</p>
         </div>
         <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
           <figure class="blueprint duotone" style="margin:0;width:84px;height:84px;flex-shrink:0;">
@@ -1442,6 +1441,7 @@ function renderGrid(){
           </figure>
         </div>
       </div>
+      <p style="font-size:15px;color:color-mix(in srgb, var(--color-text) 78%, transparent);margin:calc(var(--space-8) * -1) 0 var(--space-6);">Rollup, biglietti da visita, volantini, abbigliamento personalizzato, quadri su tela e molto altro: tutto pronto in tempi record.</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;">
         ${chips.map(c => `<button class="chip ${c===state.category?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>
