@@ -68,6 +68,8 @@
   .pill { border:1.5px solid oklch(0.88 0.005 90); background:#fff; color:oklch(0.25 0.01 90); font-size:13px; font-weight:600; padding:8px 14px; border-radius:8px; cursor:pointer; }
   .pill.active { border-color:oklch(0.42 0.12 155); background:oklch(0.42 0.12 155 / 0.08); }
   input[type=range] { width:100%; accent-color: oklch(0.42 0.12 155); }
+  .qty-select { width:100%; padding:11px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); background:#fff; font-size:15px; font-family:inherit; font-weight:600; cursor:pointer; }
+  .qty-select:focus-visible { outline:2px solid oklch(0.42 0.12 155); outline-offset:2px; }
 </style>
 <template id="__bundler_thumbnail" data-bg-color="#fbfaf7">
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -81,12 +83,6 @@
 
 <nav class="nav">
   <span class="nav-brand" id="logoHome" style="cursor:pointer;">Tipografia Online <span style="opacity:.55;font-weight:400;">by Printing Italy</span></span>
-  <a href="stampa-rollup-roma-eur-24h.dc.html">Rollup</a>
-  <a href="blog.dc.html">Tipografia Online Blog Posts</a>
-  <a href="abbigliamento-personalizzato-roma.dc.html">Abbigliamento</a>
-  <a href="realizzazione-foto-quadri-roma-eur.dc.html">Foto & Canvas</a>
-  <a href="centro-stampa-tipografia-roma-eur.dc.html">Chi siamo</a>
-  <a href="checkout.dc.html">Checkout</a>
   <button id="backBtn" class="btn btn-secondary blueprint" style="display:none;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>← Tutti i prodotti</button>
   <a href="contattateci.dc.html" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi preventivo</a>
 </nav>
@@ -141,7 +137,9 @@
         <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:var(--space-3);">Azienda</div>
         <div style="display:flex;flex-direction:column;gap:var(--space-2);">
           <a href="centro-stampa-tipografia-roma-eur.dc.html" style="font-size:13.5px;">Centro Stampa Roma EUR</a>
+          <a href="blog.dc.html" style="font-size:13.5px;">Tipografia Online Blog Posts</a>
           <a href="contattateci.dc.html" style="font-size:13.5px;">Contattateci</a>
+          <a href="checkout.dc.html" style="font-size:13.5px;">Checkout</a>
         </div>
       </div>
       <div>
@@ -493,14 +491,14 @@ const PRODUCTS = [
     // Reconstructed 1:1 from the real APF config for this product (image-swatch: scelta del design, prezzo fisso 24€ a soggetto).
     pricing:{ type:'imageSwatch', price:24,
       swatches: [
-        { label: 'Mejo', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSLBTFN.MAIN_-1-150x150.jpg', hero: 'img/B09MSLBTFN.PT01.jpg' },
-        { label: 'Iddio', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSLP81T.MAIN_-150x150.jpg', hero: 'img/B09MSLP81T.PT01.jpg' },
-        { label: 'Tutte le strade', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSMCJ9X.MAIN_-150x150.jpg', hero: 'img/B09MSMCJ9X.PT01.jpg' },
-        { label: 'Omo de Panza', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSMFTCP.MAIN_-150x150.jpg', hero: 'img/B09MSMFTCP.PT01.jpg' },
-        { label: "'ngrassa", image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSN48JV.MAIN_-150x150.jpg', hero: 'img/B09MSN48JV.PT01.jpg' },
-        { label: 'Napoli Orto', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSNSG3V.MAIN_-150x150.jpg', hero: 'img/B09MSNSG3V.PT01.jpg' },
-        { label: 'Faccia Tosta', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSNWRDF.MAIN_-150x150.jpg', hero: 'img/B09MSNWRDF.PT01.jpg' },
-        { label: 'A chi tocca', image: 'https://www.tipografia.online/wp-content/uploads/2025/02/B09MSP2JQQ.MAIN_-150x150.jpg', hero: 'img/B09MSP2JQQ.PT01.jpg' },
+        { label: 'Mejo', image: 'img/B09MSLBTFN.PT01.jpg', hero: 'img/B09MSLBTFN.PT01.jpg' },
+        { label: 'Iddio', image: 'img/B09MSLP81T.PT01.jpg', hero: 'img/B09MSLP81T.PT01.jpg' },
+        { label: 'Tutte le strade', image: 'img/B09MSMCJ9X.PT01.jpg', hero: 'img/B09MSMCJ9X.PT01.jpg' },
+        { label: 'Omo de Panza', image: 'img/B09MSMFTCP.PT01.jpg', hero: 'img/B09MSMFTCP.PT01.jpg' },
+        { label: "'ngrassa", image: 'img/B09MSN48JV.PT01.jpg', hero: 'img/B09MSN48JV.PT01.jpg' },
+        { label: 'Napoli Orto', image: 'img/B09MSNSG3V.PT01.jpg', hero: 'img/B09MSNSG3V.PT01.jpg' },
+        { label: 'Faccia Tosta', image: 'img/B09MSNWRDF.PT01.jpg', hero: 'img/B09MSNWRDF.PT01.jpg' },
+        { label: 'A chi tocca', image: 'img/B09MSP2JQQ.PT01.jpg', hero: 'img/B09MSP2JQQ.PT01.jpg' },
       ] } },
   { id:'214', nome:'Decalcomania Hollywood Sticker', categoria:'Adesivi Sagomati',
     img:'img/hollywood500x500-copia.jpg',
@@ -722,8 +720,8 @@ const PRODUCTS = [
       { key:'qty', label:'Quantità (50–1.000)', type:'slider', unitSuffix:'pz', choices:['50','100','200','300','500','750','1000'] },
       { key:'holder', label:'Porta Badge', choices:['Senza','Con'] },
       { key:'formato', label:'Formato Biglietto', choices:['8,5×5,5 cm Landscape','8,5×5,5 cm Portrait','10×15 cm Portrait','7,5×10 cm Portrait','Su misura (senza porta badge)'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
-      { key:'larghezza', label:'Larghezza cm (5–32, solo su misura)', type:'slider', choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
-      { key:'altezza', label:'Altezza cm (5–42, solo su misura)', type:'slider', choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'larghezza', label:'Larghezza solo su misura', type:'slider', choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'altezza', label:'Altezza solo su misura', type:'slider', choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'stampa', label:'Stampa su 1 lato o 2', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato a colori + 1 lato bianco nero'] },
       { key:'carta', label:'Grammatura carta', choices:['gr. 300'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
       { key:'carta', label:'Grammatura carta (solo su misura)', choices:['gr. 300','gr. 80','gr. 100','gr. 200','gr. 350','gr. 400'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
@@ -1423,7 +1421,7 @@ function renderGrid(){
         <div>
           <h1 style="font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Il nostro catalogo</h1>
           <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 16px; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione e controllo file e IVA.</p>
-          <p style="font-size:15px;color:color-mix(in srgb, var(--color-text) 78%, transparent);max-width:48ch;margin:0;">Rollup, biglietti da visita, volantini, abbigliamento personalizzato, quadri su tela e molto altro: tutto pronto in 24 ore.</p>
+          <p style="font-size:15px;color:color-mix(in srgb, var(--color-text) 78%, transparent);max-width:48ch;margin:0;">Rollup, biglietti da visita, volantini, abbigliamento personalizzato, quadri su tela e molto altro: tutto pronto in tempi record.</p>
         </div>
         <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
           <figure class="blueprint duotone" style="margin:0;width:84px;height:84px;flex-shrink:0;">
@@ -1868,11 +1866,10 @@ function renderDetail(){
     const tier = tiers[Math.min(idx, tiers.length-1)];
     pricingHtml = `
       <div style="margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-          <span style="color:oklch(0.5 0.01 90);">Quantità</span>
-          <span style="font-weight:700; font-family:ui-monospace,monospace;">${fmtEUR(tier.qty)} ${esc(p.pricing.unit)}</span>
-        </div>
-        <input type="range" min="0" max="${tiers.length-1}" step="1" value="${idx}" id="tierRange">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
+        <select class="qty-select" id="tierRange">
+          ${tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+        </select>
       </div>
       <div style="margin-bottom:18px;">
         ${uploadBlockHtml()}
@@ -1896,11 +1893,10 @@ function renderDetail(){
         </div>
       </div>
       <div style="margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-          <span style="color:oklch(0.5 0.01 90);">Quantità</span>
-          <span style="font-weight:700; font-family:ui-monospace,monospace;">${fmtEUR(tier.qty)} ${esc(p.pricing.unit)}</span>
-        </div>
-        <input type="range" min="0" max="${tiers.length-1}" step="1" value="${idx}" id="deliveryQtyRange">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
+        <select class="qty-select" id="deliveryQtyRange">
+          ${tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+        </select>
       </div>
       <div style="margin-bottom:18px;">
         ${uploadBlockHtml()}
@@ -1959,11 +1955,10 @@ function renderDetail(){
         </div>
       </div>
       <div style="margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-          <span style="color:oklch(0.5 0.01 90);">Quantità</span>
-          <span style="font-weight:700; font-family:ui-monospace,monospace;">${fmtEUR(tier.qty)} ${esc(p.pricing.unit)}</span>
-        </div>
-        <input type="range" min="0" max="${paper.tiers.length-1}" step="1" value="${idx}" id="bcrQtyRange">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
+        <select class="qty-select" id="bcrQtyRange">
+          ${paper.tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+        </select>
       </div>
       <div style="margin-bottom:18px;">
         ${uploadBlockHtml()}
@@ -2007,11 +2002,10 @@ function renderDetail(){
         </div>
       </div>
       <div style="margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-          <span style="color:oklch(0.5 0.01 90);">Quantità</span>
-          <span style="font-weight:700; font-family:ui-monospace,monospace;">${fmtEUR(qty)} copie</span>
-        </div>
-        <input type="range" min="0" max="${delivery.prices.length-1}" step="1" value="${idx}" id="bcsQtyRange">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
+        <select class="qty-select" id="bcsQtyRange">
+          ${delivery.prices.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(p.pricing.qtyLabels[i]) + ' copie'}</option>`).join('')}
+        </select>
       </div>
       <div style="margin-bottom:18px;">
         ${uploadBlockHtml()}
@@ -2148,11 +2142,8 @@ function renderDetail(){
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
             return `<div>
-              <div style="display:flex; justify-content:space-between; font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">
-                <span>${esc(opt.label)}</span><span style="font-weight:700; color:oklch(0.2 0.01 90);">${esc(String(current))} ${esc(suffix)}</span>
-              </div>
-              <input type="range" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" data-quote-key="${esc(opt.key)}" style="width:100%;">
-              <div style="display:flex; justify-content:space-between; font-size:11px; color:oklch(0.6 0.01 90); margin-top:2px;"><span>${min} ${esc(suffix)}</span><span>${max} ${esc(suffix)}</span></div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7;">(${min}–${max} ${esc(suffix)})</span></div>
+              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
@@ -2392,10 +2383,12 @@ function renderDetail(){
     }
     renderDetail();
   }));
-  app.querySelectorAll('input[type="range"][data-quote-key]').forEach(el => el.addEventListener('input', () => {
-    state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.value };
-    renderDetail();
-  }));
+  app.querySelectorAll('input[data-quote-num]').forEach(el => {
+    const key = el.dataset.quoteNum;
+    bindNum(el.id, parseInt(el.dataset.quoteMin,10), parseInt(el.dataset.quoteMax,10), (n) => {
+      state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [key]: String(n) };
+    });
+  });
   bindNum('formulaQty', 1, null, (n) => { formulaState(p).qty = n; });
   const canvaInput = document.getElementById('formulaCanva');
   if (canvaInput) canvaInput.addEventListener('input', (e) => { formulaState(p).canva = e.target.value; });
