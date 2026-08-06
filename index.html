@@ -17,6 +17,35 @@
   .idx-grid-2{grid-template-columns:repeat(2,1fr);}
   @media (max-width:900px){.idx-grid-4{grid-template-columns:repeat(2,1fr);}.idx-grid-2{grid-template-columns:1fr;}}
   @media (max-width:600px){.idx-grid-4{grid-template-columns:1fr;}.nav a{display:none;}}
+  /* --- Schede prodotto su cellulare ---
+     Le colonne erano scritte inline, quindi nessuna media query poteva sovrascriverle:
+     su telefono la scheda restava a due colonne da ~180px, illeggibile. Ora le griglie
+     passano da classi e collassano sotto i 760px. */
+  .p-page{padding:36px 28px 90px;}
+  .p-detail{display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:start;}
+  .p-media{position:sticky; top:96px;}
+  .p-cat{padding:36px 40px 80px;}
+  .p-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:20px;}
+  .p-two{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .p-sw3{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+  .p-sw5{display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;}
+  @media (max-width:760px){
+    .p-page{padding:20px 16px 64px;}
+    .p-cat{padding:20px 16px 64px;}
+    .p-detail{grid-template-columns:1fr; gap:28px;}
+    .p-media{position:static; top:auto;}
+    .p-cards{grid-template-columns:1fr; gap:14px;}
+    .p-two{grid-template-columns:1fr;}
+    .p-sw5{grid-template-columns:repeat(3, 1fr);}
+    /* target touch: mai sotto i 44px */
+    .p-page input, .p-page select, .p-page textarea{font-size:16px; min-height:44px;}
+    .p-page .btn, .p-page button{min-height:44px;}
+    .swatch{min-height:44px;}
+    .p-page h1{font-size:24px;}
+    .p-cat h1{font-size:26px;}
+    .thumb{width:56px; height:56px;}
+  }
+  @media (max-width:400px){ .p-sw3, .p-sw5{grid-template-columns:repeat(2, 1fr);} }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: oklch(0.99 0.003 90); color: oklch(0.2 0.01 90); }
   a { color: oklch(0.42 0.12 155); }
@@ -1384,12 +1413,12 @@ function renderGrid(){
         <p style="font-size:13.5px; color:oklch(0.5 0.01 90); margin:0;">${esc(subtitle)}</p>
         ${title === 'Prezzi Strategici' ? '<p style="font-size:15px; color:oklch(0.5 0.01 90); margin:10px 0 0; max-width:none; line-height:1.6;">Ordina i tuoi stampati online anche senza competenze grafiche. Ti aiutiamo a preparare il file corretto e a ottenere un risultato professionale. Abbiamo selezionato una serie di articoli tipografici pensati per chi vuole comunicare in modo efficace senza sprechi: formati ottimizzati, materiali affidabili e costi calibrati per ottenere il massimo rendimento per ogni stampa. Volantini, poster, materiali promozionali e prodotti con standard professionali.</p>' : ''}
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:20px;">
+      <div class="p-cards">
         ${items.map(cardHtml).join('')}
       </div>`;
 
   app.innerHTML = `
-    <div style="max-width:none; margin:0 auto; padding:36px 40px 80px;">
+    <div class="p-cat" style="max-width:none; margin:0 auto;">
       <div class="idx-grid idx-grid-2" style="align-items:center;margin-bottom:calc(var(--space-8) * 1.5);">
         <div>
           <h1 style="font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Il nostro catalogo</h1>
@@ -1556,7 +1585,7 @@ function renderDetail(){
     pricingHtml = `
       <div style="margin-bottom:18px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Scegli il design</div>
-        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+        <div class="p-sw3">
           ${p.pricing.swatches.map((s,i) => `
             <div class="swatch ${i===idx?'active':''}" data-swatch="${i}" style="cursor:pointer; border:2px solid ${i===idx?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
               <img src="${s.image}" alt="${esc(s.label)}" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
@@ -1579,7 +1608,7 @@ function renderDetail(){
       </div>
       <div style="margin-bottom:18px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Scegli il volto</div>
-        <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;">
+        <div class="p-sw5">
           ${p.pricing.swatches.map((s,i) => `
             <div class="swatch ${i===f.swatchIdx?'active':''}" data-swqty-swatch="${i}" style="cursor:pointer; border:2px solid ${i===f.swatchIdx?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
               <img src="${s.image}" alt="${esc(s.label)}" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
@@ -1597,7 +1626,7 @@ function renderDetail(){
     const total = computeAdesivoPrice(p, f);
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza cm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
             <input type="number" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="adesLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
@@ -1653,7 +1682,7 @@ function renderDetail(){
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altro colore</div>
           <input type="text" id="prespAltroColore" value="${esc(f.altroColore)}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>` : ''}
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Base cm (lato lungo, ${p.pricing.base.min}–${p.pricing.base.max})</div>
             <input type="number" min="${p.pricing.base.min}" max="${p.pricing.base.max}" id="prespBase" value="${f.base}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
@@ -1669,7 +1698,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Lavorazioni</div>
-          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+          <div class="p-sw3">
             ${p.pricing.lavorazioni.map((l,i) => `
               <div class="swatch ${i===f.lavorazioneIdx?'active':''}" data-presp-lavorazione="${i}" style="cursor:pointer; border:2px solid ${i===f.lavorazioneIdx?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
                 <img src="${l.image}" alt="${esc(l.label)}" style="width:100%; aspect-ratio:1/1; object-fit:contain; background:#fff; display:block;">
@@ -1694,7 +1723,7 @@ function renderDetail(){
     const total = baseTotal + angoliSurcharge;
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza mm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
             <input type="number" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="bvLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
@@ -1798,7 +1827,7 @@ function renderDetail(){
     const total = computeRilegaturaPrice(p, f);
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità di Rilegature (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
             <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="rilQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
@@ -2129,7 +2158,7 @@ function renderDetail(){
           return `<div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${esc(opt.label)}</div>
             ${opt.images ? `
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+            <div class="p-sw3">
               ${choices.map(c => `
                 <div class="swatch ${c===current?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}" style="cursor:pointer; border:2px solid ${c===current?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
                   <img src="${opt.images[c]}" alt="${esc(c)}" style="width:100%; aspect-ratio:2/1; object-fit:contain; background:#fff; display:block; padding:6px;">
@@ -2178,10 +2207,10 @@ function renderDetail(){
   }
 
   app.innerHTML = `
-    <div style="max-width:1200px; margin:0 auto; padding:36px 28px 90px;">
+    <div class="p-page" style="max-width:1200px; margin:0 auto;">
       <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:20px; font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
-      <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:start;">
-        <div style="position:sticky; top:96px;">
+      <div class="p-detail">
+        <div class="p-media">
           <div style="aspect-ratio:1/1; background:oklch(0.95 0.005 90); border-radius:16px; overflow:hidden; margin-bottom:12px;">
             <img src="${mainImage}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
           </div>
