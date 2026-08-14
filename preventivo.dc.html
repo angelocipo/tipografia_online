@@ -71,6 +71,16 @@
           <td style="padding:14px 6px;text-align:right;vertical-align:top;">{{ quantita }}</td>
           <td style="padding:14px 6px;text-align:right;vertical-align:top;font-weight:600;font-family:ui-monospace,monospace;">€ {{ prezzoFmt }}</td>
         </tr>
+        <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
+          <tr style="border-bottom:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);">
+            <td style="padding:14px 6px;vertical-align:top;">
+              <div style="font-weight:600;">Spedizione</div>
+              <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);margin-top:3px;">{{ spedizioneZona }}</div>
+            </td>
+            <td style="padding:14px 6px;text-align:right;vertical-align:top;">1</td>
+            <td style="padding:14px 6px;text-align:right;vertical-align:top;font-weight:600;font-family:ui-monospace,monospace;">€ {{ spedizioneFmt }}</td>
+          </tr>
+        </sc-if>
       </tbody>
     </table>
 
@@ -83,10 +93,20 @@
           <span>IVA (22%)</span><span style="font-family:ui-monospace,monospace;">€ {{ ivaFmt }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:10px 6px;font-size:16px;font-weight:700;border-top:1.5px solid var(--color-text);margin-top:4px;">
-          <span>Totale</span><span style="font-family:ui-monospace,monospace;">€ {{ prezzoFmt }}</span>
+          <span>Totale</span><span style="font-family:ui-monospace,monospace;">€ {{ totaleFmt }}</span>
         </div>
       </div>
     </div>
+
+    <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 70%, transparent);line-height:1.6;margin-bottom:20px;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:14px;">
+        <div style="font-weight:600;color:var(--color-text);margin-bottom:4px;">Opzioni di spedizione</div>
+        <div>Italia (+1 giorno) — € 25 (opzione applicata in questo preventivo)</div>
+        <div>Roma Sud/EUR/Centro — € 20</div>
+        <div>Resto di Roma — € 30</div>
+        <div>Spedizione gratuita per ordini da € 50. Nessuna consegna in Vaticano.</div>
+      </div>
+    </sc-if>
 
     <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);line-height:1.6;margin-top:auto;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:16px;">
       Preventivo generato automaticamente in base alla configurazione selezionata sul sito. Prezzi IVA inclusa, salvo diversa indicazione. Per confermare l'ordine o richiedere modifiche, contattateci a info@tipografia.online o tramite il modulo sul sito.
@@ -105,10 +125,16 @@ class Component extends DCLogic {
     const quantita = params.get('quantita') || '-';
     const prezzo = parseFloat(params.get('prezzo')) || 0;
     const pid = params.get('pid');
+    const collection = params.get('collection') || 'strategici';
+    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, free from € 50.
+    // Zone rates roma_centro 20 / roma_resto 30 / italia 25 — the quote uses the checkout default zone.
+    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, gratuita: 0 };
+    const zona = params.get('zona') || 'italia';
+    const spedizione = (collection === 'misura' && prezzo > 0 && prezzo < 50) ? (zoneRates[zona] ?? 20) : 0;
     const productUrl = pid ? `index.html#${encodeURIComponent(pid)}` : 'index.html';
     const now = new Date();
     this.setState({
-      prodotto, configurazione, quantita, prezzo, productUrl,
+      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona,
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
       dateStr: now.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
@@ -116,9 +142,16 @@ class Component extends DCLogic {
   }
   renderVals() {
     const prezzo = this.state.prezzo || 0;
-    const imponibile = prezzo / 1.22;
-    const iva = prezzo - imponibile;
+    const spedizione = this.state.spedizione || 0;
+    const totale = prezzo + spedizione;
+    const imponibile = totale / 1.22;
+    const iva = totale - imponibile;
+    const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)' };
     return {
+      hasSpedizione: spedizione > 0,
+      spedizioneFmt: spedizione.toFixed(2),
+      spedizioneZona: zoneLabels[this.state.zona] || '',
+      totaleFmt: totale.toFixed(2),
       prodotto: this.state.prodotto || '',
       productUrl: this.state.productUrl || 'index.html',
       configurazione: this.state.configurazione || '',

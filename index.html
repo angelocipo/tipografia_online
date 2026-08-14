@@ -888,7 +888,7 @@ const PRODUCTS = [
 ];
 
 // Two merchandising collections: "Prezzi Strategici" (the current catalog) and "Su Misura" (new configurable products added going forward).
-const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '206', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805'];
+const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805'];
 PRODUCTS.forEach(p => { p.collection = SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'; });
 
 function fmtEUR(n){ return Math.round(n).toLocaleString('it-IT', {minimumFractionDigits:0, maximumFractionDigits:0}); }
@@ -1007,7 +1007,8 @@ function quoteHref(p, price, selectionIdx, formula){
     + (cfg ? '&config=' + encodeURIComponent(cfg) : '')
     + (qty ? '&quantita=' + encodeURIComponent(qty) : '')
     + '&prezzo=' + Math.round(price)
-    + '&pid=' + encodeURIComponent(p.id);
+    + '&pid=' + encodeURIComponent(p.id)
+    + '&collection=' + encodeURIComponent(p.collection || 'strategici');
 }
 function paymentBlockHtml(p, price, selectionIdx, formula){
   const quoteHrefStr = quoteHref(p, price, selectionIdx, formula);
