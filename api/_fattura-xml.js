@@ -12,7 +12,7 @@ function escapeXml(s) {
 }
 
 // order: { number, date (Date), customer: { name, isCompany, vatNumber?, fiscalCode?, address, cap, city, province, country },
-//          lines: [{ description, quantity, unitPrice, vatRate }], total }
+//          lines: [{ description, quantity, unitPrice, vatRate, ean?, sku? }], total }
 function buildFatturaPAXml(order, seller) {
   const date = order.date || new Date();
   const dataDoc = `${date.getFullYear()}-${pad(date.getMonth() + 1, 2)}-${pad(date.getDate(), 2)}`;
@@ -21,9 +21,15 @@ function buildFatturaPAXml(order, seller) {
   const lines = order.lines.map((l, i) => {
     const idx = i + 1;
     const totale = (l.quantity * l.unitPrice).toFixed(2);
+    // CodiceArticolo is optional in FatturaPA but repeatable: EAN identifies the product,
+    // the internal id identifies the catalog entry (and the two are not interchangeable).
+    const codiciArticolo = [
+      l.ean ? `\n        <CodiceArticolo><CodiceTipo>EAN</CodiceTipo><CodiceValore>${escapeXml(l.ean)}</CodiceValore></CodiceArticolo>` : '',
+      l.sku ? `\n        <CodiceArticolo><CodiceTipo>SKU</CodiceTipo><CodiceValore>${escapeXml(l.sku)}</CodiceValore></CodiceArticolo>` : '',
+    ].join('');
     return `
       <DettaglioLinee>
-        <NumeroLinea>${idx}</NumeroLinea>
+        <NumeroLinea>${idx}</NumeroLinea>${codiciArticolo}
         <Descrizione>${escapeXml(l.description)}</Descrizione>
         <Quantita>${l.quantity.toFixed(2)}</Quantita>
         <PrezzoUnitario>${l.unitPrice.toFixed(2)}</PrezzoUnitario>

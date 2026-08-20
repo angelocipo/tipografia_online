@@ -271,10 +271,17 @@ module.exports = async (req, res) => {
 
     const origin = req.headers.origin || `https://${req.headers.host}`;
 
+    // EAN (GTIN-13) of the product, from _pricing-data.js. Identifies the product, not the
+    // chosen configuration — it travels alongside productId, never in place of it.
+    const productEan = product.ean || '';
+
     const lineItems = [{
       price_data: {
         currency: 'eur',
-        product_data: { name: description },
+        product_data: {
+          name: description,
+          metadata: { product_id: String(productId), ...(productEan ? { ean: productEan } : {}) },
+        },
         unit_amount: unitAmountCents,
       },
       quantity: 1,
@@ -296,6 +303,8 @@ module.exports = async (req, res) => {
     // Stripe session metadata — read back in stripe-webhook.js to build the FatturaPA
     // invoice and to know where/who the shipment should show as sender.
     const metadata = {};
+    metadata.product_id = String(productId);
+    metadata.product_ean = productEan;
     const c = customer || {};
     metadata.inv_type = c.invType || 'privato';
     metadata.inv_name = c.name || '';

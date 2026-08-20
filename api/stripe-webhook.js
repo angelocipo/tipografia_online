@@ -158,11 +158,15 @@ module.exports = async (req, res) => {
           // No SDI code = "consumatore finale", invoice made available via portal instead of pushed by SDI.
           sdiCode: md.inv_sdi || '0000000',
         },
-        lines: lineItems.data.map((li) => ({
+        lines: lineItems.data.map((li, i) => ({
           description: li.description,
           quantity: li.quantity,
           unitPrice: li.amount_total / 100 / li.quantity,
           vatRate: 22, // adjust if any product carries a different aliquota
+          // The product is always the FIRST line item; any further line is shipping,
+          // which has no EAN of its own.
+          ean: i === 0 ? (md.product_ean || '') : '',
+          sku: i === 0 ? (md.product_id || '') : '',
         })),
       };
       const buyerEmail = md.inv_email || session.customer_details?.email || session.customer_email;
@@ -250,8 +254,11 @@ function orderEmailHtml(order, total, md) {
   md = md || {};
   const rows = order.lines.map((l) => {
     const lineTotal = l.unitPrice * l.quantity;
+    const eanLine = l.ean
+      ? `<div style="padding-top:4px;font:400 12px/1.4 ${BODY_FONT};color:${MUTED};letter-spacing:.04em;">EAN ${l.ean}</div>`
+      : '';
     return `<tr>
-      <td style="padding:14px 0;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};">${l.description}</td>
+      <td style="padding:14px 0;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};">${l.description}${eanLine}</td>
       <td style="padding:14px 0 14px 16px;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${MUTED};text-align:right;white-space:nowrap;">${l.quantity}×</td>
       <td style="padding:14px 0 14px 16px;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};text-align:right;white-space:nowrap;">${eur(lineTotal)}</td>
     </tr>`;
@@ -377,6 +384,9 @@ function ownerBlockHtml(order, buyerEmail, session) {
       ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city].filter(Boolean).join(', ')
       : 'Come fatturazione'],
   ];
+  if (md.product_ean || md.product_id) {
+    rowsData.push(['EAN / Cod. prodotto', [md.product_ean, md.product_id].filter(Boolean).join(' · ')]);
+  }
   if (md.sender_use === '1') {
     rowsData.push(['Mittente sul pacco', [md.sender_company, md.sender_address, md.sender_cap, md.sender_city].filter(Boolean).join(', ') || '—']);
   }
