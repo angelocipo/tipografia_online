@@ -1163,7 +1163,7 @@ async function startStripeCheckout(btn){
     const col = p && p.collection === 'strategici' ? 'strategici' : 'misura';
     if (human) body.human = human;
     const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
-    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${col}&cfg=${cfg}`;
+    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${col}&cfg=${cfg}${p && p.ean ? '&ean=' + encodeURIComponent(p.ean) : ''}`;
   } catch (err) {
     errorEl.textContent = 'Checkout non disponibile — ' + err.message;
     errorEl.style.display = 'block';
@@ -1595,7 +1595,7 @@ function renderDetail(){
   const mainImage = state.mainImageOverride
     || (p.pricing.type === 'imageSwatch' ? (p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].hero || p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].image) : null)
     || p.img;
-  const specsList = Object.entries(p.specs || {});
+  const specsList = Object.entries(p.specs || {}).concat(p.ean ? [['EAN', p.ean]] : []);
   const _active = document.activeElement;
   const _focusId = _active && _active.tagName === 'INPUT' && _active.type !== 'range' && _active.id ? _active.id : null;
   const _selStart = _focusId ? _active.selectionStart : null;

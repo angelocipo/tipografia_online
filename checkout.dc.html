@@ -49,10 +49,13 @@
         <div>
           <div class="card-kicker">Il tuo ordine</div>
           <div class="card-title">{{ productName }}</div>
+          <sc-if value="{{ hasEan }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;letter-spacing:0.04em;font-family:ui-monospace,monospace;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-top:4px;">EAN {{ productEan }}</div>
+          </sc-if>
         </div>
         <div style="text-align:right;">
           <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
-          <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
+          <div style="font-size:12px;font-weight:700;color:#c0392b;">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
         </div>
       </div>
       <sc-if value="{{ hasDetails }}" hint-placeholder-val="{{ false }}">
@@ -253,6 +256,7 @@ class Component extends DCLogic {
     const price = params.get('price');
     const cfg = params.get('cfg');
     const col = params.get('col');
+    const ean = params.get('ean') || '';
     let orderBody = id ? { productId: id } : null;
     if (cfg) {
       try { orderBody = JSON.parse(decodeURIComponent(atob(cfg))); } catch (e) {}
@@ -261,7 +265,7 @@ class Component extends DCLogic {
     const autoFree = (col === 'strategici') || priceNum >= 50;
     let design = {};
     try { design = JSON.parse(sessionStorage.getItem('tp_design') || '{}'); } catch (e) {}
-    if (id) this.setState({ productId: id, productName: name || '', productPrice: price || '', productCollection: col || 'misura', orderBody, design, shipZone: autoFree ? 'gratuita' : this.state.shipZone });
+    if (id) this.setState({ productId: id, productName: name || '', productEan: ean, productPrice: price || '', productCollection: col || 'misura', orderBody, design, shipZone: autoFree ? 'gratuita' : this.state.shipZone });
     if (id) this.mountPaypalWhenReady();
   }
 
@@ -361,6 +365,8 @@ class Component extends DCLogic {
       orderDetails,
       detailsMarginBottom: orderDetails.length > 0 ? 'var(--space-4)' : '0',
       productName: s.productName,
+      productEan: s.productEan || '',
+      hasEan: !!s.productEan,
       productPrice: s.productPrice,
       orderTotal: orderTotal.toFixed(2).replace(/\.00$/, ''),
       shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + shippingFee),
