@@ -64,6 +64,9 @@
         <tr style="border-bottom:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);">
           <td style="padding:14px 6px;vertical-align:top;">
             <div style="font-weight:600;"><a href="{{ productUrl }}" target="_blank" rel="noopener" style="color:var(--color-accent-700);text-decoration:none;">{{ prodotto }}</a></div>
+            <sc-if value="{{ hasEan }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;letter-spacing:0.04em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-top:3px;font-family:ui-monospace,monospace;">EAN {{ ean }}</div>
+            </sc-if>
             <sc-for list="{{ dettagli }}" as="d" hint-placeholder-count="4">
               <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);margin-top:3px;">{{ d }}</div>
             </sc-for>
@@ -125,6 +128,7 @@ class Component extends DCLogic {
     const quantita = params.get('quantita') || '-';
     const prezzo = parseFloat(params.get('prezzo')) || 0;
     const pid = params.get('pid');
+    const ean = params.get('ean') || '';
     const collection = params.get('collection') || 'strategici';
     // Same rule as checkout.dc.html: shipping only on "Su Misura" products, free from € 50.
     // Zone rates roma_centro 20 / roma_resto 30 / italia 25 — the quote uses the checkout default zone.
@@ -134,7 +138,7 @@ class Component extends DCLogic {
     const productUrl = pid ? `index.html#${encodeURIComponent(pid)}` : 'index.html';
     const now = new Date();
     this.setState({
-      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona,
+      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean,
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
       dateStr: now.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
@@ -153,6 +157,8 @@ class Component extends DCLogic {
       spedizioneZona: zoneLabels[this.state.zona] || '',
       totaleFmt: totale.toFixed(2),
       prodotto: this.state.prodotto || '',
+      ean: this.state.ean || '',
+      hasEan: !!this.state.ean,
       productUrl: this.state.productUrl || 'index.html',
       configurazione: this.state.configurazione || '',
       dettagli: (this.state.configurazione || '').split(' · ').map(s => s.trim()).filter(Boolean),
