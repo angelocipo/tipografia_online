@@ -217,6 +217,34 @@ const PRICING = {
       [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],
       [{qty:50,price:156},{qty:100,price:191},{qty:250,price:210},{qty:500,price:255},{qty:1000,price:292},{qty:2500,price:533},{qty:5000,price:1004},{qty:7500,price:1472},{qty:10000,price:1943}],
     ] },
+  '5722': { nome: 'Adesivo PVC ø2 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:15},{qty:25,price:16},{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164},{qty:30000,price:186}],
+    ] },
+  '5724': { nome: 'Adesivo PVC ø3 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:15},{qty:25,price:16},{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164}],
+    ] },
+  '5725': { nome: 'Adesivo PVC ø4 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:17},{qty:25,price:18},{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258},{qty:25000,price:316},{qty:30000,price:367}],
+    ] },
+  '5721': { nome: 'Adesivo PVC ø5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:17},{qty:25,price:18},{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258}],
+    ] },
+  '5726': { nome: 'Adesivo PVC ø6 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:19},{qty:25,price:20},{qty:50,price:21},{qty:75,price:22},{qty:100,price:23},{qty:250,price:30},{qty:500,price:35},{qty:1000,price:44},{qty:2500,price:70},{qty:5000,price:114},{qty:7500,price:150},{qty:10000,price:192},{qty:15000,price:272},{qty:20000,price:354},{qty:25000,price:436}],
+    ] },
+  '5728': { nome: 'Adesivo PVC ø14 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:38},{qty:25,price:40},{qty:50,price:44},{qty:75,price:47},{qty:100,price:51},{qty:250,price:79},{qty:500,price:100},{qty:1000,price:141},{qty:2500,price:259},{qty:5000,price:472},{qty:7500,price:697},{qty:10000,price:922},{qty:15000,price:1358},{qty:20000,price:1799},{qty:25000,price:2222},{qty:30000,price:2606}],
+    ] },
+  '5727': { nome: 'Adesivo PVC ø9,5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:26},{qty:25,price:27},{qty:50,price:29},{qty:75,price:31},{qty:100,price:33},{qty:250,price:48},{qty:500,price:59},{qty:1000,price:81},{qty:2500,price:138},{qty:5000,price:236},{qty:7500,price:336},{qty:10000,price:446},{qty:15000,price:665},{qty:20000,price:866},{qty:25000,price:1089},{qty:30000,price:1260}],
+    ] },
   '211': { nome: 'Adesivi per uso interno 24H', ean: '0652026573510', type: 'adesivoInterno',
     larghezza: { min:5, max:31, default:21 },
     altezza: { min:5, max:44, default:15 },
