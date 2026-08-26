@@ -242,7 +242,7 @@ const ORACAL_LABELS = ORACAL_751.slice().sort((a, b) => Number(a.code) - Number(
 const PRODUCTS = [
   { id:'197', ean:'0652026573206', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
     img:'img/rollup.webp',
-    gallery:['img/rollup.webp','img/IMG_4262ac-copia.jpg','img/IMG_4265ac-copia.jpg','img/rollup-500.jpg'],
+    gallery:['img/rollup.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:"Rollup stampato in 24H. Stampa il tuo Roll-Up a Roma in 24 ore e presentati sempre al meglio, anche all'ultimo minuto. Qualità premium, colori vivi e materiali resistenti.",
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'80×200 · 85×200 cm','Uso':'Interni'},
     // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
@@ -257,14 +257,14 @@ const PRODUCTS = [
       rate24h: 10,
     } },
   { id:'5833', ean:'0652026573213', nome:'Stampa Roll-Up 200 × 200 cm', categoria:'Rollup',
-    img:'img/Professional-rollup-banner-mockup-display-copia2.avif',
-    gallery:['img/Professional-rollup-banner-mockup-display-copia2.avif','img/IMG_4262ac-copia.jpg','img/IMG_4265ac-copia.jpg','img/rollup-500.jpg'],
+    img:'img/Professional-rollup-banner-mockup-display-copia2.webp',
+    gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
     pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:2} },
   { id:'5850', ean:'0652026573220', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
-    img:'img/Professional-roll-up-banner-mockup-copia700.avif',
-    gallery:['img/Professional-roll-up-banner-mockup-copia700.avif','img/IMG_4265ac-copia.jpg','img/IMG_4262ac-copia.jpg','img/rollup-500.jpg'],
+    img:'img/Professional-roll-up-banner-mockup-copia700.webp',
+    gallery:['img/Professional-roll-up-banner-mockup-copia700.webp','img/IMG_4265ac-copia.webp','img/IMG_4262ac-copia.webp','img/rollup-500.webp'],
     intro:"La via di mezzo perfetta: largo abbastanza da farsi notare, comodo da spostare tra un evento e l'altro. Stampa il tuo Roll-Up a Roma in 3gg.",
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'150×200 cm','Uso':'Interni'},
     // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
@@ -279,8 +279,8 @@ const PRODUCTS = [
       rate24h: 0,
     } },
   { id:'5392', ean:'0652026573237', nome:'Volantini A5 gr 130 Opaca o Lucida', categoria:'Volantini',
-    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.avif',
-    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.webp',
+    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.webp'],
     intro:'Volantini formato A5 (148 × 210 mm), stampa fronte/retro in quadricromia offset su carta patinata 130 g/m².',
     features:['Stampa fronte/retro in quadricromia offset','Definizione nitida e colori saturi','Prezzi all inclusive: stampa, gestione file e IVA'],
     specs:{'Formato':'A5 · 148×210 mm','Carta':'Patinata opaca o lucida 130 g/m²','Tempi':'7 giorni lavorativi'},
@@ -293,15 +293,15 @@ const PRODUCTS = [
       ],
     } },
   { id:'5560', ean:'0652026573244', nome:'Volantini A4 gr 170 Opaca', categoria:'Volantini',
-    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.avif',
-    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.webp',
+    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.webp'],
     intro:'Volantini formato A4 (210 × 297 mm), stampa fronte/retro in quadricromia offset su carta patinata 170 g/m².',
     features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
     specs:{'Formato':'A4 · 210×297 mm','Carta':'Patinata opaca 170 g/m²','Tempi':'7 giorni lavorativi'},
     pricing:{type:'tiers', unit:'copie', tiers:[{qty:1000,price:82},{qty:2500,price:137},{qty:5000,price:236},{qty:10000,price:429},{qty:20000,price:804},{qty:30000,price:1163},{qty:40000,price:1596},{qty:50000,price:1937},{qty:60000,price:2249},{qty:70000,price:2614},{qty:80000,price:2972},{qty:90000,price:3361},{qty:100000,price:3600}]} },
   { id:'5840', ean:'0652026573251', nome:'Volantini A6 gr 130 Opaca o Lucida', categoria:'Volantini',
-    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.avif',
-    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.avif','https://www.tipografia.online/wp-content/uploads/2025/02/volantini-10000-a5-2018-04-06-copia.jpg'],
+    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.webp',
+    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.webp'],
     intro:'Volantini formato A6 (105 × 148 mm), il più piccolo e conveniente per grandi tirature.',
     features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
     specs:{'Formato':'A6 · 105×148 mm','Carta':'Patinata opaca o lucida 130 g/m²','Tempi':'7 giorni lavorativi'},
@@ -314,8 +314,8 @@ const PRODUCTS = [
       ],
     } },
   { id:'5723', ean:'0652026573268', nome:'Volantini 10×21 cm Opaca o Lucida', categoria:'Volantini',
-    img:'img/Flyers-personalizzati-e-stampa-professionale-copia.avif',
-    gallery:['img/Flyers-personalizzati-e-stampa-professionale-copia.avif'],
+    img:'img/Flyers-personalizzati-e-stampa-professionale-copia.webp',
+    gallery:['img/Flyers-personalizzati-e-stampa-professionale-copia.webp'],
     intro:'Il formato DL (10×21 cm), stretto e verticale: ideale per espositori, distribuzione manuale e campagne porta a porta.',
     features:['Stampa solo fronte o fronte/retro','Colori pieni e definiti','Controllo file prima di stampa'],
     specs:{'Formato':'DL · 10×21 cm','Carta':'Patinata opaca o lucida','Tempi':'7 giorni lavorativi'},
@@ -342,8 +342,8 @@ const PRODUCTS = [
       ],
     } },
   { id:'5794', ean:'0652026573282', nome:'Pieghevoli A4 a 3 Ante 10×21 cm', categoria:'Pieghevoli',
-    img:'img/Tri-fold-brochures-with-Italian-design700.avif',
-    gallery:['img/Tri-fold-brochures-with-Italian-design700.avif'],
+    img:'img/Tri-fold-brochures-with-Italian-design700.webp',
+    gallery:['img/Tri-fold-brochures-with-Italian-design700.webp'],
     intro:"Pieghevole aperto A4, chiuso 10×21 cm, con piega a portafoglio o a zig-zag: ordinato e d'impatto per servizi, menù e listini.",
     features:['Piega a portafoglio o a zig-zag','Layout ordinato per menù e listini','Prezzi all inclusive: stampa, gestione file e IVA'],
     specs:{'Formato':'Aperto A4 · chiuso 10×21 cm','Piega':'Portafoglio o zig-zag','Tempi':'7 giorni lavorativi'},
@@ -356,8 +356,8 @@ const PRODUCTS = [
       ],
     } },
   { id:'5606', ean:'0652026573299', nome:'Locandine 70×100 cm', categoria:'Locandine e Manifesti',
-    img:'img/locandine700x700-copia.avif',
-    gallery:['img/locandine700x700-copia.avif'],
+    img:'img/locandine700x700-copia.webp',
+    gallery:['img/locandine700x700-copia.webp'],
     intro:'Locandine 70×100 cm stampate fronte in quadricromia offset su carta patinata lucida 100 g/m².',
     features:['Stampa fronte in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
     specs:{'Formato':'70×100 cm','Carta':'Patinata lucida 100 g/m²','Tempi':'7 giorni lavorativi'},
@@ -370,8 +370,8 @@ const PRODUCTS = [
       ],
     } },
   { id:'5720', ean:'0652026573305', nome:'Adesivo PVC 42×10 cm', categoria:'Adesivi',
-    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.avif',
-    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.avif'],
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
     intro:'Adesivo PVC impermeabile per esterni, 42×10cm, stampato su PVC 90 µm retro intagliato: resiste anche a immersioni prolungate in acqua piovana o salata, mantenendo intatte stampa e adesione.',
     features:['Vinile PVC impermeabile, retro intagliato','Resiste a pioggia e acqua salata','Tempi di produzione: 7 giorni lavorativi o 2 giorni lavorativi (extra)'],
     specs:{'Materiale':'PVC 90 µm','Formato':'42×10 cm','Uso':'Interni ed esterni'},
@@ -381,6 +381,90 @@ const PRODUCTS = [
       tiersByDelivery: [
         [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],
         [{qty:50,price:156},{qty:100,price:191},{qty:250,price:210},{qty:500,price:255},{qty:1000,price:292},{qty:2500,price:533},{qty:5000,price:1004},{qty:7500,price:1472},{qty:10000,price:1943}],
+      ],
+    } },
+  { id:'5722', ean:'', variantOf:'5720', nome:'Adesivo PVC ø2 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø2 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø2 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:15},{qty:25,price:16},{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164},{qty:30000,price:186}],
+      ],
+    } },
+  { id:'5724', ean:'', variantOf:'5720', nome:'Adesivo PVC ø3 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø3 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø3 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:15},{qty:25,price:16},{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164}],
+      ],
+    } },
+  { id:'5725', ean:'', variantOf:'5720', nome:'Adesivo PVC ø4 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø4 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø4 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:17},{qty:25,price:18},{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258},{qty:25000,price:316},{qty:30000,price:367}],
+      ],
+    } },
+  { id:'5721', ean:'', variantOf:'5720', nome:'Adesivo PVC ø5 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø5 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø5 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:17},{qty:25,price:18},{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258}],
+      ],
+    } },
+  { id:'5726', ean:'', variantOf:'5720', nome:'Adesivo PVC ø6 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø6 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø6 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:19},{qty:25,price:20},{qty:50,price:21},{qty:75,price:22},{qty:100,price:23},{qty:250,price:30},{qty:500,price:35},{qty:1000,price:44},{qty:2500,price:70},{qty:5000,price:114},{qty:7500,price:150},{qty:10000,price:192},{qty:15000,price:272},{qty:20000,price:354},{qty:25000,price:436}],
+      ],
+    } },
+  { id:'5728', ean:'', variantOf:'5720', nome:'Adesivo PVC ø14 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø14 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø14 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:38},{qty:25,price:40},{qty:50,price:44},{qty:75,price:47},{qty:100,price:51},{qty:250,price:79},{qty:500,price:100},{qty:1000,price:141},{qty:2500,price:259},{qty:5000,price:472},{qty:7500,price:697},{qty:10000,price:922},{qty:15000,price:1358},{qty:20000,price:1799},{qty:25000,price:2222},{qty:30000,price:2606}],
+      ],
+    } },
+  { id:'5727', ean:'', variantOf:'5720', nome:'Adesivo PVC ø9,5 cm', categoria:'Adesivi',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø9,5 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø9,5 cm','Stampa':'4/0 colori','Tempi':'1 settimana (6 giorni lavorativi)'},
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['1 Settimana'],
+      tiersByDelivery: [
+        [{qty:10,price:26},{qty:25,price:27},{qty:50,price:29},{qty:75,price:31},{qty:100,price:33},{qty:250,price:48},{qty:500,price:59},{qty:1000,price:81},{qty:2500,price:138},{qty:5000,price:236},{qty:7500,price:336},{qty:10000,price:446},{qty:15000,price:665},{qty:20000,price:866},{qty:25000,price:1089},{qty:30000,price:1260}],
       ],
     } },
   { id:'198', ean:'0652026573312', nome:'Foto Quadro Personalizzato', categoria:'Quadri',
@@ -519,8 +603,8 @@ const PRODUCTS = [
         { label: 'Swift', image: 'img/taylor-150x150.webp' },
       ] } },
   { id:'215', ean:'0652026573411', nome:'Struttura Personalizzata per Eventi', categoria:'Eventi',
-    img:'img/insieme-copia.avif',
-    gallery:['img/insieme-copia.avif'],
+    img:'img/insieme-copia.webp',
+    gallery:['img/insieme-copia.webp'],
     intro:'Fondale su misura per eventi e conferenze: traliccio in alluminio e stampa PVC ad alta definizione, montaggio incluso.',
     features:['Dimensioni su misura, adattate al tuo spazio (100–400 cm altezza, 100–600 cm larghezza)','Traliccio in alluminio certificato + telo in PVC ignifugo, robusto e riutilizzabile','Stampa ad alta definizione','Consegna, installazione, messa in bolla e smontaggio a cura del nostro team','Richiesta caparra confirmatoria del 50%, restituita dopo ispezione senza danni'],
     specs:{'Altezza':'100 – 400 cm','Larghezza':'100 – 600 cm','Materiale':'Alluminio certificato + PVC ignifugo'},
@@ -695,8 +779,8 @@ const PRODUCTS = [
       cartaRate:[0.042, 0.065, 0.125, 0.185, 0.215, 0.245],
     } },
   { id:'5047', ean:'0652026573558', nome:'Stampa Badge Personalizzati', categoria:'Servizi',
-    img:'img/ID-badge-close-up-in-professional-settinglandscape.avif',
-    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.avif','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.avif','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.avif'],
+    img:'img/ID-badge-close-up-in-professional-settinglandscape.webp',
+    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp'],
     intro:'Badge personalizzati per eventi e aziende, con o senza portabadge in plastica, stampa in giornata. Quantità da 50 a 1.000 pezzi.',
     features:['Con o senza portabadge in plastica','Stampa fronte o fronte/retro, a colori o B/N','Laccio colorato opzionale (11 colori disponibili)','Quantità da 50 a 1.000 pezzi'],
     specs:{'Quantità':'50 – 1.000 pz','Formati':'8,5×5,5, 10×15, 7,5×10 cm (con porta badge) o su misura','Tempi':'In giornata'},
@@ -734,8 +818,8 @@ const PRODUCTS = [
       { key:'creazione_file', label:'Creazione file da stampa dal modello e file excel', choices:['No, vi forniamo noi','Si, create voi il file da stampa'] },
     ] } },
   { id:'5805', ean:'0652026573565', nome:'Libretti Chiesa Personalizzati', categoria:'Servizi',
-    img:'img/libretti-chiesa-personalizzati-stampa-700.avif',
-    gallery:['img/libretti-chiesa-personalizzati-stampa-700.avif'],
+    img:'img/libretti-chiesa-personalizzati-stampa-700.webp',
+    gallery:['img/libretti-chiesa-personalizzati-stampa-700.webp'],
     intro:'Libretti per cerimonie religiose, copertina a colori su carta pregiata, interno bianco/nero.',
     features:['Formato A5 chiuso','Copertina in carta martellata, stampa a colori esterna','Interno gr. 80, stampato bianco e nero fronte/retro','Quantità da 1 a 200 rilegature, pagine multiplo di 4'],
     specs:{'Formato':'A5 chiuso','Copertina':'Carta martellata, stampa a colori','Interno':'gr. 80, B/N fronte/retro'},
@@ -796,8 +880,8 @@ const PRODUCTS = [
       ],
     } },
   { id:'217', ean:'0652026573596', nome:'Forex PVC Stampato', categoria:'Forex',
-    img:'img/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif',
-    gallery:['img/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif'],
+    img:'img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp',
+    gallery:['img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp'],
     intro:'Pannello Forex PVC rigido, stampa diretta ad alta definizione, ideale per insegne, espositori e pannelli decorativi.',
     features:['Spessore 2 mm o 5 mm','Stampa 1 o 2 lati','Consegna in 1 settimana o 2 giorni lavorativi (espressa)','Fino a 100 soggetti diversi per ordine'],
     specs:{'Materiale':'PVC espanso (Forex)','Spessori':'2 mm · 5 mm','Uso':'Interni ed esterni'},
@@ -1189,6 +1273,8 @@ function mountPaypalButtons(){
 
 let state = {
   category: 'Tutti',
+  categoryPage: null,
+  returnTo: null,
   selectedId: null,
   mainImageOverride: null,
   tierIdxById: {},
@@ -1350,54 +1436,76 @@ function computeBv24hPrice(p, f){
 
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
-function openProduct(id, push){
+// Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
+const CATEGORY_PAGES = { '5720': 'Adesivi' };
+// Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
+const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure' };
+function openProduct(id, push, from){
   state.selectedId = id;
+  state.categoryPage = null;
+  state.returnTo = from || null;
   state.mainImageOverride = null;
-  if (push !== false) history.pushState({ productId: id }, '', id ? ('#' + id) : location.pathname);
+  if (push !== false) history.pushState({ productId: id, returnTo: state.returnTo }, '', id ? ('#' + id) : location.pathname);
+  render();
+}
+function openCategoryPage(cat, push){
+  state.selectedId = null;
+  state.categoryPage = cat;
+  state.returnTo = null;
+  state.mainImageOverride = null;
+  if (push !== false) history.pushState({ catPage: cat }, '', '#cat-' + encodeURIComponent(cat));
   render();
 }
 function closeProduct(push){
   state.selectedId = null;
+  state.categoryPage = null;
+  state.returnTo = null;
   if (push !== false) history.pushState({}, '', location.pathname);
   render();
 }
+function goBack(){
+  if (state.selectedId && state.returnTo) openCategoryPage(state.returnTo);
+  else closeProduct();
+}
 document.getElementById('logoHome').addEventListener('click', () => closeProduct());
-backBtn.addEventListener('click', () => closeProduct());
+backBtn.addEventListener('click', () => goBack());
 window.addEventListener('popstate', (e) => {
   const id = e.state && e.state.productId;
   state.selectedId = id || null;
+  state.categoryPage = (e.state && e.state.catPage) || null;
+  state.returnTo = (e.state && e.state.returnTo) || null;
   state.mainImageOverride = null;
   render();
 });
 {
-  const initialId = location.hash ? location.hash.slice(1) : null;
-  if (initialId && PRODUCTS.some(p => p.id === initialId)) {
-    state.selectedId = initialId;
-    history.replaceState({ productId: initialId }, '', '#' + initialId);
+  const initialHash = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+  if (initialHash && initialHash.indexOf('cat-') === 0 && CATEGORIES.includes(initialHash.slice(4))) {
+    state.categoryPage = initialHash.slice(4);
+    history.replaceState({ catPage: state.categoryPage }, '', location.hash);
+  } else if (initialHash && PRODUCTS.some(p => p.id === initialHash)) {
+    state.selectedId = initialHash;
+    history.replaceState({ productId: initialHash }, '', '#' + initialHash);
   }
 }
 
 function render(){
-  backBtn.style.display = state.selectedId ? 'block' : 'none';
-  if (state.selectedId) renderDetail(); else renderGrid();
+  backBtn.style.display = (state.selectedId || state.categoryPage) ? 'block' : 'none';
+  if (state.selectedId) renderDetail();
+  else if (state.categoryPage) renderCategoryPage();
+  else renderGrid();
   window.scrollTo(0,0);
 }
 
-function renderGrid(){
-  const chips = ['Tutti', ...CATEGORIES];
-  const visible = PRODUCTS.filter(p => state.category === 'Tutti' || p.categoria === state.category)
-    .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
-  const strategici = visible.filter(p => p.collection === 'strategici');
-  const suMisura = visible.filter(p => p.collection === 'misura');
-
-  const cardHtml = p => `
+function productCardHtml(p, nameOverride){
+  const nome = nameOverride || p.nome;
+  return `
     <div class="card" data-open="${p.id}">
       <div style="aspect-ratio:1/1; background:oklch(0.95 0.005 90); overflow:hidden;">
-        <img src="${p.img}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
+        <img src="${p.img}" alt="${esc(nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
       </div>
       <div style="padding:16px 18px 18px; display:flex; flex-direction:column; gap:8px; flex:1;">
         <span style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:oklch(0.42 0.12 155);">${esc(p.categoria)}</span>
-        <span style="font-size:15.5px; font-weight:650; line-height:1.3;">${esc(p.nome)}</span>
+        <span style="font-size:15.5px; font-weight:650; line-height:1.3;">${esc(nome)}</span>
         <div style="flex:1;"></div>
         <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:6px;">
           <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">${esc(priceLabelFor(p))}</span>
@@ -1405,6 +1513,45 @@ function renderGrid(){
         </div>
       </div>
     </div>`;
+}
+
+function renderCategoryPage(){
+  const cat = state.categoryPage;
+  const parentId = Object.keys(CATEGORY_PAGES).find(id => CATEGORY_PAGES[id] === cat);
+  // Ordine per misura crescente (ø2 … ø14), non alfabetico; il capofila resta primo.
+  const sizeOf = p => {
+    const m = /ø\s*([\d,.]+)/.exec(p.nome);
+    return m ? parseFloat(m[1].replace(',', '.')) : -1;
+  };
+  const items = PRODUCTS.filter(p => p.id === parentId || p.variantOf === parentId)
+    .sort((a,b) => sizeOf(a) - sizeOf(b) || a.nome.localeCompare(b.nome, 'it'));
+  app.innerHTML = `
+    <div class="p-cat" style="max-width:none; margin:0 auto;">
+      <p style="font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:oklch(0.5 0.01 90); margin:0 0 8px; font-family:ui-monospace,monospace;">Catalogo · Categoria</p>
+      <h1 style="font-size:44px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; display:flex; align-items:baseline; gap:12px;">
+        ${esc(cat)}
+        <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
+      </h1>
+      <p style="font-size:15px; color:color-mix(in srgb, var(--color-text) 78%, transparent); margin:0 0 6px; max-width:62ch; line-height:1.6;">Adesivi stampati su vinile e carta adesiva, per interni ed esterni. Scegli il prodotto per configurare formato, quantità e tempi di consegna.</p>
+      <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 32px; font-family:ui-monospace,monospace;">${items.length} prodott${items.length === 1 ? 'o' : 'i'} · prezzi all inclusive, IVA compresa.</p>
+      <div class="p-cards">${items.map(p => productCardHtml(p)).join('')}</div>
+      <div style="margin-top:36px;">
+        <button class="chip" data-home="1">← Torna al catalogo</button>
+      </div>
+    </div>`;
+  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openProduct(el.dataset.open, true, cat)));
+  app.querySelectorAll('[data-home]').forEach(el => el.addEventListener('click', () => closeProduct()));
+}
+
+function renderGrid(){
+  const chips = ['Tutti', ...CATEGORIES];
+  const visible = PRODUCTS.filter(p => !p.variantOf)
+    .filter(p => state.category === 'Tutti' || p.categoria === state.category)
+    .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
+  const strategici = visible.filter(p => p.collection === 'strategici');
+  const suMisura = visible.filter(p => p.collection === 'misura');
+
+  const cardHtml = p => productCardHtml(p, CATALOG_NAMES[p.id]);
 
   const sectionHtml = (title, subtitle, items) => !items.length ? '' : `
       <section style="background:${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.10)' : 'oklch(0.55 0.09 245 / 0.13)'}; border:1px solid ${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.22)' : 'oklch(0.55 0.09 245 / 0.28)'}; border-radius:18px; padding:28px 26px 32px; margin-top:${title === 'Prezzi Strategici' ? '0' : '40px'};">
@@ -1440,11 +1587,11 @@ function renderGrid(){
           </figure>
           <figure class="blueprint duotone" style="margin:0;width:84px;height:84px;flex-shrink:0;">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <img src="img/Foam-boards-with-diverse-designs-and-themes-ac-copia.avif" alt="Forex PVC stampato" style="width:100%;height:100%;object-fit:cover;display:block;">
+            <img src="img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp" alt="Forex PVC stampato" style="width:100%;height:100%;object-fit:cover;display:block;">
           </figure>
           <figure class="blueprint duotone" style="margin:0;width:84px;height:84px;flex-shrink:0;">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <img src="img/locandine700x700-copia.avif" alt="Locandine 70x100 cm stampate" style="width:100%;height:100%;object-fit:cover;display:block;">
+            <img src="img/locandine700x700-copia.webp" alt="Locandine 70x100 cm stampate" style="width:100%;height:100%;object-fit:cover;display:block;">
           </figure>
         </div>
       </div>
@@ -1480,7 +1627,10 @@ function renderGrid(){
       </section>
     </div>`;
   app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; render(); }));
-  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openProduct(el.dataset.open)));
+  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => {
+    const cat = CATEGORY_PAGES[el.dataset.open];
+    if (cat) openCategoryPage(cat); else openProduct(el.dataset.open);
+  }));
 }
 
 // Blocco "materiale da stampare" — identico su tutte le schede prodotto.
