@@ -145,7 +145,7 @@ module.exports = async (req, res) => {
       unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${formato || '50 x 25 cm'}`;
     } else if (product.type === 'badgeEn') {
-      const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, creazione_file } = formula || {};
+      const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, colore_cordino, creazione_file } = formula || {};
       const q = Math.max(50, parseInt(qty, 10) || 50);
       const stampaRate = { '1 side full color':0.4, '2 sides full color':0.7, '1 side B/W':0.07, '2 sides B/W':0.14, '1 side color + 1 side B/W':0.39 }[stampa] || 0.4;
       const excelRate = creazione_file === 'Yes, create the file for me' ? 0.5 : 0;
@@ -161,12 +161,12 @@ module.exports = async (req, res) => {
         const [w,h] = dims[formato] || [9,12];
         const lanyardRate = cordino === 'Yes' ? 0.3 : 0;
         total = 0.68*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + q*1 + 10 + q*lanyardRate + q*excelRate;
-        desc = `${product.nome} — ${formato || 'with badge holder'}, ${q}pcs`;
+        desc = `${product.nome} — ${formato || 'with badge holder'}, ${q}pcs${cordino === 'Yes' ? `, lanyard ${colore_cordino || '01 White'}` : ''}`;
       }
       unitAmountCents = Math.round(total * 100);
       description = desc;
     } else if (product.type === 'badge') {
-      const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, creazione_file } = formula || {};
+      const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, colore_cordino, creazione_file } = formula || {};
       const q = Math.max(50, parseInt(qty, 10) || 50);
       const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato a colori + 1 lato bianco nero':0.39 }[stampa] || 0.4;
       const excelRate = creazione_file === 'Si, create voi il file da stampa' ? 0.5 : 0;
@@ -182,7 +182,7 @@ module.exports = async (req, res) => {
         const [w,h] = dims[formato] || [9,12];
         const lanyardRate = cordino === 'Si' ? 0.3 : 0;
         total = 0.68*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + q*1 + 10 + q*lanyardRate + q*excelRate;
-        desc = `${product.nome} — ${formato || 'con porta badge'}, ${q}pz`;
+        desc = `${product.nome} — ${formato || 'con porta badge'}, ${q}pz${cordino === 'Si' ? `, cordino ${colore_cordino || '01 Bianco'}` : ''}`;
       }
       unitAmountCents = Math.round(total * 100);
       description = desc;
