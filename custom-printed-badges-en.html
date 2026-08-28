@@ -90,7 +90,7 @@ const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 
 const PRODUCTS = [
   { id:'5047-en', nome:'Custom Printed Badges', categoria:'Services',
     img:'img/ID-badge-close-up-in-professional-settinglandscape.webp',
-    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp'],
+    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'],
     intro:'Custom badges for events and companies, with or without a plastic badge holder, same-day printing. Quantities from 50 to 1,000 pieces.',
     features:['With or without plastic badge holder','Single- or double-sided printing, color or B/W','Optional colored lanyard (11 colors available)','Quantities from 50 to 1,000 pieces'],
     specs:{'Quantity':'50 – 1,000 pcs','Formats':'8.5×5.5, 10×15, 7.5×10 cm (with badge holder) or custom','Turnaround':'Same day'},
@@ -115,7 +115,7 @@ const PRODUCTS = [
       options:[
       { key:'qty', label:'Quantity (50–1,000)', type:'slider', unitSuffix:'pcs', choices:['50','100','200','300','500','750','1000'] },
       { key:'holder', label:'Badge Holder', choices:['Without','With'] },
-      { key:'formato', label:'Card Format', choices:['8.5×5.5 cm Landscape','8.5×5.5 cm Portrait','10×15 cm Portrait','7.5×10 cm Portrait','Custom size (without badge holder)'], showIf: (sel) => (sel.holder ?? 'Without') !== 'Without' },
+      { key:'formato', label:'Card Format', noDefaultActive:true, heroImages:{'8.5×5.5 cm Landscape':'img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','8.5×5.5 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','10×15 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','7.5×10 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'}, choices:['8.5×5.5 cm Landscape','8.5×5.5 cm Portrait','10×15 cm Portrait','7.5×10 cm Portrait','Custom size (without badge holder)'], showIf: (sel) => (sel.holder ?? 'Without') !== 'Without' },
       { key:'larghezza', label:'Width cm (5–32, custom only)', type:'slider', choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Without') === 'Without' },
       { key:'altezza', label:'Height cm (5–42, custom only)', type:'slider', choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Without') === 'Without' },
       { key:'stampa', label:'Printing sides', choices:['1 side full color','2 sides full color','1 side B/W','2 sides B/W','1 side color + 1 side B/W'] },
@@ -123,7 +123,7 @@ const PRODUCTS = [
       { key:'carta', label:'Paper weight (custom only)', choices:['300 gsm','80 gsm','100 gsm','200 gsm','350 gsm','400 gsm'], showIf: (sel) => (sel.holder ?? 'Without') === 'Without' },
       { key:'plastificazione', label:'Lamination (custom only)', choices:['No thanks','Yes'], showIf: (sel) => (sel.holder ?? 'Without') === 'Without' },
       { key:'cordino', label:'Lanyard (badge holder only)', choices:['No thanks','Yes'], showIf: (sel) => (sel.holder ?? 'Without') !== 'Without' },
-      { key:'colore_cordino', label:'Lanyard color', choices:['01 White','02 Black','03 Yellow','05 Royal Blue','31 Orange','48 Light Pink','55 Navy Blue','60 Red','71 Purple','226 Fern Green','242 Light Royal'], showIf: (sel) => (sel.holder ?? 'Without') !== 'Without' && sel.cordino === 'Yes' },
+      { key:'colore_cordino', label:'Lanyard color', noDefaultActive:true, heroImages:{'01 White':'img/cordino-01.webp','02 Black':'img/cordino-02.webp','03 Yellow':'img/cordino-03.webp','05 Royal Blue':'img/cordino-05.webp','31 Orange':'img/cordino-31.webp','48 Fuchsia':'img/cordino-48.webp','55 Navy Blue':'img/cordino-55.webp','60 Red':'img/cordino-60.webp','71 Purple':'img/cordino-71.webp','226 Fern Green':'img/cordino-226.webp','242 Light Royal':'img/cordino-242.webp'}, choices:['01 White','02 Black','03 Yellow','05 Royal Blue','31 Orange','48 Fuchsia','55 Navy Blue','60 Red','71 Purple','226 Fern Green','242 Light Royal'], showIf: (sel) => (sel.holder ?? 'Without') !== 'Without' && sel.cordino === 'Yes' },
       { key:'creazione_file', label:'Print-ready file creation (template + Excel)', choices:['No, we will provide it','Yes, create the file for me'] },
     ] } },
 ];
@@ -256,7 +256,7 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'quote' && productId === '5047-en') {
       const sel = state.quoteSelById[productId] || {};
-      body.formula = { qty: sel.qty || '50', holder: sel.holder || 'With', formato: sel.formato || '8.5×5.5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 side full color', carta: sel.carta || '300 gsm', plastificazione: sel.plastificazione || 'No thanks', cordino: sel.cordino || 'No thanks', creazione_file: sel.creazione_file || 'No, we will provide it' };
+      body.formula = { qty: sel.qty || '50', holder: sel.holder || 'With', formato: sel.formato || '8.5×5.5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 side full color', carta: sel.carta || '300 gsm', plastificazione: sel.plastificazione || 'No thanks', cordino: sel.cordino || 'No thanks', colore_cordino: (sel.cordino === 'Yes' ? (sel.colore_cordino || '01 White') : ''), creazione_file: sel.creazione_file || 'No, we will provide it' };
     }
     if (pricingType === 'businessCardRilievo') {
       const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
@@ -1178,16 +1178,14 @@ function renderDetail(){
           const unitVal = sel.unit ?? (opt.choicesByUnit ? Object.keys(opt.choicesByUnit)[0] : null);
           const choices = opt.choicesByUnit ? opt.choicesByUnit[unitVal] : opt.choices;
           const current = sel[opt.key] ?? choices[0];
+          const activeVal = opt.noDefaultActive ? sel[opt.key] : current;
           const suffix = opt.choicesByUnit ? unitVal.toLowerCase() : (opt.unitSuffix || 'cm');
           if (opt.type === 'slider') {
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
             return `<div>
-              <div style="display:flex; justify-content:space-between; font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">
-                <span>${esc(opt.label)}</span><span style="font-weight:700; color:oklch(0.2 0.01 90);">${esc(String(current))} ${esc(suffix)}</span>
-              </div>
-              <input type="range" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" data-quote-key="${esc(opt.key)}" style="width:100%;">
-              <div style="display:flex; justify-content:space-between; font-size:11px; color:oklch(0.6 0.01 90); margin-top:2px;"><span>${min} ${esc(suffix)}</span><span>${max} ${esc(suffix)}</span></div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7;">(${min}–${max} ${esc(suffix)})</span></div>
+              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
@@ -1201,7 +1199,7 @@ function renderDetail(){
                 </div>`).join('')}
             </div>` : `
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              ${choices.map(c => `<button class="pill ${c===current?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
+              ${choices.map(c => `<button class="pill ${c===activeVal?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
             </div>`}
           </div>`;
         }).join('')}
@@ -1246,7 +1244,10 @@ function renderDetail(){
 
   app.innerHTML = `
     <div style="max-width:1200px; margin:0 auto; padding:36px 28px 90px;">
-      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:20px; font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
+        <span style="display:inline-flex; border:1px solid oklch(0.88 0.005 90); border-radius:7px; overflow:hidden; font-family:ui-monospace,monospace; font-size:11.5px; letter-spacing:.04em;"><span style="padding:4px 9px; background:oklch(0.42 0.12 155); color:#fff; font-weight:700;">EN</span><a href="index.html#5047" title="Versione italiana" style="padding:4px 9px; color:oklch(0.42 0.01 90); text-decoration:none; font-weight:600;">IT</a></span>
+      </div>
       <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:start;">
         <div style="position:sticky; top:96px;">
           <div style="aspect-ratio:1/1; background:oklch(0.95 0.005 90); border-radius:16px; overflow:hidden; margin-bottom:12px;">
@@ -1413,8 +1414,16 @@ function renderDetail(){
   app.querySelectorAll('[data-thumb]').forEach(el => el.addEventListener('click', () => { state.mainImageOverride = el.dataset.thumb; renderDetail(); }));
   app.querySelectorAll('[data-quote-key][data-quote-val]').forEach(el => el.addEventListener('click', () => {
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.dataset.quoteVal };
+    const heroOpt = (p.pricing.options||[]).find(o => o.key === el.dataset.quoteKey && o.heroImages);
+    if (heroOpt && heroOpt.heroImages[el.dataset.quoteVal]) state.mainImageOverride = heroOpt.heroImages[el.dataset.quoteVal];
     renderDetail();
   }));
+  app.querySelectorAll('input[data-quote-num]').forEach(el => {
+    const key = el.dataset.quoteNum;
+    bindNum(el.id, parseInt(el.dataset.quoteMin,10), parseInt(el.dataset.quoteMax,10), (n) => {
+      state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [key]: String(n) };
+    });
+  });
   app.querySelectorAll('input[type="range"][data-quote-key]').forEach(el => el.addEventListener('input', () => {
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.value };
     renderDetail();

@@ -779,8 +779,9 @@ const PRODUCTS = [
       cartaRate:[0.042, 0.065, 0.125, 0.185, 0.215, 0.245],
     } },
   { id:'5047', ean:'0652026573558', nome:'Stampa Badge Personalizzati', categoria:'Servizi',
+    altLang:'custom-printed-badges-en.html',
     img:'img/ID-badge-close-up-in-professional-settinglandscape.webp',
-    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp'],
+    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'],
     intro:'Badge personalizzati per eventi e aziende, con o senza portabadge in plastica, stampa in giornata. Quantità da 50 a 1.000 pezzi.',
     features:['Con o senza portabadge in plastica','Stampa fronte o fronte/retro, a colori o B/N','Laccio colorato opzionale (11 colori disponibili)','Quantità da 50 a 1.000 pezzi'],
     specs:{'Quantità':'50 – 1.000 pz','Formati':'8,5×5,5, 10×15, 7,5×10 cm (con porta badge) o su misura','Tempi':'In giornata'},
@@ -806,7 +807,7 @@ const PRODUCTS = [
       options:[
       { key:'qty', label:'Quantità (50–1.000)', type:'slider', unitSuffix:'pz', choices:['50','100','200','300','500','750','1000'] },
       { key:'holder', label:'Porta Badge', choices:['Senza','Con'] },
-      { key:'formato', label:'Formato Biglietto', choices:['8,5×5,5 cm Landscape','8,5×5,5 cm Portrait','10×15 cm Portrait','7,5×10 cm Portrait','Su misura (senza porta badge)'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
+      { key:'formato', label:'Formato Biglietto', noDefaultActive:true, heroImages:{'8,5×5,5 cm Landscape':'img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','8,5×5,5 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','10×15 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','7,5×10 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'}, choices:['8,5×5,5 cm Landscape','8,5×5,5 cm Portrait','10×15 cm Portrait','7,5×10 cm Portrait','Su misura (senza porta badge)'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
       { key:'larghezza', label:'Larghezza solo su misura', type:'slider', choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'altezza', label:'Altezza solo su misura', type:'slider', choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'stampa', label:'Stampa su 1 lato o 2', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato a colori + 1 lato bianco nero'] },
@@ -814,7 +815,7 @@ const PRODUCTS = [
       { key:'carta', label:'Grammatura carta (solo su misura)', choices:['gr. 300','gr. 80','gr. 100','gr. 200','gr. 350','gr. 400'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'plastificazione', label:'Plastificare (solo su misura)', choices:['No grazie','Si'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'cordino', label:'Cordino (solo con porta badge)', choices:['No grazie','Si'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
-      { key:'colore_cordino', label:'Colore cordino', choices:['01 Bianco','02 Nero','03 Giallo','05 Blue Royal','31 Arancione','48 Rosa Chiaro','55 Blue Navy','60 Rosso','71 Porpora','226 Verde Felce','242 Royal Chiaro'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' && sel.cordino === 'Si' },
+      { key:'colore_cordino', label:'Colore cordino', noDefaultActive:true, heroImages:{'01 Bianco':'img/cordino-01.webp','02 Nero':'img/cordino-02.webp','03 Giallo':'img/cordino-03.webp','05 Blue Royal':'img/cordino-05.webp','31 Arancione':'img/cordino-31.webp','48 Fucsia':'img/cordino-48.webp','55 Blue Navy':'img/cordino-55.webp','60 Rosso':'img/cordino-60.webp','71 Porpora':'img/cordino-71.webp','226 Verde Felce':'img/cordino-226.webp','242 Royal Chiaro':'img/cordino-242.webp'}, choices:['01 Bianco','02 Nero','03 Giallo','05 Blue Royal','31 Arancione','48 Fucsia','55 Blue Navy','60 Rosso','71 Porpora','226 Verde Felce','242 Royal Chiaro'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' && sel.cordino === 'Si' },
       { key:'creazione_file', label:'Creazione file da stampa dal modello e file excel', choices:['No, vi forniamo noi','Si, create voi il file da stampa'] },
     ] } },
   { id:'5805', ean:'0652026573565', nome:'Libretti Chiesa Personalizzati', categoria:'Servizi',
@@ -1025,6 +1026,8 @@ const QUOTE_LABELS = {
   formato:'Formato', tempi:'Tempi di consegna', carta:'Carta', colore:'Colore', consegna:'Consegna',
   angoli:'Finitura', unit:'Unità di misura', spessore:'Spessore telaio', citta:'Città', creazione:'Creazione file',
   lato_lungo:'Lato lungo (cm)', lato_corto:'Lato corto (cm)', holder:'Porta badge',
+  stampa:'Stampa', plastificazione:'Plastificazione', cordino:'Cordino',
+  colore_cordino:'Colore cordino', creazione_file:'Creazione file da stampa',
 };
 const QUOTE_IDX = {
   strutturaIdx:['Struttura','strutturaChoices'],
@@ -1195,7 +1198,7 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'quote' && productId === '5047') {
       const sel = state.quoteSelById[productId] || {};
-      body.formula = { qty: sel.qty || '50', holder: sel.holder || 'Senza', formato: sel.formato || '8,5×5,5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 lato a colori', carta: sel.carta || 'gr. 300', plastificazione: sel.plastificazione || 'No grazie', cordino: sel.cordino || 'No grazie', creazione_file: sel.creazione_file || 'No, vi forniamo noi' };
+      body.formula = { qty: sel.qty || '50', holder: sel.holder || 'Senza', formato: sel.formato || '8,5×5,5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 lato a colori', carta: sel.carta || 'gr. 300', plastificazione: sel.plastificazione || 'No grazie', cordino: sel.cordino || 'No grazie', colore_cordino: (sel.cordino === 'Si' ? (sel.colore_cordino || '01 Bianco') : ''), creazione_file: sel.creazione_file || 'No, vi forniamo noi' };
     }
     if (pricingType === 'quote' && productId === '212') {
       const sel = state.quoteSelById[productId] || {};
@@ -2318,6 +2321,7 @@ function renderDetail(){
           const unitVal = sel.unit ?? (opt.choicesByUnit ? Object.keys(opt.choicesByUnit)[0] : null);
           const choices = opt.choicesByUnit ? opt.choicesByUnit[unitVal] : opt.choices;
           const current = sel[opt.key] ?? choices[0];
+          const activeVal = opt.noDefaultActive ? sel[opt.key] : current;
           const suffix = opt.choicesByUnit ? unitVal.toLowerCase() : (opt.unitSuffix || 'cm');
           if (opt.type === 'slider') {
             const nums = choices.map(Number);
@@ -2338,7 +2342,7 @@ function renderDetail(){
                 </div>`).join('')}
             </div>` : `
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              ${choices.map(c => `<button class="pill ${c===current?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
+              ${choices.map(c => `<button class="pill ${c===activeVal?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
             </div>`}
           </div>`;
         }).join('')}
@@ -2380,7 +2384,10 @@ function renderDetail(){
 
   app.innerHTML = `
     <div class="p-page" style="max-width:1200px; margin:0 auto;">
-      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:20px; font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
+        ${p.altLang ? `<span style="display:inline-flex; border:1px solid oklch(0.88 0.005 90); border-radius:7px; overflow:hidden; font-family:ui-monospace,monospace; font-size:11.5px; letter-spacing:.04em;"><span style="padding:4px 9px; background:oklch(0.42 0.12 155); color:#fff; font-weight:700;">IT</span><a href="${p.altLang}" title="English version" style="padding:4px 9px; color:oklch(0.42 0.01 90); text-decoration:none; font-weight:600;">EN</a></span>` : ''}
+      </div>
       <div class="p-detail">
         <div class="p-media">
           <div style="aspect-ratio:1/1; background:oklch(0.95 0.005 90); border-radius:16px; overflow:hidden; margin-bottom:12px;">
@@ -2562,6 +2569,8 @@ function renderDetail(){
       const formatoVal = sel2.formato || '50 x 25 cm';
       if (bySize && bySize[formatoVal]) state.mainImageOverride = bySize[formatoVal];
     }
+    const heroOpt = (p.pricing.options||[]).find(o => o.key === el.dataset.quoteKey && o.heroImages);
+    if (heroOpt && heroOpt.heroImages[el.dataset.quoteVal]) state.mainImageOverride = heroOpt.heroImages[el.dataset.quoteVal];
     renderDetail();
   }));
   app.querySelectorAll('input[data-quote-num]').forEach(el => {
