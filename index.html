@@ -980,7 +980,10 @@ const PRODUCTS = [
 const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805'];
 PRODUCTS.forEach(p => { p.collection = SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'; });
 
-function fmtEUR(n){ return Math.round(n).toLocaleString('it-IT', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+// Due decimali: il prezzo mostrato deve coincidere al centesimo con quello addebitato da
+// Stripe (api/create-checkout-session.js arrotonda ai centesimi). Con l'arrotondamento
+// all'euro intero la scheda mostrava ad es. € 15 su un addebito di 15,10.
+function fmtEUR(n){ return Number(n).toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function priceFrom(p){
   if (p.pricing.type === 'tiers') return p.pricing.tiers[0].price;
   if (p.pricing.type === 'tiersDelivery') return Math.min(...p.pricing.tiersByDelivery.map(t => t[0].price));
@@ -1106,10 +1109,10 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
   const quoteHrefStr = quoteHref(p, price, selectionIdx, formula);
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
-      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price)}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
+      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price*100)/100}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
         Vai al checkout
       </button>
-      <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
+      <div id="paypal-btn-${p.id}" data-price="${(Math.round(price*100)/100).toFixed(2)}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
       <a id="preventivo-link-${p.id}" href="${quoteHrefStr}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
         Richiedi un preventivo ufficiale
@@ -1269,7 +1272,10 @@ function mountPaypalButtons(){
       style: { layout: 'horizontal', color: 'gold', shape: 'rect', height: 45, tagline: false },
       createOrder: (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: price, currency_code: 'EUR' } }] }),
       onApprove: (data, actions) => actions.order.capture().then(details => {
-        alert('Pagamento completato, grazie ' + (details.payer?.name?.given_name || '') + '!');
+        // Deve portare a /grazie: è quella pagina che invia al titolare il materiale da
+        // stampare rimasto in coda nel browser (tp-files.js). Prima mostrava solo un alert,
+        // quindi con PayPal dalla scheda prodotto i file non sarebbero mai partiti.
+        window.location.href = '/grazie.dc.html?token=' + (details.id || '');
       }),
     }).render(el);
   });
@@ -1425,9 +1431,9 @@ function updateRilTotal(p){
   const el = document.getElementById('rilTotal');
   if (el) el.textContent = '€ ' + fmtEUR(total);
   const btn = document.querySelector(`.pay-stripe[data-product-id="${p.id}"]`);
-  if (btn) btn.dataset.price = Math.round(total);
+  if (btn) btn.dataset.price = Math.round(total*100)/100;
   const pp = document.getElementById(`paypal-btn-${p.id}`);
-  if (pp) pp.dataset.price = total;
+  if (pp) pp.dataset.price = (Math.round(total*100)/100).toFixed(2);
   const link = document.getElementById(`preventivo-link-${p.id}`);
   if (link) link.href = quoteHref(p, total, null, f);
 }
@@ -1444,12 +1450,23 @@ const backBtn = document.getElementById('backBtn');
 const CATEGORY_PAGES = { '5720': 'Adesivi' };
 // Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
 const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure' };
+// URL leggibili: #libretti-chiesa-personalizzati invece di #5805. Lo slug è derivato dal nome
+// prodotto; i vecchi link con l'id numerico continuano a funzionare (vedi initialHash).
+function productSlug(p){
+  return p.nome.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // è → e
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function productByHash(hash){
+  return PRODUCTS.find(p => p.id === hash || productSlug(p) === hash) || null;
+}
 function openProduct(id, push, from){
   state.selectedId = id;
   state.categoryPage = null;
   state.returnTo = from || null;
   state.mainImageOverride = null;
-  if (push !== false) history.pushState({ productId: id, returnTo: state.returnTo }, '', id ? ('#' + id) : location.pathname);
+  const prod = id ? PRODUCTS.find(p => p.id === id) : null;
+  if (push !== false) history.pushState({ productId: id, returnTo: state.returnTo }, '', prod ? ('#' + productSlug(prod)) : location.pathname);
   render();
 }
 function openCategoryPage(cat, push){
@@ -1486,9 +1503,12 @@ window.addEventListener('popstate', (e) => {
   if (initialHash && initialHash.indexOf('cat-') === 0 && CATEGORIES.includes(initialHash.slice(4))) {
     state.categoryPage = initialHash.slice(4);
     history.replaceState({ catPage: state.categoryPage }, '', location.hash);
-  } else if (initialHash && PRODUCTS.some(p => p.id === initialHash)) {
-    state.selectedId = initialHash;
-    history.replaceState({ productId: initialHash }, '', '#' + initialHash);
+  } else {
+    const prod = initialHash ? productByHash(initialHash) : null;
+    if (prod) {
+      state.selectedId = prod.id;
+      history.replaceState({ productId: prod.id }, '', '#' + productSlug(prod));
+    }
   }
 }
 
