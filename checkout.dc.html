@@ -315,13 +315,21 @@ class Component extends DCLogic {
     return null;
   }
 
-  // I file sono già stati inviati al titolare al momento della selezione sulla scheda
-  // prodotto (/api/upload-design). Qui viaggiano solo nomi, link e codice di riferimento,
-  // che finiscono nei metadati Stripe e quindi nell'email d'ordine.
+  // I file restano nel browser del cliente (IndexedDB, vedi tp-files.js) e vengono inviati
+  // al titolare solo dalla pagina "grazie", a pagamento confermato. Qui viaggiano solo nomi,
+  // link e codice di riferimento, che finiscono nei metadati Stripe e quindi nell'email
+  // d'ordine. I dati del cliente li mettiamo in localStorage perché la pagina "grazie" possa
+  // allegarli all'email del materiale: senza, il file arriverebbe anonimo.
   async submit(e) {
     e.preventDefault();
     const err = this.validate();
     if (err) { this.setState({ errorMsg: err }); return; }
+    try {
+      const i = this.state.inv || {};
+      localStorage.setItem('tp_customer', JSON.stringify({
+        name: i.name || '', email: i.email || '', phone: i.phone || '', company: i.company || '',
+      }));
+    } catch (ex) {}
     this.setState({ submitting: true, errorMsg: null });
     const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody } = this.state;
     const shippingFee = this.computeShippingFee();

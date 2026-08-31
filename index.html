@@ -159,6 +159,7 @@
 </footer>
 
 <script src="https://www.paypal.com/sdk/js?client-id=AcfKh7__fZxzxaPOuwNjQqF3dvY1bUeLjfv7IoVp907QW3GrH_-6Vw8IdJ6EfjZ2Brokd6HF7_mtbAPI&currency=EUR"></script>
+<script src="tp-files.js"></script>
 <script>
 // ---- Payment: Stripe checkout is created dynamically by /api/create-checkout-session (see DEPLOY.md). ----
 // ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
@@ -827,8 +828,8 @@ const PRODUCTS = [
     pricing:{type:'quote',
       formula: (sel) => Number(sel.quantita ?? 1) * (1.5 + Number(sel.facciate ?? 12) * 0.1) + 7,
       options:[
-      { key:'quantita', label:'Quantità di Rilegature', choices:['1','5','10','25','50','100','150','200'] },
-      { key:'facciate', label:"Facciate A5 interno B/N", choices:['12','16','20','24','32','48','64','100'] },
+      { key:'quantita', label:'Quantità di Rilegature', type:'slider', unitSuffix:'rilegature', choices:['1','200'] },
+      { key:'facciate', label:"Facciate A5 interno B/N", type:'slider', unitSuffix:'facciate', step:4, choices:['12','100'] },
     ] } },
   { id:'202', ean:'0652026573572', nome:'Biglietti da visita a rilievo', categoria:'Biglietti da Visita',
     img:'img/bv-rilievo.webp',
@@ -1190,7 +1191,7 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'quote' && productId === '5805') {
       const sel = state.quoteSelById[productId] || {};
-      body.formula = { quantita: sel.quantita || '10', facciate: sel.facciate || '12' };
+      body.formula = { quantita: sel.quantita || '1', facciate: sel.facciate || '12' };
     }
     if (pricingType === 'quote' && productId === '5849') {
       const sel = state.quoteSelById[productId] || {};
@@ -1664,6 +1665,7 @@ function tpStatusEls(input){
 }
 function tpSetLink(input){
   var d = tpDesign(); d.link = input.value.trim(); tpSaveDesign(d);
+  if (window.TPFiles) window.TPFiles.setLink(d.link);
   document.querySelectorAll('.file-link').forEach(function(el){ if (el !== input) el.value = input.value; });
 }
 function tpReadFile(f){
@@ -1690,33 +1692,25 @@ async function tpSelectFiles(input){
     els.error.textContent = 'Totale ' + (total/1048576).toFixed(1) + ' MB: troppo grande. Massimo 3 MB — per file più pesanti usa il campo link qui sotto.';
     return;
   }
-  els.status.textContent = 'Invio in corso…';
+  els.status.textContent = 'Caricamento…';
   try {
     var encoded = await Promise.all(files.map(tpReadFile));
     var d = tpDesign();
     var ref = tpRef();
-    var res = await fetch('/api/upload-design', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: encoded, ref: ref, link: d.link || '', product: tpProductName() }),
-    });
-    if (!res.ok) {
-      var msg = '';
-      try { msg = (await res.json()).error || ''; } catch (e) {}
-      throw new Error(msg || ('errore ' + res.status));
-    }
-    var names = encoded.map(function(f){ return f.name; });
+    // I file NON partono ora: restano nel browser (IndexedDB) e vengono inviati al titolare
+    // solo quando la pagina "grazie" conferma il pagamento. Vedi tp-files.js.
+    var names = await window.TPFiles.stash({ files: encoded, ref: ref, product: tpProductName(), link: d.link || '' });
     d = tpDesign();
-    d.names = (d.names || []).concat(names);
+    d.names = names;
     d.ref = ref;
     tpSaveDesign(d);
     input.value = '';
-    els.status.textContent = 'Ricevuto: ' + d.names.join(', ') + ' — riferimento ' + ref;
+    els.status.textContent = 'Allegato: ' + names.join(', ') + ' — riferimento ' + ref + '. Verrà inviato alla conferma dell\u2019ordine.';
     document.querySelectorAll('[data-upload-status]').forEach(function(el){ el.textContent = els.status.textContent; });
   } catch (err) {
     input.value = '';
     els.status.textContent = '';
-    els.error.textContent = 'Invio non riuscito (' + err.message + '). Riprova con file più leggeri oppure incolla un link qui sotto.';
+    els.error.textContent = 'Caricamento non riuscito (' + err.message + '). Riprova con file più leggeri oppure incolla un link qui sotto.';
   }
 }
 
@@ -1734,7 +1728,7 @@ function uploadBlockHtml(){
             </span>
             <input type="file" class="file-upload" multiple style="display:none;" onchange="tpSelectFiles(this)">
           </label>
-          <div data-upload-status style="font-size:12px; color:oklch(0.42 0.12 155); font-weight:600; margin-top:6px;">${names ? 'Ricevuto: ' + names + (d.ref ? ' — riferimento ' + d.ref : '') : ''}</div>
+          <div data-upload-status style="font-size:12px; color:oklch(0.42 0.12 155); font-weight:600; margin-top:6px;">${names ? 'Allegato: ' + names + (d.ref ? ' — riferimento ' + d.ref : '') + '. Verrà inviato alla conferma dell&rsquo;ordine.' : ''}</div>
           <div data-upload-error style="font-size:12px; color:oklch(0.5 0.19 25); margin-top:6px;"></div>
           <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 3 MB in totale. File più grandi: usa il link qui sotto.</div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin:14px 0 6px;">Oppure incolla un link al file</div>

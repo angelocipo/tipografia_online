@@ -17,6 +17,7 @@
 <meta name="robots" content="noindex, follow">
 <link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
 <script src="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/_ds_bundle.js"></script>
+<script src="tp-files.js"></script>
 <!-- Meta Pixel -->
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1032048402974729');fbq('track','PageView');</script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1032048402974729&ev=PageView&noscript=1" alt=""></noscript>
@@ -37,6 +38,9 @@
     <div style="width:56px;height:56px;border-radius:50%;background:var(--color-accent-100);color:var(--color-accent-700);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-4);font-size:28px;font-weight:700;">✓</div>
     <h1 style="font-size:30px;margin:0 0 var(--space-3);">Grazie per il tuo ordine!</h1>
     <p style="font-size:15.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);max-width:46ch;margin:0 auto var(--space-2);">Il pagamento è andato a buon fine. A breve riceverai un'email di conferma con il riepilogo dell'ordine e la fattura elettronica.</p>
+    <sc-if value="{{ hasFileMsg }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:color-mix(in srgb, var(--color-text) 70%, transparent);margin:var(--space-4) auto 0;max-width:46ch;">{{ fileMsg }}</p>
+    </sc-if>
     <sc-if value="{{ hasOrderRef }}" hint-placeholder-val="{{ false }}">
       <p style="font-size:12.5px;font-family:ui-monospace,monospace;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin:var(--space-4) 0 0;">Riferimento ordine: {{ orderRef }}</p>
     </sc-if>
@@ -55,7 +59,20 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { orderRef: '' };
+  state = { orderRef: '', fileMsg: '' };
+
+  // Il materiale da stampare parte da qui, non dalla scheda prodotto: i file sono rimasti
+  // nel browser del cliente (IndexedDB) finché il pagamento non è confermato. Vedi tp-files.js.
+  async sendDesignFiles(orderRef) {
+    if (!window.TPFiles) return;
+    let customer = null;
+    try { customer = JSON.parse(localStorage.getItem('tp_customer') || 'null'); } catch (e) {}
+    let link = '';
+    try { link = (JSON.parse(sessionStorage.getItem('tp_design') || '{}') || {}).link || ''; } catch (e) {}
+    const r = await window.TPFiles.markPaid(orderRef, customer, link);
+    if (r && r.sent) this.setState({ fileMsg: 'Abbiamo ricevuto il tuo materiale da stampare.' });
+    else if (r && !r.ok) this.setState({ fileMsg: 'Non siamo riusciti a inviare il tuo file: riproveremo automaticamente. Se non ricevi conferma, scrivici a info@tipografia.online.' });
+  }
 
   // Character-for-character copy of orderRef() in api/stripe-webhook.js. Change one, change
   // the other: this is the code the customer reads on screen and the one printed in the
@@ -84,9 +101,15 @@ class Component extends DCLogic {
     const token = params.get('token');
     const orderRef = sessionId ? this.refFromSessionId(sessionId) : (token ? String(token).slice(-6).toUpperCase() : '');
     this.setState({ orderRef });
+    this.sendDesignFiles(orderRef);
   }
   renderVals() {
-    return { hasOrderRef: !!this.state.orderRef, orderRef: this.state.orderRef };
+    return {
+      hasOrderRef: !!this.state.orderRef,
+      orderRef: this.state.orderRef,
+      hasFileMsg: !!this.state.fileMsg,
+      fileMsg: this.state.fileMsg,
+    };
   }
 }
 </script>
