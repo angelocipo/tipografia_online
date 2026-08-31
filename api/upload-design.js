@@ -1,5 +1,7 @@
-// Riceve il materiale da stampare raccolto sulla scheda prodotto e lo inoltra
-// per email al titolare come allegato (via Resend).
+// Riceve il materiale da stampare e lo inoltra per email al titolare come allegato (via Resend).
+// Viene chiamato dalla pagina "grazie", a PAGAMENTO CONFERMATO: i file restano nel browser
+// del cliente (IndexedDB, vedi tp-files.js) finché l'ordine non è pagato. Prima partivano
+// alla selezione del file, quindi arrivavano anche gli upload di chi non completava l'ordine.
 //
 // Limite tecnico: il body di una funzione serverless Vercel non può superare ~4,5 MB.
 // I file arrivano in base64 (+33%), quindi il client limita il totale a 2,5 MB reali.
@@ -78,7 +80,7 @@ module.exports = async (req, res) => {
 
     const html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#1d1f20;">
       <h2 style="font-size:18px;margin:0 0 4px;">Materiale da stampare ricevuto</h2>
-      <p style="font-size:13px;color:#666;margin:0 0 16px;">Inviato dalla scheda prodotto nel momento in cui il cliente ha scelto il file. L'ordine potrebbe non essere ancora stato pagato: cerca su Stripe l'ordine con lo stesso riferimento.</p>
+      <p style="font-size:13px;color:#666;margin:0 0 16px;">Inviato a pagamento confermato. Cerca su Stripe l'ordine con lo stesso riferimento.</p>
       <table style="border-collapse:collapse;font-size:14px;">
         ${rows.map(([k, v]) => `<tr><td style="padding:4px 14px 4px 0;color:#666;">${esc(k)}</td><td style="padding:4px 0;">${k === 'Link fornito' ? v : esc(v)}</td></tr>`).join('')}
       </table>

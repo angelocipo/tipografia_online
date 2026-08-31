@@ -118,8 +118,9 @@ module.exports = async (req, res) => {
     description = `${product.nome} — ${product.formatChoices[fIdx]}, ${product.cartaChoices[cIdx]}, ${q}pz`;
     } else if (product.type === 'libretti') {
       const { quantita, facciate } = formula || {};
-      const q = Math.max(1, parseInt(quantita, 10) || 1);
-      const f = Math.max(12, parseInt(facciate, 10) || 12);
+      // Stessi limiti dei campi numerici sulla scheda prodotto (1–200 rilegature, 12–100 facciate).
+      const q = Math.min(200, Math.max(1, parseInt(quantita, 10) || 1));
+      const f = Math.min(100, Math.max(12, parseInt(facciate, 10) || 12));
       const total = Math.round((q * (1.5 + f * 0.1) + 7) * 100) / 100;
       unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${q}pz, ${f} facciate B/N`;
