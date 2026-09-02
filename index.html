@@ -831,6 +831,32 @@ const PRODUCTS = [
       { key:'quantita', label:'Quantità di Rilegature', type:'slider', unitSuffix:'rilegature', choices:['1','200'] },
       { key:'facciate', label:"Facciate A5 interno B/N", type:'slider', unitSuffix:'facciate', step:4, choices:['12','100'] },
     ] } },
+  { id:'5851', ean:'0652026573619', nome:'Volantini e Pieghevoli Personalizzati', categoria:'Volantini',
+    img:'img/volantini-pieghevoli-personalizzati.png',
+    gallery:['img/volantini-pieghevoli-personalizzati.png'],
+    intro:'Volantini e pieghevoli su misura: scegli formato libero, materiale, stampa, perforazione e pieghe. Prezzo calcolato sulla superficie reale della carta.',
+    features:['Formato libero da 50×50 a 320×440 mm','Carta da gr. 100 a gr. 400, anche martellata gr. 280','Stampa 1 o 2 lati, a colori o B/N','Perforazione e fino a 3 pieghe','Quantità da 25 a 1.000 pezzi'],
+    specs:{'Quantità':'25 – 1.000 pz','Formato':'da 50×50 a 320×440 mm','Carta':'gr. 100 – gr. 400, martellata gr. 280'},
+    // Ricostruito 1:1 dalla formula Studio Wombat fornita dal titolare (superficie carta su foglio 440×320 mm).
+    pricing:{type:'quote', basePrice:0,
+      formula: (sel) => {
+        const q = Number(sel.qty ?? 25);
+        const w = Number(sel.larghezza ?? 50), h = Number(sel.altezza ?? 50);
+        const carta = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[sel.materiale] ?? 0.13;
+        const stampa = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.39 }[sel.stampa] ?? 0.4;
+        const perf = sel.perforazione === 'Si' ? 0.05 : 0;
+        const pieghe = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[sel.pieghe] ?? 0;
+        return (carta + stampa) * q * (w+20) * (h+20) / 440 / 320 + perf*q + pieghe*q + 10;
+      },
+      options:[
+      { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', choices:['25','1000'] },
+      { key:'larghezza', label:'Larghezza mm (50–320)', type:'slider', unitSuffix:'mm', choices:['50','320'] },
+      { key:'altezza', label:'Altezza mm (50–440)', type:'slider', unitSuffix:'mm', choices:['50','440'] },
+      { key:'materiale', label:'Materiale', choices:['gr. 100','gr. 200','gr. 300','gr. 400','gr. 280 martellata'] },
+      { key:'stampa', label:'Stampa', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato bianco nero + 1 a colori'] },
+      { key:'perforazione', label:'Perforazione', choices:['No grazie','Si'] },
+      { key:'pieghe', label:'Pieghe', choices:['Nessuna','1 piega','2 pieghe','3 pieghe'] },
+    ] } },
   { id:'202', ean:'0652026573572', nome:'Biglietti da visita a rilievo', categoria:'Biglietti da Visita',
     img:'img/bv-rilievo.webp',
     gallery:['img/bv-rilievo.webp'],
@@ -977,13 +1003,12 @@ const PRODUCTS = [
 ];
 
 // Two merchandising collections: "Prezzi Strategici" (the current catalog) and "Su Misura" (new configurable products added going forward).
-const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805'];
+const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
 PRODUCTS.forEach(p => { p.collection = SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'; });
 
-// Due decimali: il prezzo mostrato deve coincidere al centesimo con quello addebitato da
-// Stripe (api/create-checkout-session.js arrotonda ai centesimi). Con l'arrotondamento
-// all'euro intero la scheda mostrava ad es. € 15 su un addebito di 15,10.
-function fmtEUR(n){ return Number(n).toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+// Due decimali solo quando servono: 9,70 resta 9,70 ma i listini a cifra tonda (es. Volantini
+// Prezzi Strategici) mostrano 82, non 82,00. L'addebito Stripe coincide sempre al centesimo.
+function fmtEUR(n){ const v = Math.round(Number(n)*100)/100; const dec = v % 1 !== 0 ? 2 : 0; return v.toLocaleString('it-IT', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
 function priceFrom(p){
   if (p.pricing.type === 'tiers') return p.pricing.tiers[0].price;
   if (p.pricing.type === 'tiersDelivery') return Math.min(...p.pricing.tiersByDelivery.map(t => t[0].price));
@@ -1014,13 +1039,17 @@ function priceFrom(p){
   if (p.pricing.type === 'locandine250') return p.pricing.formatRates[0] * 1 * p.pricing.cartaMultiplier[0] * 1.22;
   if (p.pricing.type === 'scatolaGioielli') return Math.min(...p.pricing.misuraRate.map(r => p.pricing.qty.default * r * 2 + p.pricing.qty.default * 3 + 8));
   if (p.pricing.type === 'rilegature') return Math.min(...p.pricing.cartaRate.map(r => p.pricing.qty.default*p.pricing.pagCol.default*0.27 + p.pricing.qty.default*5 + p.pricing.qty.default*p.pricing.pagCol.default*r));
+  // basePrice:0 significa "nessun minimo imposto", non "gratis": va sempre preferita la formula,
+  // altrimenti la card del catalogo mostra "da € 0" (era il caso di Badge, Wall Stickers e Volantini).
+  if (p.pricing.type === 'quote' && p.pricing.formula) return Math.max(p.pricing.formula({}), p.pricing.basePrice ?? 0);
   if (p.pricing.type === 'quote' && p.pricing.basePrice != null) return p.pricing.basePrice;
-  if (p.pricing.type === 'quote' && p.pricing.formula) return p.pricing.formula({});
   return null;
 }
 function priceLabelFor(p){
   if (p.pricing.type === 'quote' && p.pricing.basePrice == null && !p.pricing.formula) return 'Preventivo';
-  return 'da € ' + fmtEUR(priceFrom(p));
+  const v = priceFrom(p);
+  if (!(typeof v === 'number' && isFinite(v) && v > 0)) return 'Preventivo';
+  return 'da € ' + fmtEUR(v);
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -1032,6 +1061,7 @@ const QUOTE_LABELS = {
   lato_lungo:'Lato lungo (cm)', lato_corto:'Lato corto (cm)', holder:'Porta badge',
   stampa:'Stampa', plastificazione:'Plastificazione', cordino:'Cordino',
   colore_cordino:'Colore cordino', creazione_file:'Creazione file da stampa',
+  materiale:'Materiale', perforazione:'Perforazione', pieghe:'Pieghe',
 };
 const QUOTE_IDX = {
   strutturaIdx:['Struttura','strutturaChoices'],
@@ -1199,6 +1229,10 @@ async function startStripeCheckout(btn){
     if (pricingType === 'quote' && productId === '5849') {
       const sel = state.quoteSelById[productId] || {};
       body.formula = { lato_lungo: sel.lato_lungo || '30', lato_corto: sel.lato_corto || '21', pannelli: sel.pannelli || '1', creazione: sel.creazione || 'Sì, crea me il file' };
+    }
+    if (pricingType === 'quote' && productId === '5851') {
+      const sel = state.quoteSelById[productId] || {};
+      body.formula = { qty: sel.qty || '25', larghezza: sel.larghezza || '50', altezza: sel.altezza || '50', materiale: sel.materiale || 'gr. 100', stampa: sel.stampa || '1 lato a colori', perforazione: sel.perforazione || 'No grazie', pieghe: sel.pieghe || 'Nessuna' };
     }
     if (pricingType === 'quote' && productId === '5047') {
       const sel = state.quoteSelById[productId] || {};
@@ -2384,7 +2418,7 @@ function renderDetail(){
               <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
               <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">da € ${fmtEUR(p.pricing.basePrice)}</span>
             </div>` : '')}
-        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${p.id === '215' ? 'Totale sopra, IVA inclusa.' : 'Prezzo su richiesta in base alla configurazione selezionata.'}</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${(p.id === '215' || p.id === '5851') ? 'Totale sopra, IVA inclusa.' : 'Prezzo su richiesta in base alla configurazione selezionata.'}</div>
         ${p.pricing.depositNote ? `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${esc(p.pricing.depositNote(sel, p))}</div>` : ''}
         ${p.id === '215' ? paymentBlockHtml(p, p.pricing.formula(sel) * 1.5, null, sel)
           : (p.id === '198' ? paymentBlockHtml(p, Math.max(p.pricing.formula(sel), p.pricing.basePrice ?? 0), null, sel)
@@ -2392,7 +2426,8 @@ function renderDetail(){
           : (p.id === '5849' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
           : (p.id === '5047' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
           : (p.id === '212' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
-          : `<button style="width:100%; border:none; background:oklch(0.42 0.12 155); color:#fff; font-size:14.5px; font-weight:700; padding:14px; border-radius:10px; cursor:pointer;">Richiedi preventivo →</button>`)))))}
+          : (p.id === '5851' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
+          : `<button style="width:100%; border:none; background:oklch(0.42 0.12 155); color:#fff; font-size:14.5px; font-weight:700; padding:14px; border-radius:10px; cursor:pointer;">Richiedi preventivo →</button>`))))))}
       </div>`;
   }
 

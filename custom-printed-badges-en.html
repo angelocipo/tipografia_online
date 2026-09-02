@@ -132,7 +132,8 @@ const PRODUCTS = [
 const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '206', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805'];
 PRODUCTS.forEach(p => { p.collection = SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'; });
 
-function fmtEUR(n){ return Math.round(n).toLocaleString('it-IT', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+// Two decimals only when needed: 9.70 stays 9,70 but whole-euro list prices show 82, not 82,00.
+function fmtEUR(n){ const v = Math.round(Number(n)*100)/100; const dec = v % 1 !== 0 ? 2 : 0; return v.toLocaleString('it-IT', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
 function priceFrom(p){
   if (p.pricing.type === 'tiers') return p.pricing.tiers[0].price;
   if (p.pricing.type === 'tiersDelivery') return Math.min(...p.pricing.tiersByDelivery.map(t => t[0].price));
@@ -176,10 +177,10 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 function paymentBlockHtml(p, price, selectionIdx, formula){
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
-      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price)}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
+      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price*100)/100}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
         Proceed to checkout
       </button>
-      <div id="paypal-btn-${p.id}" data-price="${price}" class="paypal-slot" style="min-height:45px;"></div>
+      <div id="paypal-btn-${p.id}" data-price="${(Math.round(price*100)/100).toFixed(2)}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
     </div>`;
 }
@@ -304,7 +305,7 @@ function mountPaypalButtons(){
       style: { layout: 'horizontal', color: 'gold', shape: 'rect', height: 45, tagline: false },
       createOrder: (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: price, currency_code: 'EUR' } }] }),
       onApprove: (data, actions) => actions.order.capture().then(details => {
-        alert('Pagamento completato, grazie ' + (details.payer?.name?.given_name || '') + '!');
+        window.location.href = '/grazie.dc.html?token=' + (details.id || '');
       }),
     }).render(el);
   });
