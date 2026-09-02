@@ -138,6 +138,7 @@ const PRICING = {
     coloreChoices: ['Oro Lucido','Argento Lucido','Bianco Opaco'],
   },
   '5805': { nome: 'Libretti Chiesa Personalizzati', ean: '0652026573565', type: 'libretti' },
+  '5851': { nome: 'Volantini e Pieghevoli Personalizzati', ean: '0652026573619', type: 'volantiniPieghevoli' },
   '284': { nome: 'Rilegature a spirale Roma EUR', ean: '0652026573541', type: 'rilegature',
     cartaChoices: ['gr. 80','gr. 100','gr. 200','gr. 300','gr. 350','gr. 400'],
     cartaRate: [0.042, 0.065, 0.125, 0.185, 0.215, 0.245],

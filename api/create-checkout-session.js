@@ -124,6 +124,20 @@ module.exports = async (req, res) => {
       const total = Math.round((q * (1.5 + f * 0.1) + 7) * 100) / 100;
       unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${q}pz, ${f} facciate B/N`;
+    } else if (product.type === 'volantiniPieghevoli') {
+      // Formula Studio Wombat: (carta + stampa) × q × (L+20)(H+20)/440/320 + perforazione×q + pieghe×q.
+      // Stessi limiti dei campi sulla scheda prodotto (25–1.000 pz, 50–320 × 50–440 mm).
+      const { qty, larghezza, altezza, materiale, stampa, perforazione, pieghe } = formula || {};
+      const q = Math.min(1000, Math.max(25, parseInt(qty, 10) || 25));
+      const w = Math.min(320, Math.max(50, parseInt(larghezza, 10) || 50));
+      const h = Math.min(440, Math.max(50, parseInt(altezza, 10) || 50));
+      const cartaRate = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[materiale] ?? 0.13;
+      const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.39 }[stampa] ?? 0.4;
+      const perfRate = perforazione === 'Si' ? 0.05 : 0;
+      const piegheRate = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[pieghe] ?? 0;
+      const total = (cartaRate + stampaRate) * q * (w+20) * (h+20) / 440 / 320 + perfRate*q + piegheRate*q + 10; // €10 spese fisse d'ordine
+      unitAmountCents = Math.round(total * 100);
+      description = `${product.nome} — ${w}×${h} mm, ${materiale || 'gr. 100'}, ${stampa || '1 lato a colori'}${perfRate ? ', perforazione' : ''}${piegheRate ? ', ' + pieghe : ''}, ${q}pz`;
     } else if (product.type === 'strutturaEventi') {
       const { altezza, larghezza } = formula || {};
       const h = parseFloat(altezza) || 100, w = parseFloat(larghezza) || 100;
