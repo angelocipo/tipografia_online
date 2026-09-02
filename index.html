@@ -849,9 +849,9 @@ const PRODUCTS = [
         return (carta + stampa) * q * (w+20) * (h+20) / 440 / 320 + perf*q + pieghe*q + 10;
       },
       options:[
-      { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', choices:['25','1000'] },
-      { key:'larghezza', label:'Larghezza mm (50–320)', type:'slider', unitSuffix:'mm', choices:['50','320'] },
-      { key:'altezza', label:'Altezza mm (50–440)', type:'slider', unitSuffix:'mm', choices:['50','440'] },
+      { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', row:true, choices:['25','1000'] },
+      { key:'larghezza', label:'Larghezza (50–320)', type:'slider', unitSuffix:'mm', row:true, choices:['50','320'] },
+      { key:'altezza', label:'Altezza (50–440)', type:'slider', unitSuffix:'mm', row:true, choices:['50','440'] },
       { key:'materiale', label:'Materiale', choices:['gr. 100','gr. 200','gr. 300','gr. 400','gr. 280 martellata'] },
       { key:'stampa', label:'Stampa', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato bianco nero + 1 a colori'] },
       { key:'perforazione', label:'Perforazione', choices:['No grazie','Si'] },
@@ -1876,14 +1876,14 @@ function renderDetail(){
             ${p.pricing.sagomaChoices.map((c,i) => `<button class="pill ${i===f.sagomaIdx?'active':''}" data-ades-sagoma="${i}">${esc(c)}</button>`).join('')}
           </div>
         </div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'adesiviPrespaziati'){
     const f = prespaziatiState(p);
@@ -1936,14 +1936,14 @@ function renderDetail(){
               </div>`).join('')}
           </div>
         </div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'bv24h'){
     const f = bv24hState(p);
@@ -1986,14 +1986,14 @@ function renderDetail(){
           </div>
         </div>
         <div>${angoliCheckboxHtml(p, f.qty)}</div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, { ...f, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}) })}`;
   } else if (p.pricing.type === 'locandine250'){
     const f = locandineState(p);
@@ -2016,14 +2016,14 @@ function renderDetail(){
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
           <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="locQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'scatolaGioielli'){
     const f = scatolaState(p);
@@ -2083,14 +2083,14 @@ function renderDetail(){
             ${p.pricing.cartaChoices.map((c,i) => `<button class="pill ${i===f.cartaIdx?'active':''}" data-ril-carta="${i}">${esc(c)}</button>`).join('')}
           </div>
         </div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span id="rilTotal" style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'tiers'){
     const idx = state.tierIdxById[p.id] ?? 0;
@@ -2103,14 +2103,14 @@ function renderDetail(){
           ${tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
         </select>
       </div>
-      <div style="margin-bottom:18px;">
-        ${uploadBlockHtml()}
-      </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale stimato</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
       </div>
       <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(tier.price/tier.qty).toFixed(3)} / copia · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
+      </div>
       ${paymentBlockHtml(p, tier.price, idx)}`;
   } else if (p.pricing.type === 'tiersDelivery'){
     const deliveryIdx = state.deliveryIdxById[p.id]?.deliveryIdx ?? 0;
@@ -2130,12 +2130,12 @@ function renderDetail(){
           ${tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
         </select>
       </div>
-      <div style="margin-bottom:18px;">
-        ${uploadBlockHtml()}
-      </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
+      </div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
       </div>
       ${paymentBlockHtml(p, tier.price, idx)}`;
   } else if (p.pricing.type === 'size'){
@@ -2149,12 +2149,12 @@ function renderDetail(){
             <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">€ ${fmtEUR(v.price)}</span>
           </div>`).join('')}
       </div>
-      <div style="margin-bottom:18px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
-        ${uploadBlockHtml()}
-      </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Prezzo</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(variants[idx].price)}</span>
+      </div>
+      <div style="margin-bottom:18px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
+        ${uploadBlockHtml()}
       </div>
       ${paymentBlockHtml(p, variants[idx].price, idx)}`;
   } else if (p.pricing.type === 'businessCardRilievo'){
@@ -2192,15 +2192,15 @@ function renderDetail(){
           ${paper.tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
         </select>
       </div>
-      <div style="margin-bottom:18px;">
-        ${uploadBlockHtml()}
-      </div>
       ${angoliCheckboxHtml(p, tier.qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(grandTotal)}</span>
       </div>
       <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(tier.price/tier.qty).toFixed(3)} / copia · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
+      </div>
       ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, ...(p.pricing.colorChoices ? { colore: p.pricing.colorChoices[cur.colorIdx||0] } : {}), ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), qty: tier.qty })}`;
   } else if (p.pricing.type === 'businessCardStrategici'){
     const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
@@ -2239,15 +2239,15 @@ function renderDetail(){
           ${delivery.prices.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(p.pricing.qtyLabels[i]) + ' copie'}</option>`).join('')}
         </select>
       </div>
-      <div style="margin-bottom:18px;">
-        ${uploadBlockHtml()}
-      </div>
       ${angoliCheckboxHtml(p, qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(grandTotal)}</span>
       </div>
       <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(price/qty).toFixed(3)} / copia · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
+      </div>
       ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, consegna: delivery.label, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), qty })}`;
   } else if (p.pricing.type === 'forexPvc'){
     const f = forexState(p);
@@ -2282,14 +2282,14 @@ function renderDetail(){
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità <span style="opacity:.6;">(soggetti diversi)</span></div>
           <input type="number" min="1" max="100" id="forexQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'formula'){
     const f = formulaState(p);
@@ -2318,14 +2318,14 @@ function renderDetail(){
             ${p.pricing.strutturaChoices.map((c,i) => `<button class="pill ${i===f.strutturaIdx?'active':''}" data-formula-struttura="${i}">${esc(c.label)}</button>`).join('')}
           </div>
         </div>
-        <div>
-          ${uploadBlockHtml()}
-        </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
         <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
       </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
       ${paymentBlockHtml(p, total, null, f)}`;
   } else if (p.pricing.type === 'striscioniPvc'){
     const f = striscioniState(p);
@@ -2365,7 +2365,7 @@ function renderDetail(){
     const sel = state.quoteSelById[p.id] || {};
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:6px;">
-        ${p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel)).map(opt => {
+        ${(() => { const rendered = p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel)).map(opt => {
           const unitVal = sel.unit ?? (opt.choicesByUnit ? Object.keys(opt.choicesByUnit)[0] : null);
           const choices = opt.choicesByUnit ? opt.choicesByUnit[unitVal] : opt.choices;
           const current = sel[opt.key] ?? choices[0];
@@ -2374,9 +2374,9 @@ function renderDetail(){
           if (opt.type === 'slider') {
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
-            return `<div>
-              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7;">(${min}–${max} ${esc(suffix)})</span></div>
-              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
+            return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
+              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
@@ -2393,10 +2393,19 @@ function renderDetail(){
               ${choices.map(c => `<button class="pill ${c===activeVal?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
             </div>`}
           </div>`;
-        }).join('')}
-      </div>
-      <div style="margin-top:16px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
-        ${uploadBlockHtml()}
+        });
+        // Le opzioni marcate `row:true` (quantità/larghezza/altezza dei Volantini) stanno
+        // affiancate su una riga; le altre restano una per riga.
+        const opts = p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel));
+        const out = []; let group = null;
+        rendered.forEach((html, i) => {
+          if (opts[i].row) { (group = group || []).push(html); return; }
+          if (group) { out.push(`<div style="display:flex; gap:8px; align-items:stretch;">${group.join('')}</div>`); group = null; }
+          out.push(html);
+        });
+        if (group) out.push(`<div style="display:flex; gap:8px; align-items:stretch;">${group.join('')}</div>`);
+        return out.join('');
+        })()}
       </div>
       <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90);">
         ${p.id === '215' ? (() => {
@@ -2420,6 +2429,9 @@ function renderDetail(){
             </div>` : '')}
         <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${(p.id === '215' || p.id === '5851') ? 'Totale sopra, IVA inclusa.' : 'Prezzo su richiesta in base alla configurazione selezionata.'}</div>
         ${p.pricing.depositNote ? `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${esc(p.pricing.depositNote(sel, p))}</div>` : ''}
+        <div style="margin:16px 0; ${p.pricing.hideUpload ? 'display:none;' : ''}">
+          ${uploadBlockHtml()}
+        </div>
         ${p.id === '215' ? paymentBlockHtml(p, p.pricing.formula(sel) * 1.5, null, sel)
           : (p.id === '198' ? paymentBlockHtml(p, Math.max(p.pricing.formula(sel), p.pricing.basePrice ?? 0), null, sel)
           : (p.id === '5805' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
