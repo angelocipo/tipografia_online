@@ -55,6 +55,9 @@
   a:hover { color: oklch(0.35 0.12 155); }
   img { max-width: 100%; }
   button { font-family: inherit; }
+  /* Riserva l'altezza della pagina finché il JS non ha disegnato il contenuto:
+     evita che il footer parta in alto e venga spinto giù (Cumulative Layout Shift). */
+  #app:empty { min-height: 160vh; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
   .card { animation: fadeIn 0.3s ease both; cursor:pointer; background:#fff; border:1px solid oklch(0.91 0.005 90); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; transition:transform 0.15s, box-shadow 0.15s; }
   .card:hover { transform:translateY(-3px); box-shadow:0 12px 28px -12px oklch(0.2 0.01 90 / 0.18); border-color:oklch(0.85 0.005 90); }
