@@ -139,12 +139,19 @@ module.exports = async (req, res) => {
       unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${w}×${h} mm, ${materiale || 'gr. 100'}, ${stampa || '1 lato a colori'}${perfRate ? ', perforazione' : ''}${piegheRate ? ', ' + pieghe : ''}, ${q}pz`;
     } else if (product.type === 'strutturaEventi') {
-      const { altezza, larghezza } = formula || {};
-      const h = parseFloat(altezza) || 100, w = parseFloat(larghezza) || 100;
-      const base = w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
+      const { altezza, larghezza, unit } = formula || {};
+      // I campi sono ora liberi: limito i valori lato server all'intervallo dichiarato per unità.
+      const LIMITS = { CM:{h:[100,400],w:[100,600]}, INCH:{h:[40,160],w:[40,240]}, FEET:{h:[4,15],w:[4,20]} };
+      const lim = LIMITS[String(unit || 'CM').toUpperCase()] || LIMITS.CM;
+      const clamp = (v, [lo, hi], def) => Math.min(Math.max(parseFloat(v) || def, lo), hi);
+      const h = clamp(altezza, lim.h, lim.h[0]), w = clamp(larghezza, lim.w, lim.w[0]);
+      // Il prezzo si calcola sempre in cm, qualunque unità abbia scelto il cliente.
+      const k = ({ CM:1, INCH:2.54, FEET:30.48 })[String(unit || 'CM').toUpperCase()] || 1;
+      const hCm = h * k, wCm = w * k;
+      const base = wCm * 0.002 + 29 + ((2*hCm + 2*wCm) / 100) * 50;
       const total = base * 1.5;
       unitAmountCents = Math.round(total * 100);
-      description = `${product.nome} — ${altezza}×${larghezza}, prezzo € ${base.toFixed(2)} + caparra 50% (€ ${(base/2).toFixed(2)})`;
+      description = `${product.nome} — ${h}×${w} ${String(unit || 'CM').toUpperCase()}, prezzo € ${base.toFixed(2)} + caparra 50% (€ ${(base/2).toFixed(2)})`;
     } else if (product.type === 'scatolaGioielli') {
       const { misuraIdx, coloreIdx, qty } = formula || {};
       const mIdx = Math.min(Math.max(Number.isInteger(misuraIdx) ? misuraIdx : 0, 0), product.misuraRate.length - 1);
