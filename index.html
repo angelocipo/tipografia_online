@@ -179,6 +179,13 @@ const ROLLUP_FEATURES = [
   'Banner sostituibile, consegnato preconfezionato',
   'Include borsa da trasporto',
 ];
+// Struttura per Eventi: le misure si inseriscono in cm, inch o feet ma il prezzo si calcola sempre in cm.
+const STRUTTURA_TO_CM = { CM:1, INCH:2.54, FEET:30.48 };
+function struttura215cm(sel) {
+  const k = STRUTTURA_TO_CM[String(sel.unit || 'CM').toUpperCase()] || 1;
+  return [(Number(sel.altezza) || 100) * k, (Number(sel.larghezza) || 100) * k];
+}
+
 const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
@@ -615,26 +622,22 @@ const PRODUCTS = [
     specs:{'Altezza':'100 – 400 cm','Larghezza':'100 – 600 cm','Materiale':'Alluminio certificato + PVC ignifugo'},
     pricing:{type:'quote',
       formula: (sel) => {
-        const h = Number(sel.altezza ?? 100), w = Number(sel.larghezza ?? 100);
+        const [h, w] = struttura215cm(sel);
         return w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
       },
       depositNote: (sel, p) => {
-        const h = Number(sel.altezza ?? 100), w = Number(sel.larghezza ?? 100);
+        const [h, w] = struttura215cm(sel);
         const base = w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
         return `Prezzo prodotto € ${fmtEUR(base)} + caparra confirmatoria 50% (€ ${fmtEUR(base/2)}), restituita dopo ispezione senza danni.`;
       },
       options:[
+      { key:'altezza', label:'Altezza', type:'slider', row:true, unitSuffix:'', choicesByUnit:{
+        CM:['100','400'], INCH:['40','160'], FEET:['4','15'],
+      } },
+      { key:'larghezza', label:'Larghezza', type:'slider', row:true, unitSuffix:'', choicesByUnit:{
+        CM:['100','600'], INCH:['40','240'], FEET:['4','20'],
+      } },
       { key:'unit', label:'Unità di misura', choices:['CM','INCH','FEET'] },
-      { key:'altezza', label:'Altezza', unitSuffix:'', choicesByUnit:{
-        CM:['100','150','200','250','300','350','400'],
-        INCH:['40','60','80','100','120','140','160'],
-        FEET:['3.3','5','7','9','11','13','15'],
-      } },
-      { key:'larghezza', label:'Larghezza', unitSuffix:'', choicesByUnit:{
-        CM:['100','150','200','250','300','350','400','450','500','550','600'],
-        INCH:['40','65','90','115','140','165','190','215','240'],
-        FEET:['3.3','6','9','12','15','18','20'],
-      } },
     ] } },
   { id:'220', ean:'0652026573428', nome:'2 Adesivi Jeep Renegade Stella Graffiata', categoria:'Adesivi Sagomati',
     img:'img/jeep-renegade2-450-copia.webp',
@@ -2378,9 +2381,11 @@ function renderDetail(){
           if (opt.type === 'slider') {
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
+            const step = opt.step || 1;
+            const shown = Math.min(Math.max(Number(current) || min, min), max);
             return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
               <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
-              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
+              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${step}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
@@ -2626,6 +2631,7 @@ function renderDetail(){
   app.querySelectorAll('[data-str-formato]').forEach(el => el.addEventListener('click', () => { striscioniState(p).formatIdx = parseInt(el.dataset.strFormato,10); renderDetail(); }));
   app.querySelectorAll('[data-thumb]').forEach(el => el.addEventListener('click', () => { state.mainImageOverride = el.dataset.thumb; renderDetail(); }));
   app.querySelectorAll('[data-quote-key][data-quote-val]').forEach(el => el.addEventListener('click', () => {
+    const prevUnit = (state.quoteSelById[p.id]||{}).unit || 'CM';
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.dataset.quoteVal };
     const sel2 = state.quoteSelById[p.id];
     const cittaOpt = (p.pricing.options||[]).find(o => o.key === 'citta' && o.heroImagesBySize);
@@ -2636,6 +2642,24 @@ function renderDetail(){
     }
     const heroOpt = (p.pricing.options||[]).find(o => o.key === el.dataset.quoteKey && o.heroImages);
     if (heroOpt && heroOpt.heroImages[el.dataset.quoteVal]) state.mainImageOverride = heroOpt.heroImages[el.dataset.quoteVal];
+    // Cambiando unità di misura riporto le misure salvate dentro il nuovo intervallo: campo, prezzo mostrato e importo Stripe restano allineati.
+    if (el.dataset.quoteKey === 'unit') {
+      const kOld = STRUTTURA_TO_CM[String(prevUnit || 'CM').toUpperCase()] || 1;
+      const kNew = STRUTTURA_TO_CM[String(sel2.unit || 'CM').toUpperCase()] || 1;
+      (p.pricing.options||[]).forEach(o => {
+        if (!o.choicesByUnit) return;
+        const v = Number(sel2[o.key]);
+        if (!isNaN(v) && kOld !== kNew) sel2[o.key] = String(Math.round(v * kOld / kNew));
+      });
+      (p.pricing.options||[]).forEach(o => {
+        if (!o.choicesByUnit) return;
+        const range = o.choicesByUnit[sel2.unit];
+        if (!range) return;
+        const lo = Number(range[0]), hi = Number(range[range.length-1]);
+        const cur = Number(sel2[o.key]);
+        sel2[o.key] = String(isNaN(cur) ? lo : Math.min(Math.max(cur, lo), hi));
+      });
+    }
     renderDetail();
   }));
   app.querySelectorAll('input[data-quote-num]').forEach(el => {

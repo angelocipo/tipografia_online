@@ -1177,7 +1177,7 @@ function renderDetail(){
     const sel = state.quoteSelById[p.id] || {};
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:6px;">
-        ${p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel)).map(opt => {
+        ${(() => { const rendered = p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel)).map(opt => {
           const unitVal = sel.unit ?? (opt.choicesByUnit ? Object.keys(opt.choicesByUnit)[0] : null);
           const choices = opt.choicesByUnit ? opt.choicesByUnit[unitVal] : opt.choices;
           const current = sel[opt.key] ?? choices[0];
@@ -1186,9 +1186,10 @@ function renderDetail(){
           if (opt.type === 'slider') {
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
-            return `<div>
-              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7;">(${min}–${max} ${esc(suffix)})</span></div>
-              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(current))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
+            const shown = Math.min(Math.max(Number(current) || min, min), max);
+            return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
+              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${opt.step || 1}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
@@ -1205,7 +1206,18 @@ function renderDetail(){
               ${choices.map(c => `<button class="pill ${c===activeVal?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
             </div>`}
           </div>`;
-        }).join('')}
+        });
+        // Options marked `row:true` sit side by side on one line; the others stay one per row.
+        const opts = p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel));
+        const out = []; let group = null;
+        rendered.forEach((html, i) => {
+          if (opts[i].row) { (group = group || []).push(html); return; }
+          if (group) { out.push(`<div style="display:flex; gap:8px; align-items:stretch;">${group.join('')}</div>`); group = null; }
+          out.push(html);
+        });
+        if (group) out.push(`<div style="display:flex; gap:8px; align-items:stretch;">${group.join('')}</div>`);
+        return out.join('');
+        })()}
       </div>
       <div style="margin-top:16px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Upload your file <span style="opacity:.6;">(you'll receive submission instructions after payment)</span></div>
@@ -1419,6 +1431,17 @@ function renderDetail(){
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.dataset.quoteVal };
     const heroOpt = (p.pricing.options||[]).find(o => o.key === el.dataset.quoteKey && o.heroImages);
     if (heroOpt && heroOpt.heroImages[el.dataset.quoteVal]) state.mainImageOverride = heroOpt.heroImages[el.dataset.quoteVal];
+    // On a unit change, bring the stored sizes back into the new range so field, shown price and Stripe amount agree.
+    if (el.dataset.quoteKey === 'unit') {
+      (p.pricing.options||[]).forEach(o => {
+        if (!o.choicesByUnit) return;
+        const range = o.choicesByUnit[sel2.unit];
+        if (!range) return;
+        const lo = Number(range[0]), hi = Number(range[range.length-1]);
+        const cur = Number(sel2[o.key]);
+        sel2[o.key] = String(isNaN(cur) ? lo : Math.min(Math.max(cur, lo), hi));
+      });
+    }
     renderDetail();
   }));
   app.querySelectorAll('input[data-quote-num]').forEach(el => {
