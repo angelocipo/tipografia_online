@@ -206,11 +206,12 @@ const PRICING = {
     stampaChoices: ['1 lato', '2 lati'],
     consegnaChoices: ['1 Settimana', '2 gg Lavorativi'],
     // rates[spessoreIdx][stampaIdx][consegnaIdx] -> [30x40,40x60,50x70,70x100]
+    // Listino +20% applicato il 14/09/2026 (base storica: 31,35,43,58 / 65,69,76,93 ecc.)
     rates: [
-      [ [ [31,35,43,58], [65,69,76,93] ],   // 2mm, 1 lato: [1 sett, 2gg]
-        [ [32,36,44,67], [66,70,77,102] ] ], // 2mm, 2 lati: [1 sett, 2gg]
-      [ [ [33,38,48,67], [67,72,81,102] ],  // 5mm, 1 lato: [1 sett, 2gg]
-        [ [34,39,49,70], [67,73,83,105] ] ], // 5mm, 2 lati: [1 sett, 2gg]
+      [ [ [37.2,42,51.6,69.6], [78,82.8,91.2,111.6] ],   // 2mm, 1 lato: [1 sett, 2gg]
+        [ [38.4,43.2,52.8,80.4], [79.2,84,92.4,122.4] ] ], // 2mm, 2 lati: [1 sett, 2gg]
+      [ [ [39.6,45.6,57.6,80.4], [80.4,86.4,97.2,122.4] ],  // 5mm, 1 lato: [1 sett, 2gg]
+        [ [40.8,46.8,58.8,84], [80.4,87.6,99.6,126] ] ], // 5mm, 2 lati: [1 sett, 2gg]
     ],
   },
   '5720': { nome: 'Adesivo PVC 42×10 cm', ean: '0652026573305', type: 'tiersDelivery',
