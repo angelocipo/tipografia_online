@@ -1,4 +1,9 @@
 {
+  "redirects": [
+    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti", "destination": "/", "permanent": true },
+    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.html", "destination": "/", "permanent": true },
+    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.dc.html", "destination": "/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/tipografia-roma-eur.html", "destination": "/tipografia-roma-eur.dc.html" },
     { "source": "/centro-stampa-tipografia-roma-eur.html", "destination": "/centro-stampa-tipografia-roma-eur.dc.html" },
@@ -17,7 +22,6 @@
     { "source": "/canvas-con-foto-effetto-pittura-ad-olio.html", "destination": "/canvas-con-foto-effetto-pittura-ad-olio.dc.html" },
     { "source": "/stampa-poster-a-roma-in-24-ore.html", "destination": "/stampa-poster-a-roma-in-24-ore.dc.html" },
     { "source": "/preparare-lesecutivo-per-la-stampa.html", "destination": "/preparare-lesecutivo-per-la-stampa.dc.html" },
-    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.html", "destination": "/prezzi-strategici-qualita-professionale-risultati-concreti.dc.html" },
     { "source": "/noleggio-stand-fieristici-leggeri-roma.html", "destination": "/noleggio-stand-fieristici-leggeri-roma.dc.html" },
     { "source": "/termini-di-servizio-terms-of-service.html", "destination": "/termini-di-servizio-terms-of-service.dc.html" },
     { "source": "/privacy-gdpr.html", "destination": "/privacy-gdpr.dc.html" },
