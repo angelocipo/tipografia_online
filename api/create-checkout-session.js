@@ -23,6 +23,8 @@ module.exports = async (req, res) => {
     }
 
     let unitAmountCents, description;
+    // Dimensioni inserite dal cliente: virgola o punto, arrotondate a 1 decimale.
+    const dim1 = (v) => { const n = Math.round(parseFloat(String(v).replace(',', '.')) * 10) / 10; return isNaN(n) ? 0 : n; };
     if (product.type === 'formula') {
       const qty = Math.max(1, parseInt(formula?.qty, 10) || 1);
       const strutturaIdx = formula?.strutturaIdx === 1 ? 1 : 0;
@@ -59,8 +61,8 @@ module.exports = async (req, res) => {
       description = `${product.nome} — ${formats[idx]}, ${consegnaLabel}${occhielliLabel ? ', ' + occhielliLabel : ''}, ${qty}pz`;
     } else if (product.type === 'bv24h') {
       const { larghezza, altezza, qty, latiIdx, cartaIdx, soggettiIdx } = formula || {};
-      const l = Math.max(product.larghezza.min, Math.min(product.larghezza.max, parseInt(larghezza, 10) || product.larghezza.default));
-      const a = Math.max(product.altezza.min, Math.min(product.altezza.max, parseInt(altezza, 10) || product.altezza.default));
+      const l = Math.max(product.larghezza.min, Math.min(product.larghezza.max, dim1(larghezza) || product.larghezza.default));
+      const a = Math.max(product.altezza.min, Math.min(product.altezza.max, dim1(altezza) || product.altezza.default));
       const q = Math.max(product.qty.min, Math.min(product.qty.max, parseInt(qty, 10) || product.qty.default));
       const latI = latiIdx === 1 ? 1 : 0;
       const cartaI = Math.min(Math.max(Number.isInteger(cartaIdx) ? cartaIdx : 0, 0), product.cartaMultiplier.length - 1);
@@ -68,15 +70,15 @@ module.exports = async (req, res) => {
       const bv = product.cartaMultiplier[cartaI];
       const soggetti = product.soggettiMultiplier[sogI];
       const lati = product.latiMultiplier[latI];
-      let total = Math.round(20 + bv * soggetti * lati * q * (l+20)*(a+40)/440/320);
+      let total = Math.round(20 + bv * soggetti * lati * q * (l*10+20)*(a*10+40)/440/320);
       let angoliSuffix = '';
       if (formula && formula.angoliArrotondati) { total += angoliArrotondatiPrice(q); angoliSuffix = ', Angoli arrotondati'; }
       unitAmountCents = total * 100;
-      description = `${product.nome} — ${l}×${a} mm, gr.${product.cartaChoices[cartaI]}, ${product.latiChoices[latI]}, ${product.soggettiChoices[sogI]} soggetti, ${q}pz${angoliSuffix}`;
+      description = `${product.nome} — ${l}×${a} cm, gr.${product.cartaChoices[cartaI]}, ${product.latiChoices[latI]}, ${product.soggettiChoices[sogI]} soggetti, ${q}pz${angoliSuffix}`;
     } else if (product.type === 'adesiviPrespaziati') {
       const { base, altezza, copie, lavorazioneIdx, coloreIdx, materialeIdx, altroColore } = formula || {};
-      const b = Math.max(product.base.min, Math.min(product.base.max, parseInt(base, 10) || product.base.default));
-      const a = Math.max(product.altezza.min, Math.min(product.altezza.max, parseInt(altezza, 10) || product.altezza.default));
+      const b = Math.max(product.base.min, Math.min(product.base.max, dim1(base) || product.base.default));
+      const a = Math.max(product.altezza.min, Math.min(product.altezza.max, dim1(altezza) || product.altezza.default));
       const c = Math.max(product.copie.min, parseInt(copie, 10) || product.copie.default);
       const lIdx = Math.min(Math.max(Number.isInteger(lavorazioneIdx) ? lavorazioneIdx : 0, 0), product.lavorazioni.length - 1);
       const mIdx = materialeIdx === 1 ? 1 : 0;
@@ -89,8 +91,8 @@ module.exports = async (req, res) => {
       description = `${product.nome} — ${b}×${a} cm, ${colore}, ${product.lavorazioni[lIdx].label}, ${c}pz`;
     } else if (product.type === 'adesivoInterno') {
       const { larghezza, altezza, qty, sagomaIdx } = formula || {};
-      const l = Math.max(product.larghezza.min, Math.min(product.larghezza.max, parseInt(larghezza, 10) || product.larghezza.default));
-      const a = Math.max(product.altezza.min, Math.min(product.altezza.max, parseInt(altezza, 10) || product.altezza.default));
+      const l = Math.max(product.larghezza.min, Math.min(product.larghezza.max, dim1(larghezza) || product.larghezza.default));
+      const a = Math.max(product.altezza.min, Math.min(product.altezza.max, dim1(altezza) || product.altezza.default));
       const q = Math.max(product.qty.min, Math.min(product.qty.max, parseInt(qty, 10) || product.qty.default));
       const sIdx = sagomaIdx === 1 ? 1 : 0;
       const mult = product.sagomaMultiplier[sIdx];
@@ -126,24 +128,24 @@ module.exports = async (req, res) => {
       description = `${product.nome} — ${q}pz, ${f} facciate B/N`;
     } else if (product.type === 'volantiniPieghevoli') {
       // Formula Studio Wombat: (carta + stampa) × q × (L+20)(H+20)/440/320 + perforazione×q + pieghe×q.
-      // Stessi limiti dei campi sulla scheda prodotto (25–1.000 pz, 50–320 × 50–440 mm).
+      // Stessi limiti dei campi sulla scheda prodotto (25–1.000 pz, 5–32 × 5–44 cm).
       const { qty, larghezza, altezza, materiale, stampa, perforazione, pieghe } = formula || {};
       const q = Math.min(1000, Math.max(25, parseInt(qty, 10) || 25));
-      const w = Math.min(320, Math.max(50, parseInt(larghezza, 10) || 50));
-      const h = Math.min(440, Math.max(50, parseInt(altezza, 10) || 50));
+      const w = Math.min(32, Math.max(5, dim1(larghezza) || 5)) * 10; // cm → mm
+      const h = Math.min(44, Math.max(5, dim1(altezza) || 5)) * 10;
       const cartaRate = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[materiale] ?? 0.13;
       const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.39 }[stampa] ?? 0.4;
       const perfRate = perforazione === 'Si' ? 0.05 : 0;
       const piegheRate = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[pieghe] ?? 0;
       const total = (cartaRate + stampaRate) * q * (w+20) * (h+20) / 440 / 320 + perfRate*q + piegheRate*q + 10; // €10 spese fisse d'ordine
       unitAmountCents = Math.round(total * 100);
-      description = `${product.nome} — ${w}×${h} mm, ${materiale || 'gr. 100'}, ${stampa || '1 lato a colori'}${perfRate ? ', perforazione' : ''}${piegheRate ? ', ' + pieghe : ''}, ${q}pz`;
+      description = `${product.nome} — ${w/10}×${h/10} cm, ${materiale || 'gr. 100'}, ${stampa || '1 lato a colori'}${perfRate ? ', perforazione' : ''}${piegheRate ? ', ' + pieghe : ''}, ${q}pz`;
     } else if (product.type === 'strutturaEventi') {
       const { altezza, larghezza, unit } = formula || {};
       // I campi sono ora liberi: limito i valori lato server all'intervallo dichiarato per unità.
       const LIMITS = { CM:{h:[100,400],w:[100,600]}, INCH:{h:[40,160],w:[40,240]}, FEET:{h:[4,15],w:[4,20]} };
       const lim = LIMITS[String(unit || 'CM').toUpperCase()] || LIMITS.CM;
-      const clamp = (v, [lo, hi], def) => Math.min(Math.max(parseFloat(v) || def, lo), hi);
+      const clamp = (v, [lo, hi], def) => Math.min(Math.max(dim1(v) || def, lo), hi);
       const h = clamp(altezza, lim.h, lim.h[0]), w = clamp(larghezza, lim.w, lim.w[0]);
       // Il prezzo si calcola sempre in cm, qualunque unità abbia scelto il cliente.
       const k = ({ CM:1, INCH:2.54, FEET:30.48 })[String(unit || 'CM').toUpperCase()] || 1;
@@ -173,7 +175,7 @@ module.exports = async (req, res) => {
       const excelRate = creazione_file === 'Yes, create the file for me' ? 0.5 : 0;
       let total, desc;
       if (holder === 'Without' || formato === 'Custom size (without badge holder)') {
-        const w = parseFloat(larghezza) || 5, h = parseFloat(altezza) || 8;
+        const w = dim1(larghezza) || 5, h = dim1(altezza) || 8;
         const vol = { '80 gsm':0.074, '100 gsm':0.22, '200 gsm':0.44, '300 gsm':0.68, '350 gsm':0.8, '400 gsm':0.92 }[carta] || 0.68;
         const plastRate = plastificazione === 'Yes' ? 0.2 : 0;
         const lanyardRate = cordino === 'Yes' ? 0.3 : 0;
@@ -195,7 +197,7 @@ module.exports = async (req, res) => {
       const excelRate = creazione_file === 'Si, create voi il file da stampa' ? 0.5 : 0;
       let total, desc;
       if (holder === 'Senza' || formato === 'Su misura (senza porta badge)') {
-        const w = parseFloat(larghezza) || 5, h = parseFloat(altezza) || 8;
+        const w = dim1(larghezza) || 5, h = dim1(altezza) || 8;
         const vol = { 'gr. 80':0.074, 'gr. 100':0.22, 'gr. 200':0.44, 'gr. 300':0.68, 'gr. 350':0.8, 'gr. 400':0.92 }[carta] || 0.68;
         const plastRate = plastificazione === 'Si' ? 0.2 : 0;
         const lanyardRate = cordino === 'Si' ? 0.3 : 0;
@@ -212,7 +214,7 @@ module.exports = async (req, res) => {
       description = desc;
     } else if (product.type === 'quadroWarhol') {
       const { lato_lungo, lato_corto, pannelli, creazione } = formula || {};
-      const ll = parseFloat(lato_lungo) || 30, lc = parseFloat(lato_corto) || 21;
+      const ll = dim1(lato_lungo) || 30, lc = dim1(lato_corto) || 21;
       const pannelliIdx = ['1','2','3','4'].indexOf(String(pannelli || '1'));
       const pannelliMult = [1, 1.8, 2.7, 3.6][pannelliIdx === -1 ? 0 : pannelliIdx];
       const creazionePrice = creazione === "No, il file ce l'ho io" ? -2 : 30;
@@ -221,7 +223,7 @@ module.exports = async (req, res) => {
       description = `${product.nome} — ${ll}×${lc} cm, ${pannelli || '1'} pannelli, ${creazione || 'creazione file inclusa'}`;
     } else if (product.type === 'fotoQuadro') {
       const { lato_lungo, lato_corto, spessore } = formula || {};
-      const ll = parseFloat(lato_lungo) || 30, lc = parseFloat(lato_corto) || 21;
+      const ll = dim1(lato_lungo) || 30, lc = dim1(lato_corto) || 21;
       const total = Math.max(1.3 * ll * lc / 100 + 22, product.basePrice ?? 0);
       unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${ll}×${lc} cm, ${spessore || ''}`;
