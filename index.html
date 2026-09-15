@@ -757,12 +757,12 @@ const PRODUCTS = [
     gallery:['img/100-bv-IMG_2664-ac-copia-2.webp'],
     intro:'Biglietti da visita stampati in giornata, 1 o 2 lati, a partire da 50 esemplari, carta gr. 300/350/400. Stampa digitale.',
     warning:'Nota: la resa cromatica della stampa digitale non ha la stessa qualità della stampa offset, ideale però per tirature rapide e piccole quantità.',
-    features:['Stampa digitale in 24H, 1 o 2 lati','Formato personalizzabile da 55×55 a 105×148 mm','Fino a 10 soggetti diversi nello stesso ordine'],
+    features:['Stampa digitale in 24H, 1 o 2 lati','Formato personalizzabile da 5,5×5,5 a 10,5×14,8 cm','Fino a 10 soggetti diversi nello stesso ordine'],
     specs:{},
     // Reconstructed 1:1 from the real APF config for this product (Larghezza × Altezza × Quantità × Lati × Carta × Soggetti diversi).
     pricing:{ type:'bv24h',
-      larghezza: { min:55, max:105, default:55 },
-      altezza: { min:55, max:148, default:85 },
+      larghezza: { min:5.5, max:10.5, default:5.5 },
+      altezza: { min:5.5, max:14.8, default:8.5 },
       qty: { min:50, max:1000, default:100 },
       latiChoices: ['1 lato', '2 lati'],
       latiMultiplier: [1, 1.5],
@@ -843,13 +843,13 @@ const PRODUCTS = [
     img:'img/volantini-pieghevoli-personalizzati.png',
     gallery:['img/volantini-pieghevoli-personalizzati.png'],
     intro:'Volantini e pieghevoli su misura: scegli formato libero, materiale, stampa, perforazione e pieghe. Prezzo calcolato sulla superficie reale della carta.',
-    features:['Formato libero da 50×50 a 320×440 mm','Carta da gr. 100 a gr. 400, anche martellata gr. 280','Stampa 1 o 2 lati, a colori o B/N','Perforazione e fino a 3 pieghe','Quantità da 25 a 1.000 pezzi'],
-    specs:{'Quantità':'25 – 1.000 pz','Formato':'da 50×50 a 320×440 mm','Carta':'gr. 100 – gr. 400, martellata gr. 280'},
+    features:['Formato libero da 5×5 a 32×44 cm','Carta da gr. 100 a gr. 400, anche martellata gr. 280','Stampa 1 o 2 lati, a colori o B/N','Perforazione e fino a 3 pieghe','Quantità da 25 a 1.000 pezzi'],
+    specs:{'Quantità':'25 – 1.000 pz','Formato':'da 5×5 a 32×44 cm','Carta':'gr. 100 – gr. 400, martellata gr. 280'},
     // Ricostruito 1:1 dalla formula Studio Wombat fornita dal titolare (superficie carta su foglio 440×320 mm).
     pricing:{type:'quote', basePrice:0,
       formula: (sel) => {
         const q = Number(sel.qty ?? 25);
-        const w = Number(sel.larghezza ?? 50), h = Number(sel.altezza ?? 50);
+        const w = Number(sel.larghezza ?? 5) * 10, h = Number(sel.altezza ?? 5) * 10; // cm → mm
         const carta = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[sel.materiale] ?? 0.13;
         const stampa = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.39 }[sel.stampa] ?? 0.4;
         const perf = sel.perforazione === 'Si' ? 0.05 : 0;
@@ -858,8 +858,8 @@ const PRODUCTS = [
       },
       options:[
       { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', row:true, choices:['25','1000'] },
-      { key:'larghezza', label:'Larghezza (50–320)', type:'slider', unitSuffix:'mm', row:true, choices:['50','320'] },
-      { key:'altezza', label:'Altezza (50–440)', type:'slider', unitSuffix:'mm', row:true, choices:['50','440'] },
+      { key:'larghezza', label:'Larghezza (5–32)', type:'slider', unitSuffix:'cm', row:true, choices:['5','32'] },
+      { key:'altezza', label:'Altezza (5–44)', type:'slider', unitSuffix:'cm', row:true, choices:['5','44'] },
       { key:'materiale', label:'Materiale', choices:['gr. 100','gr. 200','gr. 300','gr. 400','gr. 280 martellata'] },
       { key:'stampa', label:'Stampa', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato bianco nero + 1 a colori'] },
       { key:'perforazione', label:'Perforazione', choices:['No grazie','Si'] },
@@ -1038,7 +1038,7 @@ function priceFrom(p){
   }
   if (p.pricing.type === 'bv24h') {
     const { larghezza, altezza, qty } = p.pricing;
-    return Math.round(20 + 1 * 1 * 1 * qty.default * (larghezza.default+20)*(altezza.default+40)/440/320);
+    return Math.round(20 + 1 * 1 * 1 * qty.default * (larghezza.default*10+20)*(altezza.default*10+40)/440/320);
   }
   if (p.pricing.type === 'formula') {
     const minStruttura = Math.min(...p.pricing.strutturaChoices.map(c => c.rate));
@@ -1188,7 +1188,7 @@ async function startStripeCheckout(btn){
       const p = PRODUCTS.find(x => x.id === productId);
       const f = adesivoState(p);
       body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, sagomaIdx: f.sagomaIdx };
-      human = { 'Larghezza': f.larghezza + ' mm', 'Altezza': f.altezza + ' mm', 'Quantità': f.qty, 'Sagoma': p.pricing.sagomaChoices[f.sagomaIdx] };
+      human = { 'Larghezza': f.larghezza + ' cm', 'Altezza': f.altezza + ' cm', 'Quantità': f.qty, 'Sagoma': p.pricing.sagomaChoices[f.sagomaIdx] };
     }
     if (pricingType === 'adesiviPrespaziati') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -1202,7 +1202,7 @@ async function startStripeCheckout(btn){
       const f = bv24hState(p);
       const angoliOn = !!state.angoliById[productId];
       body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx, angoliArrotondati: angoliOn };
-      human = { 'Larghezza': f.larghezza + ' mm', 'Altezza': f.altezza + ' mm', 'Quantità': f.qty, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': 'gr. ' + p.pricing.cartaChoices[f.cartaIdx], 'Soggetti diversi': p.pricing.soggettiChoices[f.soggettiIdx], ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
+      human = { 'Larghezza': f.larghezza + ' cm', 'Altezza': f.altezza + ' cm', 'Quantità': f.qty, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': 'gr. ' + p.pricing.cartaChoices[f.cartaIdx], 'Soggetti diversi': p.pricing.soggettiChoices[f.soggettiIdx], ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
     }
     if (pricingType === 'locandine250') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -1240,7 +1240,7 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'quote' && productId === '5851') {
       const sel = state.quoteSelById[productId] || {};
-      body.formula = { qty: sel.qty || '25', larghezza: sel.larghezza || '50', altezza: sel.altezza || '50', materiale: sel.materiale || 'gr. 100', stampa: sel.stampa || '1 lato a colori', perforazione: sel.perforazione || 'No grazie', pieghe: sel.pieghe || 'Nessuna' };
+      body.formula = { qty: sel.qty || '25', larghezza: sel.larghezza || '5', altezza: sel.altezza || '5', materiale: sel.materiale || 'gr. 100', stampa: sel.stampa || '1 lato a colori', perforazione: sel.perforazione || 'No grazie', pieghe: sel.pieghe || 'Nessuna' };
     }
     if (pricingType === 'quote' && productId === '5047') {
       const sel = state.quoteSelById[productId] || {};
@@ -1483,7 +1483,8 @@ function computeBv24hPrice(p, f){
   const bv = p.pricing.cartaMultiplier[f.cartaIdx];
   const soggetti = p.pricing.soggettiMultiplier[f.soggettiIdx];
   const lati = p.pricing.latiMultiplier[f.latiIdx];
-  return Math.round(20 + bv * soggetti * lati * f.qty * (f.larghezza+20)*(f.altezza+40)/440/320);
+  // I campi sono in cm, la formula Studio Wombat lavora in mm: ×10.
+  return Math.round(20 + bv * soggetti * lati * f.qty * (f.larghezza*10+20)*(f.altezza*10+40)/440/320);
 }
 
 const app = document.getElementById('app');
@@ -1703,6 +1704,17 @@ function renderGrid(){
             ['Polo Alta Visibilità Atrio L/S', 'https://www.tshirt-shop.online/hv-atrio-ls.html', 'https://www.tshirt-shop.online/img/hv-atrio-ls-hv9319.webp', 'img/polo-austral-hero.webp'],
             ['Polo Alta Visibilità Foran', 'https://www.tshirt-shop.online/hv-foran.html', 'https://www.tshirt-shop.online/img/hv-foran-hv9324.webp', 'img/polo-austral-hero.webp'],
             ['Polo Alta Visibilità Foran L/S', 'https://www.tshirt-shop.online/hv-foran-ls.html', 'https://www.tshirt-shop.online/img/hv-foran-ls-hv9325.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Uomo Prince', 'https://www.tshirt-shop.online/prince-polo.html', 'https://www.tshirt-shop.online/img/prince-card.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Donna Prince', 'https://www.tshirt-shop.online/prince-donna.html', 'https://www.tshirt-shop.online/img/prince-donna-hero.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Polaris', 'https://www.tshirt-shop.online/hv-polaris.html', 'https://www.tshirt-shop.online/img/polaris-221.webp', 'img/polo-austral-hero.webp'],
+            ['Camicia Uomo Aifos Manica Corta', 'https://www.tshirt-shop.online/aifos.html', 'https://www.tshirt-shop.online/img/aifos-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Uomo Aifos Manica Lunga', 'https://www.tshirt-shop.online/aifos-ls.html', 'https://www.tshirt-shop.online/img/aifos-ls-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Uomo Moscu Manica Lunga', 'https://www.tshirt-shop.online/moscu.html', 'https://www.tshirt-shop.online/img/moscu-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Donna Moscu Manica Lunga', 'https://www.tshirt-shop.online/moscu-donna.html', 'https://www.tshirt-shop.online/img/moscu-donna-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Donna Sofia Manica Corta', 'https://www.tshirt-shop.online/sofia.html', 'https://www.tshirt-shop.online/img/sofia-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Donna Sofia Manica Lunga', 'https://www.tshirt-shop.online/sofia-ls.html', 'https://www.tshirt-shop.online/img/sofia-ls-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camice da Laboratorio Vaccine', 'https://www.tshirt-shop.online/vaccine.html', 'https://www.tshirt-shop.online/img/vaccine-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camice da Laboratorio Vaccine Donna', 'https://www.tshirt-shop.online/vaccine-donna.html', 'https://www.tshirt-shop.online/img/vaccine-donna-hero.webp', 'img/tshirt-dic-copia.webp'],
             ['Promozione 100 Magliette', 'https://www.tshirt-shop.online/promozione-100-magliette.html', 'img/100-t-shirt-copia600-1.webp', ''],
           ].map(([nome, url, img, imgFallback]) => `
             <a href="${url}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; background:#fff; border:1px solid oklch(0.91 0.005 90); border-radius:14px; padding:0 0 16px; overflow:hidden; display:flex; flex-direction:column; gap:8px; transition:transform 0.15s, box-shadow 0.15s;">
@@ -1890,11 +1902,11 @@ function renderDetail(){
         <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza cm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
-            <input type="number" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="adesLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="adesLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
-            <input type="number" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="adesAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="adesAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
@@ -1946,11 +1958,11 @@ function renderDetail(){
         <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Base cm (lato lungo, ${p.pricing.base.min}–${p.pricing.base.max})</div>
-            <input type="number" min="${p.pricing.base.min}" max="${p.pricing.base.max}" id="prespBase" value="${f.base}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.base.min}" max="${p.pricing.base.max}" id="prespBase" value="${f.base}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (lato corto, ${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
-            <input type="number" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="prespAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="prespAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
@@ -1986,12 +1998,12 @@ function renderDetail(){
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
         <div class="p-two">
           <div>
-            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza mm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
-            <input type="number" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="bvLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza cm (${String(p.pricing.larghezza.min).replace('.',',')}–${String(p.pricing.larghezza.max).replace('.',',')})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="bvLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
-            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza mm (${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
-            <input type="number" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="bvAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (${String(p.pricing.altezza.min).replace('.',',')}–${String(p.pricing.altezza.max).replace('.',',')})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="bvAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
@@ -2405,7 +2417,8 @@ function renderDetail(){
           if (opt.type === 'slider') {
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
-            const step = opt.step || 1;
+            // Campi dimensione: 1 cifra dopo la virgola; le quantità restano interi.
+            const step = opt.step || (['larghezza','altezza','base','lato_lungo','lato_corto'].includes(opt.key) ? 0.1 : 1);
             const shown = Math.min(Math.max(Number(current) || min, min), max);
             return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
               <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
@@ -2683,7 +2696,7 @@ function renderDetail(){
       (p.pricing.options||[]).forEach(o => {
         if (!o.choicesByUnit) return;
         const v = Number(sel2[o.key]);
-        if (!isNaN(v) && kOld !== kNew) sel2[o.key] = String(Math.round(v * kOld / kNew));
+        if (!isNaN(v) && kOld !== kNew) sel2[o.key] = String(Math.round(v * kOld / kNew * 10) / 10);
       });
       (p.pricing.options||[]).forEach(o => {
         if (!o.choicesByUnit) return;
