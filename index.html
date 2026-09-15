@@ -790,13 +790,13 @@ const PRODUCTS = [
     altLang:'custom-printed-badges-en.html',
     img:'img/ID-badge-close-up-in-professional-settinglandscape.webp',
     gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'],
-    intro:'Badge personalizzati per eventi e aziende, con o senza portabadge in plastica, stampa in giornata. Quantità da 50 a 1.000 pezzi.',
-    features:['Con o senza portabadge in plastica','Stampa fronte o fronte/retro, a colori o B/N','Laccio colorato opzionale (11 colori disponibili)','Quantità da 50 a 1.000 pezzi'],
-    specs:{'Quantità':'50 – 1.000 pz','Formati':'8,5×5,5, 10×15, 7,5×10 cm (con porta badge) o su misura','Tempi':'In giornata'},
+    intro:'Badge personalizzati per eventi e aziende, con o senza portabadge in plastica, stampa in giornata. Quantità da 35 a 1.000 pezzi.',
+    features:['Con o senza portabadge in plastica','Stampa fronte o fronte/retro, a colori o B/N','Laccio colorato opzionale (11 colori disponibili), con o senza porta badge','Quantità da 35 a 1.000 pezzi'],
+    specs:{'Quantità':'35 – 1.000 pz','Formati':'8,5×5,5, 10×15, 7,5×10 cm (con porta badge) o su misura','Tempi':'In giornata'},
     // Reconstructed 1:1 from the real APF config for this product (con/senza porta badge, formato/misura, stampa, carta, plastificazione, cordino).
     pricing:{type:'quote', basePrice:0,
       formula: (sel) => {
-        const q = Number(sel.qty ?? 50);
+        const q = Number(sel.qty ?? 35);
         const holder = sel.holder ?? 'Senza';
         const formato = sel.formato ?? '8,5×5,5 cm Landscape';
         const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato a colori + 1 lato bianco nero':0.39 }[sel.stampa] ?? 0.4;
@@ -805,7 +805,8 @@ const PRODUCTS = [
           const w = Number(sel.larghezza ?? 5), h = Number(sel.altezza ?? 8);
           const vol = { 'gr. 80':0.074, 'gr. 100':0.22, 'gr. 200':0.44, 'gr. 300':0.68, 'gr. 350':0.8, 'gr. 400':0.92 }[sel.carta] ?? 0.68;
           const plastRate = sel.plastificazione === 'Si' ? 0.2 : 0;
-          return vol*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + plastRate*3*q*(w+22)*(h+22)/44/32 + q*excelRate + 10;
+          const lanyardRateNo = sel.cordino === 'Si' ? 0.3 : 0;
+          return vol*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + plastRate*3*q*(w+22)*(h+22)/44/32 + q*excelRate + q*lanyardRateNo + 10;
         }
         const dims = { '8,5×5,5 cm Landscape':[9,12], '8,5×5,5 cm Portrait':[9,12], '10×15 cm Portrait':[9,6], '7,5×10 cm Portrait':[9,6] };
         const [w,h] = dims[formato] || [9,12];
@@ -813,17 +814,17 @@ const PRODUCTS = [
         return 0.68*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + q*1 + 10 + q*lanyardRate + q*excelRate;
       },
       options:[
-      { key:'qty', label:'Quantità (50–1.000)', type:'slider', unitSuffix:'pz', choices:['50','100','200','300','500','750','1000'] },
+      { key:'qty', label:'Quantità (35–1.000)', type:'slider', unitSuffix:'pz', choices:['35','100','200','300','500','750','1000'] },
       { key:'holder', label:'Porta Badge', choices:['Senza','Con'] },
       { key:'formato', label:'Formato Biglietto', noDefaultActive:true, heroImages:{'8,5×5,5 cm Landscape':'img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','8,5×5,5 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','10×15 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','7,5×10 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'}, choices:['8,5×5,5 cm Landscape','8,5×5,5 cm Portrait','10×15 cm Portrait','7,5×10 cm Portrait','Su misura (senza porta badge)'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
-      { key:'larghezza', label:'Larghezza solo su misura', type:'slider', choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
-      { key:'altezza', label:'Altezza solo su misura', type:'slider', choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'larghezza', label:'Larghezza solo su misura', type:'slider', step:0.1, choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'altezza', label:'Altezza solo su misura', type:'slider', step:0.1, choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'stampa', label:'Stampa su 1 lato o 2', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato a colori + 1 lato bianco nero'] },
       { key:'carta', label:'Grammatura carta', choices:['gr. 300'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
       { key:'carta', label:'Grammatura carta (solo su misura)', choices:['gr. 300','gr. 80','gr. 100','gr. 200','gr. 350','gr. 400'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
       { key:'plastificazione', label:'Plastificare (solo su misura)', choices:['No grazie','Si'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
-      { key:'cordino', label:'Cordino (solo con porta badge)', choices:['No grazie','Si'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
-      { key:'colore_cordino', label:'Colore cordino', noDefaultActive:true, heroImages:{'01 Bianco':'img/cordino-01.webp','02 Nero':'img/cordino-02.webp','03 Giallo':'img/cordino-03.webp','05 Blue Royal':'img/cordino-05.webp','31 Arancione':'img/cordino-31.webp','48 Fucsia':'img/cordino-48.webp','55 Blue Navy':'img/cordino-55.webp','60 Rosso':'img/cordino-60.webp','71 Porpora':'img/cordino-71.webp','226 Verde Felce':'img/cordino-226.webp','242 Royal Chiaro':'img/cordino-242.webp'}, choices:['01 Bianco','02 Nero','03 Giallo','05 Blue Royal','31 Arancione','48 Fucsia','55 Blue Navy','60 Rosso','71 Porpora','226 Verde Felce','242 Royal Chiaro'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' && sel.cordino === 'Si' },
+      { key:'cordino', label:'Cordino', choices:['No grazie','Si'] },
+      { key:'colore_cordino', label:'Colore cordino', noDefaultActive:true, heroImages:{'01 Bianco':'img/cordino-01.webp','02 Nero':'img/cordino-02.webp','03 Giallo':'img/cordino-03.webp','05 Blue Royal':'img/cordino-05.webp','31 Arancione':'img/cordino-31.webp','48 Fucsia':'img/cordino-48.webp','55 Blue Navy':'img/cordino-55.webp','60 Rosso':'img/cordino-60.webp','71 Porpora':'img/cordino-71.webp','226 Verde Felce':'img/cordino-226.webp','242 Royal Chiaro':'img/cordino-242.webp'}, choices:['01 Bianco','02 Nero','03 Giallo','05 Blue Royal','31 Arancione','48 Fucsia','55 Blue Navy','60 Rosso','71 Porpora','226 Verde Felce','242 Royal Chiaro'], showIf: (sel) => sel.cordino === 'Si' },
       { key:'creazione_file', label:'Creazione file da stampa dal modello e file excel', choices:['No, vi forniamo noi','Si, create voi il file da stampa'] },
     ] } },
   { id:'5805', ean:'0652026573565', nome:'Libretti Chiesa Personalizzati', categoria:'Servizi',
@@ -1243,7 +1244,7 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'quote' && productId === '5047') {
       const sel = state.quoteSelById[productId] || {};
-      body.formula = { qty: sel.qty || '50', holder: sel.holder || 'Senza', formato: sel.formato || '8,5×5,5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 lato a colori', carta: sel.carta || 'gr. 300', plastificazione: sel.plastificazione || 'No grazie', cordino: sel.cordino || 'No grazie', colore_cordino: (sel.cordino === 'Si' ? (sel.colore_cordino || '01 Bianco') : ''), creazione_file: sel.creazione_file || 'No, vi forniamo noi' };
+      body.formula = { qty: sel.qty || '35', holder: sel.holder || 'Senza', formato: sel.formato || '8,5×5,5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 lato a colori', carta: sel.carta || 'gr. 300', plastificazione: sel.plastificazione || 'No grazie', cordino: sel.cordino || 'No grazie', colore_cordino: (sel.cordino === 'Si' ? (sel.colore_cordino || '01 Bianco') : ''), creazione_file: sel.creazione_file || 'No, vi forniamo noi' };
     }
     if (pricingType === 'quote' && productId === '212') {
       const sel = state.quoteSelById[productId] || {};
@@ -2408,7 +2409,7 @@ function renderDetail(){
             const shown = Math.min(Math.max(Number(current) || min, min), max);
             return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
               <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
-              <input type="number" inputmode="numeric" min="${min}" max="${max}" step="${step}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
+              <input type="${step < 1 ? 'text' : 'number'}" inputmode="${step < 1 ? 'decimal' : 'numeric'}" min="${min}" max="${max}" step="${step}" data-quote-step="${step}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
@@ -2527,15 +2528,24 @@ function renderDetail(){
   function bindNum(id, min, max, apply, after) {
     const el = document.getElementById(id);
     if (!el) return;
+    // Campi con step decimale (es. badge su misura): 1 cifra dopo la virgola.
+    const stepAttr = parseFloat(el.dataset.quoteStep || '1');
+    const dec = stepAttr > 0 && stepAttr < 1;
+    const parseVal = (s) => dec ? Math.round(parseFloat(String(s).replace(',', '.')) * 10) / 10 : parseInt(s, 10);
     const done = after || renderDetail;
     el.addEventListener('input', (e) => {
       const raw = e.target.value.trim();
       if (raw === '') return;
-      let n = parseInt(raw, 10);
+      if (dec && /[.,]$/.test(raw)) return; // separatore appena digitato: aspetta il decimale
+      let n = parseVal(raw);
       if (isNaN(n)) return;
       if (max != null && n > max) { n = max; e.target.value = String(n); }
       if (min != null && n < min) return; // sta ancora digitando
       apply(n); done();
+      // Il re-render sostituisce l'input: rimetti il focus, il testo digitato (virgola o punto)
+      // e il cursore dopo le cifre.
+      const again = document.getElementById(id);
+      if (again) { if (dec) again.value = raw; again.focus(); try { const L = again.value.length; again.setSelectionRange(L, L); } catch (err) {} }
     });
     el.addEventListener('blur', (e) => {
       // Re-rendering detaches the focused input, and removing a focused element fires blur on
@@ -2543,10 +2553,11 @@ function renderDetail(){
       // the next one, and so on — an infinite loop that froze the page. Ignore dead nodes.
       if (!e.target.isConnected) return;
       const raw = e.target.value.trim();
-      let n = parseInt(raw, 10);
+      let n = parseVal(raw);
       if (isNaN(n) || (min != null && n < min)) n = (min != null ? min : 1);
       if (max != null && n > max) n = max;
-      if (String(n) === raw) return; // valore gia' valido: nessun re-render
+      if (String(n) === raw) return;
+      if (dec && parseVal(raw) === n) return; // "8,5" e "8.5" sono lo stesso valore // valore gia' valido: nessun re-render
       e.target.value = String(n);
       apply(n); done();
     });
@@ -2687,7 +2698,7 @@ function renderDetail(){
   }));
   app.querySelectorAll('input[data-quote-num]').forEach(el => {
     const key = el.dataset.quoteNum;
-    bindNum(el.id, parseInt(el.dataset.quoteMin,10), parseInt(el.dataset.quoteMax,10), (n) => {
+    bindNum(el.id, parseFloat(el.dataset.quoteMin), parseFloat(el.dataset.quoteMax), (n) => {
       state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [key]: String(n) };
     });
   });
