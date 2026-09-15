@@ -1012,7 +1012,15 @@ const PRODUCTS = [
 
 // Two merchandising collections: "Prezzi Strategici" (the current catalog) and "Su Misura" (new configurable products added going forward).
 const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
-PRODUCTS.forEach(p => { p.collection = SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'; });
+// Terza collezione: le decalcomanie/adesivi sagomati pronti, scorporati da "Su Misura".
+const DECALC_IDS = ['209', '210', '212', '213', '214', '220', '221', '223', '224', '225', '226'];
+// Quarta collezione: i quadri su tela, scorporati da "Su Misura".
+const QUADRI_IDS = ['198', '199', '200', '201', '227', '5849'];
+PRODUCTS.forEach(p => {
+  p.collection = DECALC_IDS.includes(p.id) ? 'decalc'
+    : QUADRI_IDS.includes(p.id) ? 'quadri'
+    : (SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici');
+});
 
 // Due decimali solo quando servono: 9,70 resta 9,70 ma i listini a cifra tonda (es. Volantini
 // Prezzi Strategici) mostrano 82, non 82,00. L'addebito Stripe coincide sempre al centesimo.
@@ -1293,7 +1301,7 @@ async function startStripeCheckout(btn){
     const name = btn.dataset.name || '';
     const price = btn.dataset.price || '';
     const p = PRODUCTS.find(x => x.id === productId);
-    const col = p && p.collection === 'strategici' ? 'strategici' : 'misura';
+    const col = p && ['strategici','decalc','quadri'].includes(p.collection) ? p.collection : 'misura';
     if (human) body.human = human;
     const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
     window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${col}&cfg=${cfg}${p && p.ean ? '&ean=' + encodeURIComponent(p.ean) : ''}`;
@@ -1617,11 +1625,13 @@ function renderGrid(){
     .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
   const strategici = visible.filter(p => p.collection === 'strategici');
   const suMisura = visible.filter(p => p.collection === 'misura');
+  const decalc = visible.filter(p => p.collection === 'decalc');
+  const quadri = visible.filter(p => p.collection === 'quadri');
 
   const cardHtml = p => productCardHtml(p, CATALOG_NAMES[p.id]);
 
   const sectionHtml = (title, subtitle, items) => !items.length ? '' : `
-      <section style="background:${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.10)' : 'oklch(0.55 0.09 245 / 0.13)'}; border:1px solid ${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.22)' : 'oklch(0.55 0.09 245 / 0.28)'}; border-radius:18px; padding:28px 26px 32px; margin-top:${title === 'Prezzi Strategici' ? '0' : '40px'};">
+      <section style="background:${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.10)' : (title === 'Decalcomanie' ? 'oklch(0.52 0.11 320 / 0.12)' : (title === 'Quadri su Tela' ? 'oklch(0.55 0.09 30 / 0.12)' : 'oklch(0.55 0.09 245 / 0.13)'))}; border:1px solid ${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.22)' : (title === 'Decalcomanie' ? 'oklch(0.52 0.11 320 / 0.26)' : (title === 'Quadri su Tela' ? 'oklch(0.55 0.09 30 / 0.26)' : 'oklch(0.55 0.09 245 / 0.28)'))}; border-radius:18px; padding:28px 26px 32px; margin-top:${title === 'Prezzi Strategici' ? '0' : '40px'};">
       <div style="margin:0 0 20px;">
         <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
           ${esc(title)}
@@ -1667,7 +1677,6 @@ function renderGrid(){
         ${chips.map(c => `<button class="chip ${c===state.category?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>
       ${sectionHtml('Prezzi Strategici', 'Il nostro listino a prezzo fisso: formati e quantità pronti, senza sorprese.', strategici)}
-      ${sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
       <section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
         <div style="margin:0 0 20px;">
           <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
@@ -1726,6 +1735,9 @@ function renderGrid(){
             </a>`).join('')}
         </div>
       </section>
+      ${sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
+      ${sectionHtml('Quadri su Tela', 'Stampa su tela con telaio in legno: riproduzioni d\'autore e quadri dalle tue foto.', quadri)}
+      ${sectionHtml('Decalcomanie', 'Adesivi e decalcomanie pronti: vinile da applicare e rimuovere senza residui.', decalc)}
     </div>`;
   app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; render(); }));
   app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => {
