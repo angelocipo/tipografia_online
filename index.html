@@ -37,7 +37,8 @@
     .p-cat{padding:20px 16px 64px;}
     .p-detail{grid-template-columns:1fr; gap:28px;}
     .p-media{position:static; top:auto;}
-    .p-cards{grid-template-columns:1fr; gap:14px;}
+    /* Su cellulare due prodotti per riga. */
+    .p-cards{grid-template-columns:repeat(2, 1fr); gap:10px;}
     .p-two{grid-template-columns:1fr;}
     .p-sw5{grid-template-columns:repeat(3, 1fr);}
     /* target touch: mai sotto i 44px */
@@ -1579,10 +1580,9 @@ function productCardHtml(p, nameOverride){
         <img src="${p.img}" alt="${esc(nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
       </div>
       <div style="padding:16px 18px 18px; display:flex; flex-direction:column; gap:8px; flex:1;">
-        <span style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:oklch(0.42 0.12 155);">${esc(p.categoria)}</span>
         <span style="font-size:15.5px; font-weight:650; line-height:1.3;">${esc(nome)}</span>
         <div style="flex:1;"></div>
-        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:6px;">
+        <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
           <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">${esc(priceLabelFor(p))}</span>
           <span style="font-size:12px; color:oklch(0.5 0.01 90);">Configura →</span>
         </div>
