@@ -168,7 +168,7 @@ module.exports = async (req, res) => {
       description = `${product.nome} — ${formato || '50 x 25 cm'}`;
     } else if (product.type === 'badgeEn') {
       const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, colore_cordino, creazione_file } = formula || {};
-      const q = Math.max(50, parseInt(qty, 10) || 50);
+      const q = Math.max(35, parseInt(qty, 10) || 35);
       const stampaRate = { '1 side full color':0.4, '2 sides full color':0.7, '1 side B/W':0.07, '2 sides B/W':0.14, '1 side color + 1 side B/W':0.39 }[stampa] || 0.4;
       const excelRate = creazione_file === 'Yes, create the file for me' ? 0.5 : 0;
       let total, desc;
@@ -176,8 +176,9 @@ module.exports = async (req, res) => {
         const w = parseFloat(larghezza) || 5, h = parseFloat(altezza) || 8;
         const vol = { '80 gsm':0.074, '100 gsm':0.22, '200 gsm':0.44, '300 gsm':0.68, '350 gsm':0.8, '400 gsm':0.92 }[carta] || 0.68;
         const plastRate = plastificazione === 'Yes' ? 0.2 : 0;
-        total = vol*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + plastRate*3*q*(w+22)*(h+22)/44/32 + q*excelRate + 10;
-        desc = `${product.nome} — without holder, ${w}×${h}cm, ${q}pcs`;
+        const lanyardRate = cordino === 'Yes' ? 0.3 : 0;
+        total = vol*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + plastRate*3*q*(w+22)*(h+22)/44/32 + q*excelRate + q*lanyardRate + 10;
+        desc = `${product.nome} — without holder, ${w}×${h}cm, ${q}pcs${cordino === 'Yes' ? `, lanyard ${colore_cordino || '01 White'}` : ''}`;
       } else {
         const dims = { '8.5×5.5 cm Landscape':[9,12], '8.5×5.5 cm Portrait':[9,12], '10×15 cm Portrait':[9,6], '7.5×10 cm Portrait':[9,6] };
         const [w,h] = dims[formato] || [9,12];
@@ -189,7 +190,7 @@ module.exports = async (req, res) => {
       description = desc;
     } else if (product.type === 'badge') {
       const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, colore_cordino, creazione_file } = formula || {};
-      const q = Math.max(50, parseInt(qty, 10) || 50);
+      const q = Math.max(35, parseInt(qty, 10) || 35);
       const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato a colori + 1 lato bianco nero':0.39 }[stampa] || 0.4;
       const excelRate = creazione_file === 'Si, create voi il file da stampa' ? 0.5 : 0;
       let total, desc;
@@ -197,8 +198,9 @@ module.exports = async (req, res) => {
         const w = parseFloat(larghezza) || 5, h = parseFloat(altezza) || 8;
         const vol = { 'gr. 80':0.074, 'gr. 100':0.22, 'gr. 200':0.44, 'gr. 300':0.68, 'gr. 350':0.8, 'gr. 400':0.92 }[carta] || 0.68;
         const plastRate = plastificazione === 'Si' ? 0.2 : 0;
-        total = vol*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + plastRate*3*q*(w+22)*(h+22)/44/32 + q*excelRate + 10;
-        desc = `${product.nome} — senza porta badge, ${w}×${h}cm, ${q}pz`;
+        const lanyardRate = cordino === 'Si' ? 0.3 : 0;
+        total = vol*q*(w+23)*(h+23)/44/32 + stampaRate*q*(w+22)*(h+22)/44/32 + plastRate*3*q*(w+22)*(h+22)/44/32 + q*excelRate + q*lanyardRate + 10;
+        desc = `${product.nome} — senza porta badge, ${w}×${h}cm, ${q}pz${cordino === 'Si' ? `, cordino ${colore_cordino || '01 Bianco'}` : ''}`;
       } else {
         const dims = { '8,5×5,5 cm Landscape':[9,12], '8,5×5,5 cm Portrait':[9,12], '10×15 cm Portrait':[9,6], '7,5×10 cm Portrait':[9,6] };
         const [w,h] = dims[formato] || [9,12];
