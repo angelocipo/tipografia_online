@@ -1143,11 +1143,15 @@ function quoteConfigText(p, f, selectionIdx){
 }
 function quoteHref(p, price, selectionIdx, formula){
   const cfg = quoteConfigText(p, formula, selectionIdx);
-  const qty = (formula && formula.qty) ? `${formula.qty} ${p.pricing.unit || 'pz'}` : '';
+  // Se il cliente non ha toccato la quantità, sul preventivo va comunque la quantità
+  // di default (quella con cui il prezzo è stato calcolato), non un trattino.
+  const qtyOpt = (p.pricing.options || []).find(o => o.key === 'qty');
+  const qtyVal = (formula && formula.qty) || (qtyOpt && qtyOpt.choices && qtyOpt.choices[0]) || '';
+  const qty = qtyVal ? `${qtyVal} ${p.pricing.unit || 'pz'}` : '';
   return 'preventivo.dc.html?prodotto=' + encodeURIComponent(p.nome)
     + (cfg ? '&config=' + encodeURIComponent(cfg) : '')
     + (qty ? '&quantita=' + encodeURIComponent(qty) : '')
-    + '&prezzo=' + Math.round(price)
+    + '&prezzo=' + (Math.round(price * 100) / 100).toFixed(2)
     + '&pid=' + encodeURIComponent(p.id)
     + (p.ean ? '&ean=' + encodeURIComponent(p.ean) : '')
     + '&collection=' + encodeURIComponent(p.collection || 'strategici');

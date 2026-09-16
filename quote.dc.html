@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/png" href="img/favicon.png">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<meta charset="utf-8">
+<link rel="icon" type="image/png" href="img/favicon.png">
+
+<title>Official Quote | Tipografia Online by Printing Italy</title>
+<link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
+<script src="./doc-page.js"></script>
+<style>
+  @media print { .no-print { display: none !important; } }
+  doc-page:not(:defined) { visibility: hidden; }
+  body { font-family: var(--font-body); }
+</style>
+</helmet>
+
+<div class="no-print" style="max-width:900px;margin:16px auto 0;padding:0 16px;display:flex;justify-content:flex-end;gap:10px;">
+  <button onClick="{{ handlePrint }}" style="border:none;background:oklch(0.42 0.12 255);color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:8px;cursor:pointer;">Save as PDF</button>
+</div>
+
+<doc-page size="a4">
+  <section class="page" style="width:100%;height:100%;padding:56px 64px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--font-body);color:var(--color-text);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--color-accent);padding-bottom:20px;margin-bottom:32px;">
+      <div style="flex:1;min-width:0;padding-right:20px;">
+        <img src="img/tipografia-online-logo.webp" alt="Tipografia Online by Printing Italy" style="height:44px;width:auto;display:block;">
+      </div>
+      <div style="text-align:right;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 65%, transparent);line-height:1.5;">
+        Via Lorenzo Bonincontri, 26 – 00147 Roma<br>
+        P.IVA 02452700590<br>
+        Mon–Fri 8–12/15–18, Sat. closed
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-bottom:28px;">
+      <div>
+        <div style="font-family:var(--font-heading);font-size:22px;font-weight:700;">Official Quote</div>
+        <div style="font-size:13px;color:color-mix(in srgb, var(--color-text) 65%, transparent);margin-top:4px;">N. {{ quoteNumber }} · {{ dateStr }}</div>
+      </div>
+      <div style="font-size:13px;text-align:right;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
+        Quote valid for 30 days
+      </div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;">
+      <thead>
+        <tr style="border-bottom:1.5px solid var(--color-text);">
+          <th style="text-align:left;padding:10px 6px;font-size:12px;letter-spacing:0.02em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 65%, transparent);">Description</th>
+          <th style="text-align:right;padding:10px 6px;font-size:12px;letter-spacing:0.02em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 65%, transparent);">Quantity</th>
+          <th style="text-align:right;padding:10px 6px;font-size:12px;letter-spacing:0.02em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 65%, transparent);">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);">
+          <td style="padding:14px 6px;vertical-align:top;">
+            <div style="font-weight:600;"><a href="{{ productUrl }}" target="_blank" rel="noopener" style="color:var(--color-accent-700);text-decoration:none;">{{ prodotto }}</a></div>
+            <sc-if value="{{ hasEan }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;letter-spacing:0.04em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-top:3px;font-family:ui-monospace,monospace;">EAN {{ ean }}</div>
+            </sc-if>
+            <sc-for list="{{ dettagli }}" as="d" hint-placeholder-count="4">
+              <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);margin-top:3px;">{{ d }}</div>
+            </sc-for>
+          </td>
+          <td style="padding:14px 6px;text-align:right;vertical-align:top;">{{ quantita }}</td>
+          <td style="padding:14px 6px;text-align:right;vertical-align:top;font-weight:600;font-family:ui-monospace,monospace;">€ {{ prezzoFmt }}</td>
+        </tr>
+        <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
+          <tr style="border-bottom:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);">
+            <td style="padding:14px 6px;vertical-align:top;">
+              <div style="font-weight:600;">Shipping</div>
+              <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);margin-top:3px;">{{ spedizioneZona }}</div>
+            </td>
+            <td style="padding:14px 6px;text-align:right;vertical-align:top;">1</td>
+            <td style="padding:14px 6px;text-align:right;vertical-align:top;font-weight:600;font-family:ui-monospace,monospace;">€ {{ spedizioneFmt }}</td>
+          </tr>
+        </sc-if>
+      </tbody>
+    </table>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:32px;">
+      <div style="width:260px;">
+        <div style="display:flex;justify-content:space-between;padding:8px 6px;font-size:14px;">
+          <span>Net amount</span><span style="font-family:ui-monospace,monospace;">€ {{ imponibileFmt }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 6px;font-size:14px;">
+          <span>VAT (22%)</span><span style="font-family:ui-monospace,monospace;">€ {{ ivaFmt }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 6px;font-size:16px;font-weight:700;border-top:1.5px solid var(--color-text);margin-top:4px;">
+          <span>Total</span><span style="font-family:ui-monospace,monospace;">€ {{ totaleFmt }}</span>
+        </div>
+      </div>
+    </div>
+
+    <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 70%, transparent);line-height:1.6;margin-bottom:20px;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:14px;">
+        <div style="font-weight:600;color:var(--color-text);margin-bottom:4px;">Shipping options</div>
+        <div>Italy (+1 day) — € 25 (option applied to this quote)</div>
+        <div>Rome South/EUR/Centre — € 20</div>
+        <div>Rest of Rome — € 30</div>
+        <div>Free shipping on orders from € 50. No delivery to the Vatican.</div>
+      </div>
+    </sc-if>
+
+    <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);line-height:1.6;margin-top:auto;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:16px;">
+      Quote generated automatically from the configuration selected on the site. Prices include VAT unless stated otherwise. To confirm the order or request changes, contact us at info@tipografia.online or through the form on the site.
+    </div>
+  </section>
+</doc-page>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {};
+  componentDidMount() {
+    const params = new URLSearchParams(window.location.search);
+    const prodotto = params.get('prodotto') || 'Tipografia Online product';
+    const configurazione = params.get('config') || '';
+    const quantita = params.get('quantita') || '-';
+    const prezzo = parseFloat(params.get('prezzo')) || 0;
+    const pid = params.get('pid');
+    const ean = params.get('ean') || '';
+    const collection = params.get('collection') || 'strategici';
+    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, free from € 50.
+    // Zone rates roma_centro 20 / roma_resto 30 / italia 25 — the quote uses the checkout default zone.
+    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, gratuita: 0 };
+    const zona = params.get('zona') || 'italia';
+    const spedizione = (collection === 'misura' && prezzo > 0 && prezzo < 50) ? (zoneRates[zona] ?? 20) : 0;
+    const productUrl = pid ? `custom-printed-badges-en.html#${encodeURIComponent(pid)}` : 'custom-printed-badges-en.html';
+    const now = new Date();
+    this.setState({
+      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean,
+      quoteNumber: `PRT-EN-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
+      dateStr: now.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }),
+    });
+    setTimeout(() => window.print(), 400);
+  }
+  renderVals() {
+    const prezzo = this.state.prezzo || 0;
+    const spedizione = this.state.spedizione || 0;
+    const totale = prezzo + spedizione;
+    const imponibile = totale / 1.22;
+    const iva = totale - imponibile;
+    const zoneLabels = { roma_centro: 'Rome South/EUR/Centre', roma_resto: 'Rest of Rome', italia: 'Italy (+1 day)' };
+    return {
+      hasSpedizione: spedizione > 0,
+      spedizioneFmt: spedizione.toFixed(2),
+      spedizioneZona: zoneLabels[this.state.zona] || '',
+      totaleFmt: totale.toFixed(2),
+      prodotto: this.state.prodotto || '',
+      ean: this.state.ean || '',
+      hasEan: !!this.state.ean,
+      productUrl: this.state.productUrl || 'custom-printed-badges-en.html',
+      configurazione: this.state.configurazione || '',
+      dettagli: (this.state.configurazione || '').split(' · ').map(s => s.trim()).filter(Boolean),
+      quantita: this.state.quantita || '-',
+      quoteNumber: this.state.quoteNumber || '',
+      dateStr: this.state.dateStr || '',
+      prezzoFmt: prezzo.toFixed(2),
+      imponibileFmt: imponibile.toFixed(2),
+      ivaFmt: iva.toFixed(2),
+      handlePrint: () => window.print(),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -181,7 +181,36 @@ function priceLabelFor(p){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// Testo della configurazione e link al preventivo ufficiale in inglese (quote.dc.html).
+function quoteConfigText(p, f){
+  const parts = [];
+  if (f && typeof f === 'object'){
+    const opts = p.pricing.options || [];
+    for (const [k, v] of Object.entries(f)){
+      if (k === 'qty') continue;
+      if (typeof v !== 'string' && typeof v !== 'number') continue;
+      if (v === '' || v === 0) continue;
+      const opt = opts.find(o => o.key === k);
+      parts.push(((opt && opt.label) || k) + ': ' + v);
+    }
+  }
+  return parts.join(' · ');
+}
+function quoteHref(p, price, selectionIdx, formula){
+  const cfg = quoteConfigText(p, formula);
+  const qtyOpt = (p.pricing.options || []).find(o => o.key === 'qty');
+  const qtyVal = (formula && formula.qty) || (qtyOpt && qtyOpt.choices && qtyOpt.choices[0]) || '';
+  const qty = qtyVal ? `${qtyVal} ${p.pricing.unit || 'pcs'}` : '';
+  return 'quote.dc.html?prodotto=' + encodeURIComponent(p.nome)
+    + (cfg ? '&config=' + encodeURIComponent(cfg) : '')
+    + (qty ? '&quantita=' + encodeURIComponent(qty) : '')
+    + '&prezzo=' + (Math.round(price * 100) / 100).toFixed(2)
+    + '&pid=' + encodeURIComponent(p.id)
+    + (p.ean ? '&ean=' + encodeURIComponent(p.ean) : '')
+    + '&collection=' + encodeURIComponent(p.collection || 'strategici');
+}
 function paymentBlockHtml(p, price, selectionIdx, formula){
+  const quoteHrefStr = quoteHref(p, price, selectionIdx, formula);
   return `
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
       <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price*100)/100}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
@@ -189,6 +218,9 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
       </button>
       <div id="paypal-btn-${p.id}" data-price="${(Math.round(price*100)/100).toFixed(2)}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
+      <a id="quote-link-${p.id}" href="${quoteHrefStr}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
+        Request an official quote
+      </a>
     </div>`;
 }
 
