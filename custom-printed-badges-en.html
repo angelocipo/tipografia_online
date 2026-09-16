@@ -57,7 +57,7 @@
 <body>
 
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">Rome EUR</span></a>
+  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">by Printing Italy</span></a>
   <button id="backBtn" class="btn btn-secondary blueprint" style="display:none;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>← Back</button>
   <a href="mailto:info@tipografia.online" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Contact us</a>
 </nav>
@@ -66,7 +66,7 @@
 
 <footer style="border-top:1px solid var(--color-divider);margin-top:var(--space-8);">
   <div class="idx-wrap" style="padding:var(--space-6) var(--space-6);text-align:center;">
-    <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">© 2026 Tipografia Online Rome EUR &mdash; <a href="mailto:info@tipografia.online">info@tipografia.online</a></div>
+    <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">© 2026 Tipografia Online by Printing Italy &mdash; <a href="mailto:info@tipografia.online">info@tipografia.online</a></div>
   </div>
 </footer>
 </footer>
@@ -90,7 +90,7 @@ const ROLLUP_FEATURES = [
 const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
 
 const PRODUCTS = [
-  { id:'5047-en', nome:'Custom Printed Badges', categoria:'Services',
+  { id:'5047-en', ean:'0652026573558', collection:'misura', nome:'Custom Printed Badges', categoria:'Services',
     img:'img/ID-badge-close-up-in-professional-settinglandscape.webp',
     gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'],
     intro:'Custom badges for events and companies, with or without a plastic badge holder, same-day printing. Quantities from 35 to 1,000 pieces.',
@@ -133,7 +133,8 @@ const PRODUCTS = [
 
 // Two merchandising collections: "Prezzi Strategici" (the current catalog) and "Su Misura" (new configurable products added going forward).
 const SU_MISURA_IDS = ['198', '199', '200', '201', '203', '206', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805'];
-PRODUCTS.forEach(p => { p.collection = SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'; });
+// Se il prodotto dichiara già la sua collezione (es. il badge EN, id '5047-en'), va rispettata.
+PRODUCTS.forEach(p => { p.collection = p.collection || (SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici'); });
 
 // Two decimals only when needed: 9.70 stays 9,70 but whole-euro list prices show 82, not 82,00.
 function fmtEUR(n){ const v = Math.round(Number(n)*100)/100; const dec = v % 1 !== 0 ? 2 : 0; return v.toLocaleString('it-IT', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
@@ -326,7 +327,9 @@ async function startStripeCheckout(btn){
     const name = btn.dataset.name || '';
     const price = btn.dataset.price || '';
     const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
-    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&cfg=${cfg}`;
+    const prod = PRODUCTS.find(x => x.id === productId);
+    const col = (prod && prod.collection) || 'misura';
+    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${encodeURIComponent(col)}&cfg=${cfg}${prod && prod.ean ? '&ean=' + encodeURIComponent(prod.ean) : ''}`;
   } catch (err) {
     errorEl.textContent = 'Checkout non disponibile — ' + err.message;
     errorEl.style.display = 'block';
