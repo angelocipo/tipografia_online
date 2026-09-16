@@ -167,13 +167,17 @@ function priceFrom(p){
   if (p.pricing.type === 'locandine250') return p.pricing.formatRates[0] * 1 * p.pricing.cartaMultiplier[0] * 1.22;
   if (p.pricing.type === 'scatolaGioielli') return Math.min(...p.pricing.misuraRate.map(r => p.pricing.qty.default * r * 2 + p.pricing.qty.default * 3 + 8));
   if (p.pricing.type === 'rilegature') return Math.min(...p.pricing.cartaRate.map(r => p.pricing.qty.default*p.pricing.pagCol.default*0.27 + p.pricing.qty.default*5 + p.pricing.qty.default*p.pricing.pagCol.default*r));
+  // basePrice:0 significa "nessun minimo imposto", non "gratis": va sempre preferita la formula,
+  // altrimenti la card mostra "da € 0,00" mentre il preventivo calcola l'importo reale.
+  if (p.pricing.type === 'quote' && p.pricing.formula) return Math.max(p.pricing.formula({}), p.pricing.basePrice ?? 0);
   if (p.pricing.type === 'quote' && p.pricing.basePrice != null) return p.pricing.basePrice;
-  if (p.pricing.type === 'quote' && p.pricing.formula) return p.pricing.formula({});
   return null;
 }
 function priceLabelFor(p){
-  if (p.pricing.type === 'quote' && p.pricing.basePrice == null && !p.pricing.formula) return 'Preventivo';
-  return 'da € ' + fmtEUR(priceFrom(p));
+  if (p.pricing.type === 'quote' && p.pricing.basePrice == null && !p.pricing.formula) return 'from € —';
+  const v = priceFrom(p);
+  if (!(typeof v === 'number' && isFinite(v) && v > 0)) return 'from € —';
+  return 'from € ' + fmtEUR(v);
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -635,11 +639,11 @@ function renderDetail(){
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza cm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
-            <input type="number" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="adesLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="adesLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
-            <input type="number" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="adesAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="adesAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
@@ -691,11 +695,11 @@ function renderDetail(){
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Base cm (lato lungo, ${p.pricing.base.min}–${p.pricing.base.max})</div>
-            <input type="number" min="${p.pricing.base.min}" max="${p.pricing.base.max}" id="prespBase" value="${f.base}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.base.min}" max="${p.pricing.base.max}" id="prespBase" value="${f.base}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (lato corto, ${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
-            <input type="number" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="prespAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="prespAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
@@ -733,11 +737,11 @@ function renderDetail(){
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza mm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
-            <input type="number" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="bvLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="bvLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza mm (${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
-            <input type="number" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="bvAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="bvAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
