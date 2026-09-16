@@ -26,6 +26,19 @@
     { "source": "/termini-di-servizio-terms-of-service.html", "destination": "/termini-di-servizio-terms-of-service.dc.html" },
     { "source": "/privacy-gdpr.html", "destination": "/privacy-gdpr.dc.html" },
     { "source": "/privacy-policy.html", "destination": "/privacy-policy.dc.html" },
-    { "source": "/checkout.html", "destination": "/checkout.dc.html" }
+    { "source": "/checkout.html", "destination": "/checkout.dc.html" },
+    { "source": "/blog.html", "destination": "/blog.dc.html" },
+    { "source": "/blog-addio-al-celibato-magliette-personalizzate.html", "destination": "/blog-addio-al-celibato-magliette-personalizzate.dc.html" },
+    { "source": "/blog-biglietti-da-visita-roma-eur-24h.html", "destination": "/blog-biglietti-da-visita-roma-eur-24h.dc.html" },
+    { "source": "/blog-canvas-effetto-pittura-ad-olio.html", "destination": "/blog-canvas-effetto-pittura-ad-olio.dc.html" },
+    { "source": "/blog-maglietta-personalizzata-in-tempi-record.html", "destination": "/blog-maglietta-personalizzata-in-tempi-record.dc.html" },
+    { "source": "/blog-modifica-documenti-photoshop.html", "destination": "/blog-modifica-documenti-photoshop.dc.html" },
+    { "source": "/blog-printing-services-in-italy.html", "destination": "/blog-printing-services-in-italy.dc.html" },
+    { "source": "/blog-rivoluzione-stampa-tshirt-24-ore.html", "destination": "/blog-rivoluzione-stampa-tshirt-24-ore.dc.html" },
+    { "source": "/blog-statua-della-liberta-warhol.html", "destination": "/blog-statua-della-liberta-warhol.dc.html" },
+    { "source": "/blog-tele-pop-art-warhol.html", "destination": "/blog-tele-pop-art-warhol.dc.html" },
+    { "source": "/blog-van-gogh-notte-stellata.html", "destination": "/blog-van-gogh-notte-stellata.dc.html" },
+    { "source": "/preventivo.html", "destination": "/preventivo.dc.html" },
+    { "source": "/quote.html", "destination": "/quote.dc.html" }
   ]
 }
