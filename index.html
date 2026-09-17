@@ -187,6 +187,7 @@ function struttura215cm(sel) {
   return [(Number(sel.altezza) || 100) * k, (Number(sel.larghezza) || 100) * k];
 }
 
+const GARMENT_CAT = 'Stampa su indumento';
 const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
@@ -1623,7 +1624,7 @@ function renderCategoryPage(){
 }
 
 function renderGrid(){
-  const chips = ['Tutti', ...CATEGORIES];
+  const chips = ['Tutti', ...CATEGORIES, GARMENT_CAT];
   const visible = PRODUCTS.filter(p => !p.variantOf)
     .filter(p => state.category === 'Tutti' || p.categoria === state.category)
     .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
@@ -1681,7 +1682,7 @@ function renderGrid(){
         ${chips.map(c => `<button class="chip ${c===state.category?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>
       ${sectionHtml('Prezzi Strategici', 'Il nostro listino a prezzo fisso: formati e quantità pronti, senza sorprese.', strategici)}
-      <section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
+      ${(state.category !== 'Tutti' && state.category !== GARMENT_CAT) ? '' : `<section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
         <div style="margin:0 0 20px;">
           <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
             Stampa su indumento
@@ -1738,7 +1739,7 @@ function renderGrid(){
               <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace; padding:0 18px;">tshirt-shop.online ↗</div>
             </a>`).join('')}
         </div>
-      </section>
+      </section>`}
       ${sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
       ${sectionHtml('Quadri su Tela', 'Stampa su tela con telaio in legno: riproduzioni d\'autore e quadri dalle tue foto.', quadri)}
       ${sectionHtml('Decalcomanie', 'Adesivi e decalcomanie pronti: vinile da applicare e rimuovere senza residui.', decalc)}
