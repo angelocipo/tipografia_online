@@ -4,7 +4,7 @@
 // creates a Stripe Checkout Session, and returns { url } to redirect the browser to.
 
 const Stripe = require('stripe');
-const { PRICING, angoliArrotondatiPrice } = require('./_pricing-data');
+const { PRICING, angoliArrotondatiPrice, plastificataPrice } = require('./_pricing-data');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -268,8 +268,14 @@ module.exports = async (req, res) => {
       let priceStrategici = delivery.prices[i];
       let angoliSuffixStrategici = '';
       if (formula && formula.angoliArrotondati) { priceStrategici += angoliArrotondatiPrice(product.qtyLabels[i]); angoliSuffixStrategici = ', Angoli arrotondati'; }
+      // Motivi: 1° a prezzo pieno, ogni motivo aggiuntivo al 90%. Quantità per ogni motivo.
+      const motiviRaw = formula && Number(formula.motivi);
+      const motivi = Number.isFinite(motiviRaw) ? Math.min(Math.max(Math.round(motiviRaw), 1), 10) : 1;
+      priceStrategici = priceStrategici * (1 + 0.9 * (motivi - 1));
+      if (formula && formula.plastificata) { priceStrategici += plastificataPrice(product.qtyLabels[i]) * (1 + 0.9 * (motivi - 1)); }
+      if (formula && formula.grafica) { priceStrategici += 25 * motivi; }
       unitAmountCents = Math.round(priceStrategici * 100);
-      description = `${product.nome} — ${format.label}, ${paper.label}, ${delivery.label}, ${product.qtyLabels[i]} copie${angoliSuffixStrategici}`;
+      description = `${product.nome} — ${format.label}, ${paper.label}, ${delivery.label}, ${product.qtyLabels[i]} copie${motivi > 1 ? ` × ${motivi} motivi` : ''}${angoliSuffixStrategici}${formula && formula.plastificata ? ', Plastificata' : ''}${formula && formula.grafica ? ', Creazione grafica' : ''}`;
     } else if (product.type === 'businessCardRilievo') {
       const { formatIndex, paperIndex, colorIndex } = formula || {};
       const fIdx = Number.isInteger(formatIndex) ? formatIndex : 0;

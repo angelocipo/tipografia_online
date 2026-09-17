@@ -277,4 +277,12 @@ const PRICING = {
   },
 };
 
-module.exports = { PRICING, ANGOLI_ARROTONDATI_TIERS, angoliArrotondatiPrice };
+// Plastificazione: sovrapprezzo IVA incl. per quantità (per ogni motivo). Derivato dal listino
+// plastificati/non plastificati, interpolato dove non era monotono, extrapolato per 20000, ×2.
+const PLASTIFICATA_TIERS = [{qty:10,price:14.80},{qty:25,price:14.98},{qty:50,price:15.32},{qty:75,price:15.50},{qty:100,price:15.64},{qty:250,price:18.64},{qty:500,price:20.90},{qty:1000,price:23.18},{qty:2500,price:34.10},{qty:5000,price:42.36},{qty:7500,price:47.20},{qty:10000,price:59.62},{qty:15000,price:89.16},{qty:20000,price:118.88}];
+function plastificataPrice(qty) {
+  const t = PLASTIFICATA_TIERS.find(t => qty <= t.qty);
+  return (t || PLASTIFICATA_TIERS[PLASTIFICATA_TIERS.length - 1]).price;
+}
+
+module.exports = { PRICING, ANGOLI_ARROTONDATI_TIERS, angoliArrotondatiPrice, PLASTIFICATA_TIERS, plastificataPrice };
