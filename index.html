@@ -191,14 +191,41 @@ const GARMENT_CAT = 'Stampa su indumento';
 const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
+// Plastificazione: sovrapprezzo IVA incl. per quantità (per ogni motivo).
+// Derivato dal listino plastificati/non plastificati, interpolato in log(quantità) dove il
+// listino non era monotono (50, 75, 250, 500, 2500, 5000), extrapolato per 20000, poi ×2.
+const PLASTIFICATA_TIERS = [{qty:10,price:14.80},{qty:25,price:14.98},{qty:50,price:15.32},{qty:75,price:15.50},{qty:100,price:15.64},{qty:250,price:18.64},{qty:500,price:20.90},{qty:1000,price:23.18},{qty:2500,price:34.10},{qty:5000,price:42.36},{qty:7500,price:47.20},{qty:10000,price:59.62},{qty:15000,price:89.16},{qty:20000,price:118.88}];
+function plastPrice(qty){
+  const t = PLASTIFICATA_TIERS.find(t => qty <= t.qty);
+  return (t || PLASTIFICATA_TIERS[PLASTIFICATA_TIERS.length-1]).price;
+}
+const GRAFICA_PRICE = 25; // Creazione grafica: € 25 a motivo, IVA compresa.
+function graficaCheckboxHtml(p, compact){
+  const checked = !!state.graficaById[p.id];
+  return `<div style="margin-bottom:${compact ? '0' : '14px'};">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; flex-wrap:wrap;">
+      <input type="checkbox" data-grafica-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
+      Creazione grafica <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(GRAFICA_PRICE)} a motivo)</span>
+    </label>
+  </div>`;
+}
+function plastCheckboxHtml(p, qty, compact){
+  const checked = !!state.plastById[p.id];
+  return `<div style="margin-bottom:${compact ? '0' : '14px'};">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; flex-wrap:wrap;">
+      <input type="checkbox" data-plast-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
+      Plastificata <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(plastPrice(qty))})</span>
+    </label>
+  </div>`;
+}
 function angoliPrice(qty){
   const t = ANGOLI_ARROTONDATI_TIERS.find(t => qty <= t.qty);
   return (t || ANGOLI_ARROTONDATI_TIERS[ANGOLI_ARROTONDATI_TIERS.length-1]).price;
 }
-function angoliCheckboxHtml(p, qty){
+function angoliCheckboxHtml(p, qty, compact){
   const checked = !!state.angoliById[p.id];
-  return `<div style="margin-bottom:14px;">
-    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer;">
+  return `<div style="margin-bottom:${compact ? '0' : '14px'};">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; flex-wrap:wrap;">
       <input type="checkbox" data-angoli-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
       Angoli arrotondati <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(angoliPrice(qty))})</span>
     </label>
@@ -1283,9 +1310,12 @@ async function startStripeCheckout(btn){
       const delivery = paper.deliveries[Math.min(cur.deliveryIdx, paper.deliveries.length-1)];
       const qty = p.pricing.qtyLabels[Math.min(cur.qtyIdx, delivery.prices.length-1)];
       const angoliOn = !!state.angoliById[productId];
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx, angoliArrotondati: angoliOn };
+      const motivi = Math.min(Math.max(cur.motivi || 1, 1), 10);
+      const plastOn = !!state.plastById[productId];
+      const graficaOn = !!state.graficaById[productId];
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx, angoliArrotondati: angoliOn, plastificata: plastOn, grafica: graficaOn, motivi };
       body.tierIndex = cur.qtyIdx;
-      human = { 'Formato': format.label, 'Carta': paper.label, 'Consegna': delivery.label, 'Quantità': qty, ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
+      human = { 'Formato': format.label, 'Carta': paper.label, 'Consegna': delivery.label, 'Quantità': qty + ' per motivo', 'Motivi': motivi, ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}), ...(plastOn ? { 'Plastificata': 'Sì' } : {}), ...(graficaOn ? { 'Creazione grafica': 'Sì' } : {}) };
     }
     if (pricingType === 'forexPvc') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -1350,6 +1380,8 @@ let state = {
   angoliById: {},
   forexById: {},
   striscioniById: {},
+  graficaById: {},
+  plastById: {},
   bcsIdxById: {},
   swatchIdxById: {},
   swatchQtyById: {},
@@ -2273,7 +2305,16 @@ function renderDetail(){
     const qty = p.pricing.qtyLabels[idx];
     const angoliOn = !!state.angoliById[p.id];
     const angoliSurcharge = angoliOn ? angoliPrice(qty) : 0;
-    const grandTotal = price + angoliSurcharge;
+    const plastOn = !!state.plastById[p.id];
+    const plastSurcharge = plastOn ? plastPrice(qty) : 0;
+    const graficaOn = !!state.graficaById[p.id];
+    // Motivi (soggetti diversi): il 1° a prezzo pieno, ogni motivo aggiuntivo al 90%.
+    // La quantità selezionata è per ogni motivo.
+    const motivi = Math.min(Math.max(cur.motivi || 1, 1), 10);
+    const motiviFactor = 1 + 0.9 * (motivi - 1);
+    const graficaSurcharge = graficaOn ? GRAFICA_PRICE * motivi : 0;
+    const grandTotal = Math.round(((price + angoliSurcharge + plastSurcharge) * motiviFactor + graficaSurcharge) * 100) / 100;
+    const copieTot = qty * motivi;
     pricingHtml = `
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
@@ -2293,22 +2334,30 @@ function renderDetail(){
           ${paper.deliveries.map((d,i) => `<button class="pill ${i===dIdx?'active':''}" data-bcs-delivery="${i}">${esc(d.label)}</button>`).join('')}
         </div>
       </div>
-      <div style="margin-bottom:18px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
-        <select class="qty-select" id="bcsQtyRange">
-          ${delivery.prices.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(p.pricing.qtyLabels[i]) + ' copie'}</option>`).join('')}
-        </select>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px 14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (per ogni motivo)</div>
+          <select class="qty-select" id="bcsQtyRange">
+            ${delivery.prices.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtEUR(p.pricing.qtyLabels[i]) + ' copie'}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Soggetti</div>
+          <select class="qty-select" id="bcsMotiviSelect">
+            ${Array.from({length:10}, (_x, i) => i + 1).map(n => `<option value="${n}" ${n===motivi?'selected':''}>${n} ${n===1?'motivo':'motivi'}</option>`).join('')}
+          </select>
+        </div>
       </div>
-      ${angoliCheckboxHtml(p, qty)}
-      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin:-8px 0 14px;">Ogni motivo aggiuntivo costa il 90% del primo. ${motivi > 1 ? `Totale ${fmtEUR(copieTot)} copie (${fmtEUR(qty)} per motivo).` : ''}</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px 18px; margin-bottom:14px;">${angoliCheckboxHtml(p, qty, true)}${plastCheckboxHtml(p, qty, true)}${graficaCheckboxHtml(p, true)}</div>      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
-        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(grandTotal)}</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${grandTotal.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
       </div>
-      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(price/qty).toFixed(3)} / copia · IVA inclusa</div>
+      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-top:4px; text-align:right;">≈ € ${(grandTotal/copieTot).toFixed(3)} / copia · IVA inclusa</div>
       <div style="margin-bottom:18px;">
         ${uploadBlockHtml()}
       </div>
-      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, consegna: delivery.label, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), qty })}`;
+      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, consegna: delivery.label, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), ...(plastOn ? { plastificata: 'Sì' } : {}), ...(graficaOn ? { grafica: 'Sì' } : {}), qty, motivi })}`;
   } else if (p.pricing.type === 'forexPvc'){
     const f = forexState(p);
     const total = computeForexPrice(p, f);
@@ -2630,6 +2679,8 @@ function renderDetail(){
   app.querySelectorAll('[data-bv-carta]').forEach(el => el.addEventListener('click', () => { bv24hState(p).cartaIdx = parseInt(el.dataset.bvCarta,10); renderDetail(); }));
   app.querySelectorAll('[data-bv-soggetti]').forEach(el => el.addEventListener('click', () => { bv24hState(p).soggettiIdx = parseInt(el.dataset.bvSoggetti,10); renderDetail(); }));
   app.querySelectorAll('[data-angoli-toggle]').forEach(el => el.addEventListener('change', () => { state.angoliById[el.dataset.angoliToggle] = el.checked; renderDetail(); }));
+  app.querySelectorAll('[data-plast-toggle]').forEach(el => el.addEventListener('change', () => { state.plastById[el.dataset.plastToggle] = el.checked; renderDetail(); }));
+  app.querySelectorAll('[data-grafica-toggle]').forEach(el => el.addEventListener('change', () => { state.graficaById[el.dataset.graficaToggle] = el.checked; renderDetail(); }));
   if (p.pricing && p.pricing.qty) bindNum('locQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { locandineState(p).qty = n; });
   app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));
   app.querySelectorAll('[data-loc-carta]').forEach(el => el.addEventListener('click', () => { locandineState(p).cartaIdx = parseInt(el.dataset.locCarta,10); renderDetail(); }));
@@ -2668,18 +2719,25 @@ function renderDetail(){
     state.bcsIdxById[p.id] = { ...cur, qtyIdx: parseInt(e.target.value,10) };
     renderDetail();
   });
+  const bcsMotivi = document.getElementById('bcsMotiviSelect');
+  if (bcsMotivi) bcsMotivi.addEventListener('change', (e) => {
+    const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, motivi: parseInt(e.target.value,10) };
+    renderDetail();
+  });
   app.querySelectorAll('[data-bcs-format]').forEach(el => el.addEventListener('click', () => {
-    state.bcsIdxById[p.id] = { formatIdx: parseInt(el.dataset.bcsFormat,10), paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    const cur = state.bcsIdxById[p.id] || {};
+    state.bcsIdxById[p.id] = { formatIdx: parseInt(el.dataset.bcsFormat,10), paperIdx: 0, deliveryIdx: 0, qtyIdx: cur.qtyIdx || 0, motivi: cur.motivi || 1 };
     renderDetail();
   }));
   app.querySelectorAll('[data-bcs-paper]').forEach(el => el.addEventListener('click', () => {
     const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
-    state.bcsIdxById[p.id] = { ...cur, paperIdx: parseInt(el.dataset.bcsPaper,10), deliveryIdx: 0, qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, paperIdx: parseInt(el.dataset.bcsPaper,10), deliveryIdx: 0 };
     renderDetail();
   }));
   app.querySelectorAll('[data-bcs-delivery]').forEach(el => el.addEventListener('click', () => {
     const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
-    state.bcsIdxById[p.id] = { ...cur, deliveryIdx: parseInt(el.dataset.bcsDelivery,10), qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, deliveryIdx: parseInt(el.dataset.bcsDelivery,10) };
     renderDetail();
   }));
   bindNum('forexQty', 1, 100, (n) => { forexState(p).qty = n; });
