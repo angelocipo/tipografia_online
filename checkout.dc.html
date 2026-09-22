@@ -139,12 +139,14 @@
       <div class="field" style="margin:var(--space-4) 0;">
         <label id="ship-zone-label">Consegna</label>
         <div class="seg" role="radiogroup" aria-labelledby="ship-zone-label">
-          <label class="seg-opt"><input type="radio" name="shipZone" value="gratuita" checked="{{ isZoneGratuita }}" onChange="{{ setShipZone }}">Spedizione gratuita</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="roma_centro" checked="{{ isZoneRomaCentro }}" onChange="{{ setShipZone }}">Roma Sud/EUR/Centro — € 20</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25</label>
         </div>
-        <p class="card-body" style="margin:var(--space-2) 0 0;">Nessuna consegna in Vaticano. Spedizione gratuita per ordini da € 50.</p>
+        <sc-if value="{{ isFlatShipping }}" hint-placeholder-val="{{ false }}">
+          <p class="card-body" style="margin:var(--space-2) 0 0;">Ordine sopra € 100: consegna a tariffa fissa € 8, indipendente dalla zona.</p>
+        </sc-if>
+        <p class="card-body" style="margin:var(--space-2) 0 0;">Nessuna consegna in Vaticano.</p>
       </div>
 
       <sc-if value="{{ shipDifferent }}" hint-placeholder-val="{{ false }}">
@@ -188,6 +190,11 @@
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ submitLabel }}
     </button>
     <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin-top:var(--space-4);">Pagamento sicuro tramite Stripe. Riceverai fattura elettronica via SDI o email secondo i dati inseriti.</p>
+    <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
+      <button type="button" class="btn btn-secondary btn-block blueprint" onClick="{{ downloadPdf }}" style="margin-top:var(--space-3);">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Scarica PDF riepilogo ordine
+      </button>
+    </sc-if>
   </form>
 
   <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
@@ -261,11 +268,9 @@ class Component extends DCLogic {
     if (cfg) {
       try { orderBody = JSON.parse(decodeURIComponent(atob(cfg))); } catch (e) {}
     }
-    const priceNum = parseFloat(price) || 0;
-    const autoFree = (col === 'strategici') || priceNum >= 50;
     let design = {};
     try { design = JSON.parse(sessionStorage.getItem('tp_design') || '{}'); } catch (e) {}
-    if (id) this.setState({ productId: id, productName: name || '', productEan: ean, productPrice: price || '', productCollection: col || 'misura', orderBody, design, shipZone: autoFree ? 'gratuita' : this.state.shipZone });
+    if (id) this.setState({ productId: id, productName: name || '', productEan: ean, productPrice: price || '', productCollection: col || 'misura', orderBody, design });
     if (id) this.mountPaypalWhenReady();
   }
 
@@ -298,8 +303,7 @@ class Component extends DCLogic {
   computeShippingFee() {
     if (this.state.productCollection === 'strategici') return 0;
     const price = parseFloat(this.state.productPrice) || 0;
-    if (price >= 50) return 0;
-    if (this.state.shipZone === 'gratuita') return 0;
+    if (price >= 100) return 8;
     const rates = { roma_centro: 20, roma_resto: 30, italia: 25 };
     return rates[this.state.shipZone] ?? 20;
   }
@@ -378,7 +382,7 @@ class Component extends DCLogic {
       productPrice: s.productPrice,
       orderTotal: orderTotal.toFixed(2).replace(/\.00$/, ''),
       shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + shippingFee),
-      isZoneGratuita: s.shipZone === 'gratuita',
+      isFlatShipping: (parseFloat(s.productPrice) || 0) >= 100 && s.productCollection !== 'strategici',
       isZoneRomaCentro: s.shipZone === 'roma_centro',
       isZoneRomaResto: s.shipZone === 'roma_resto',
       isZoneItalia: s.shipZone === 'italia',
@@ -422,6 +426,11 @@ class Component extends DCLogic {
       submitting: s.submitting,
       submitLabel: s.submitting ? 'Attendere…' : 'Procedi al pagamento',
       handleSubmit: (e) => this.submit(e),
+      downloadPdf: () => {
+        const p = new URLSearchParams(window.location.search);
+        p.set('zone', s.shipZone);
+        window.open('checkout-print.dc.html?' + p.toString(), '_blank');
+      },
     };
   }
 }

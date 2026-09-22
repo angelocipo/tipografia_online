@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta charset="utf-8">
+<meta name="omelette-print-source" content="v1790079747915040 checkout.dc.html">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout | Tipografia Online Roma EUR</title>
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://www.tipografia.online/checkout/">
+<link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
+<script src="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/_ds_bundle.js"></script>
+<style>
+.idx-wrap{max-width:900px;margin:0 auto;padding:0 var(--space-6);}
+.co-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);}
+@media (max-width:640px){.co-grid{grid-template-columns:1fr;}.nav a{display:none;}}
+.co-section{padding:var(--space-6);margin-bottom:var(--space-6);}
+.co-h{font-size:20px;margin:0 0 var(--space-4);}
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style>
+</helmet>
+
+<nav class="nav">
+  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">by Printing Italy</span></a>
+</nav>
+
+<main class="idx-wrap" style="padding-top:var(--space-8);padding-bottom:calc(var(--space-8) * 2);">
+  <h1 style="font-size:32px;margin:0 0 var(--space-6);">Riepilogo ordine</h1>
+
+  <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
+    <div class="card blueprint co-section">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-bottom:{{ detailsMarginBottom }};">
+        <div>
+          <div class="card-kicker">Il tuo ordine</div>
+          <div class="card-title">{{ productName }}</div>
+          <sc-if value="{{ hasEan }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;letter-spacing:0.04em;font-family:ui-monospace,monospace;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-top:4px;">EAN {{ productEan }}</div>
+          </sc-if>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
+          <div style="font-size:12px;font-weight:700;color:#c0392b;">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
+        </div>
+      </div>
+      <sc-if value="{{ hasDetails }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);display:grid;grid-template-columns:repeat(auto-fit, minmax(160px,1fr));gap:var(--space-3);">
+          <sc-for list="{{ orderDetails }}" as="d" hint-placeholder-count="4">
+            <div>
+              <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:2px;">{{ d.label }}</div>
+              <div style="font-size:13.5px;font-weight:600;">{{ d.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noProduct }}" hint-placeholder-val="{{ false }}">
+    <div class="card blueprint co-section">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <p class="card-body">Nessun prodotto selezionato.</p>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
+    <section class="card blueprint co-section">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 class="co-h">Consegna</h2>
+      <p class="card-body" style="margin:0;">
+        <sc-if value="{{ isFlatShipping }}" hint-placeholder-val="{{ false }}">Ordine sopra € 100: tariffa fissa € 8.</sc-if>
+        <sc-if value="{{ isZoneRomaCentro }}" hint-placeholder-val="{{ false }}">Roma Sud/EUR/Centro — € 20.</sc-if>
+        <sc-if value="{{ isZoneRomaResto }}" hint-placeholder-val="{{ false }}">Resto di Roma — € 30.</sc-if>
+        <sc-if value="{{ isZoneItalia }}" hint-placeholder-val="{{ false }}">Italia (+1 giorno) — € 25.</sc-if>
+        Nessuna consegna in Vaticano.
+      </p>
+    </section>
+  </sc-if>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4);">
+    <span style="font-size:14px;color:color-mix(in srgb, var(--color-text) 70%, transparent);">Totale</span>
+    <span style="font-family:var(--font-heading);font-size:26px;">€ {{ orderTotal }}</span>
+  </div>
+  <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">Documento riepilogativo, non fiscale. Pagamento tramite Stripe/PayPal sul sito. Riceverai fattura elettronica via SDI o email secondo i dati inseriti in fase di checkout.</p>
+</main>
+
+<footer style="border-top:1px solid var(--color-divider);">
+  <div class="idx-wrap" style="padding:var(--space-6);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online by Printing Italy • Via Lorenzo Bonincontri, 26, 00147 Roma • Lun-Ven: 8-12/15-18, Sab: chiuso • P.IVA 02452700590</div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    productId: null, productName: '', productPrice: null, productCollection: 'misura', orderBody: null,
+    shipZone: 'roma_centro',
+  };
+
+  humanizeKey(key) {
+    const map = {
+      lato_lungo: 'Lato lungo', lato_corto: 'Lato corto', pagCol: 'Pagine a colori', pagBn: 'Pagine bianco/nero',
+      latiIdx: 'Lati', cartaIdx: 'Carta', misuraIdx: 'Misura', coloreIdx: 'Colore', qty: 'Quantità',
+      formatIdx: 'Formato', soggettiIdx: 'Soggetti', larghezza: 'Larghezza', altezza: 'Altezza',
+      sagomaIdx: 'Forma', materialeIdx: 'Materiale', lavorazioneIdx: 'Lavorazione', altroColore: 'Altro colore',
+      base: 'Base', copie: 'Copie', swatchIdx: 'Variante', unit: 'Unità', formato: 'Formato', pannelli: 'Pannelli',
+      creazione: 'Creazione file', creazione_file: 'Creazione file', spessore: 'Spessore', holder: 'Porta badge',
+      stampa: 'Stampa', plastificazione: 'Plastificazione', cordino: 'Cordino', colore_cordino: 'Colore cordino',
+      quantita: 'Quantità', facciate: 'Facciate', tierIndex: 'Opzione', sizeIndex: 'Formato', deliveryIndex: 'Consegna',
+    };
+    return map[key] || key.replace(/Idx$/, '').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+  }
+
+  buildOrderDetails(orderBody) {
+    if (!orderBody) return [];
+    if (orderBody.human && typeof orderBody.human === 'object') {
+      return Object.entries(orderBody.human)
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => ({ label: k, value: String(v) }));
+    }
+    const skip = new Set(['productId']);
+    const src = orderBody.formula && typeof orderBody.formula === 'object' ? orderBody.formula : orderBody;
+    return Object.entries(src)
+      .filter(([k, v]) => !skip.has(k) && v !== undefined && v !== null && v !== '' && typeof v !== 'object')
+      .map(([k, v]) => ({ label: this.humanizeKey(k), value: String(v) }));
+  }
+
+  componentDidMount() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const name = params.get('name');
+    const price = params.get('price');
+    const cfg = params.get('cfg');
+    const col = params.get('col');
+    const ean = params.get('ean') || '';
+    const zone = params.get('zone') || 'roma_centro';
+    let orderBody = id ? { productId: id } : null;
+    if (cfg) {
+      try { orderBody = JSON.parse(decodeURIComponent(atob(cfg))); } catch (e) {}
+    }
+    if (id) this.setState({ productId: id, productName: name || '', productEan: ean, productPrice: price || '', productCollection: col || 'misura', orderBody, shipZone: zone });
+  }
+
+  computeShippingFee() {
+    if (this.state.productCollection === 'strategici') return 0;
+    const price = parseFloat(this.state.productPrice) || 0;
+    if (price >= 100) return 8;
+    const rates = { roma_centro: 20, roma_resto: 30, italia: 25 };
+    return rates[this.state.shipZone] ?? 20;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const shippingFee = this.computeShippingFee();
+    const orderTotal = (parseFloat(s.productPrice) || 0) + shippingFee;
+    const orderDetails = this.buildOrderDetails(s.orderBody);
+    return {
+      hasProduct: !!s.productId,
+      noProduct: !s.productId,
+      hasDetails: orderDetails.length > 0,
+      orderDetails,
+      detailsMarginBottom: orderDetails.length > 0 ? 'var(--space-4)' : '0',
+      productName: s.productName,
+      productEan: s.productEan || '',
+      hasEan: !!s.productEan,
+      productPrice: s.productPrice,
+      orderTotal: orderTotal.toFixed(2).replace(/\.00$/, ''),
+      shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + shippingFee),
+      isFlatShipping: (parseFloat(s.productPrice) || 0) >= 100 && s.productCollection !== 'strategici',
+      isZoneRomaCentro: s.shipZone === 'roma_centro' && !((parseFloat(s.productPrice) || 0) >= 100),
+      isZoneRomaResto: s.shipZone === 'roma_resto' && !((parseFloat(s.productPrice) || 0) >= 100),
+      isZoneItalia: s.shipZone === 'italia' && !((parseFloat(s.productPrice) || 0) >= 100),
+    };
+  }
+}
+</script>
+</body>
+</html>
