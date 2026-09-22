@@ -191,9 +191,6 @@
     </button>
     <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin-top:var(--space-4);">Pagamento sicuro tramite Stripe. Riceverai fattura elettronica via SDI o email secondo i dati inseriti.</p>
     <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
-      <button type="button" class="btn btn-secondary btn-block blueprint" onClick="{{ downloadPdf }}" style="margin-top:var(--space-3);">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Scarica PDF riepilogo ordine
-      </button>
       <a href="{{ preventivoHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block blueprint" style="margin-top:var(--space-3);">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi un preventivo ufficiale
       </a>
@@ -444,11 +441,6 @@ class Component extends DCLogic {
       submitting: s.submitting,
       submitLabel: s.submitting ? 'Attendere…' : 'Procedi al pagamento',
       handleSubmit: (e) => this.submit(e),
-      downloadPdf: () => {
-        const p = new URLSearchParams(window.location.search);
-        p.set('zone', s.shipZone);
-        window.open('checkout-print.dc.html?' + p.toString(), '_blank');
-      },
       preventivoHref: this.buildPreventivoHref(orderDetails),
     };
   }
