@@ -194,6 +194,9 @@
       <button type="button" class="btn btn-secondary btn-block blueprint" onClick="{{ downloadPdf }}" style="margin-top:var(--space-3);">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Scarica PDF riepilogo ordine
       </button>
+      <a href="{{ preventivoHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block blueprint" style="margin-top:var(--space-3);">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi un preventivo ufficiale
+      </a>
     </sc-if>
   </form>
 
@@ -298,6 +301,21 @@ class Component extends DCLogic {
       }),
       onError: (err) => this.setState({ errorMsg: 'Pagamento PayPal non riuscito, riprova.' }),
     }).render('#paypal-checkout-slot');
+  }
+
+  buildPreventivoHref(orderDetails) {
+    const s = this.state;
+    const qtyEntry = orderDetails.find(d => d.label === 'Quantità');
+    const cfg = orderDetails.filter(d => d !== qtyEntry).map(d => d.label + ': ' + d.value).join(' · ');
+    const p = new URLSearchParams();
+    p.set('prodotto', s.productName || '');
+    if (cfg) p.set('config', cfg);
+    if (qtyEntry) p.set('quantita', qtyEntry.value);
+    p.set('prezzo', (parseFloat(s.productPrice) || 0).toFixed(2));
+    p.set('pid', s.productId || '');
+    if (s.productEan) p.set('ean', s.productEan);
+    p.set('collection', s.productCollection || 'strategici');
+    return 'preventivo.dc.html?' + p.toString();
   }
 
   computeShippingFee() {
@@ -431,6 +449,7 @@ class Component extends DCLogic {
         p.set('zone', s.shipZone);
         window.open('checkout-print.dc.html?' + p.toString(), '_blank');
       },
+      preventivoHref: this.buildPreventivoHref(orderDetails),
     };
   }
 }
