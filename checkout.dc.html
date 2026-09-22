@@ -309,6 +309,7 @@ class Component extends DCLogic {
     if (cfg) p.set('config', cfg);
     if (qtyEntry) p.set('quantita', qtyEntry.value);
     p.set('prezzo', (parseFloat(s.productPrice) || 0).toFixed(2));
+    p.set('zona', s.shipZone || 'roma_centro');
     p.set('pid', s.productId || '');
     if (s.productEan) p.set('ean', s.productEan);
     p.set('collection', s.productCollection || 'strategici');
