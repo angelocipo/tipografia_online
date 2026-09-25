@@ -170,8 +170,6 @@
 // ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
 
 const ROLLUP_VARIANTS = [
-  { label: '80/85 × 200 cm', price: 60 },
-  { label: '150 × 200 cm', price: 350 },
   { label: '200 × 200 cm', price: 530 },
 ];
 const ROLLUP_FEATURES = [
@@ -289,7 +287,7 @@ const PRODUCTS = [
     // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
     pricing:{ type:'formula',
       formatChoices: ['80x200cm','85x200cm'],
-      tempiChoices: ['24H','72H'],
+      tempiChoices: ['24H'], hideTempi: true, // selettore tempi rimosso: sempre 24H
       strutturaChoices: [
         { label:'Con struttura', rate:30 },
         { label:'Solo stampa', rate:0 },
@@ -302,7 +300,7 @@ const PRODUCTS = [
     gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
-    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:2} },
+    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0} },
   { id:'5850', ean:'0652026573220', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
     img:'img/Professional-roll-up-banner-mockup-copia700.webp',
     gallery:['img/Professional-roll-up-banner-mockup-copia700.webp','img/IMG_4265ac-copia.webp','img/IMG_4262ac-copia.webp','img/rollup-500.webp'],
@@ -1663,7 +1661,7 @@ function renderCategoryPage(){
 }
 
 function renderGrid(){
-  const chips = ['Tutti', ...CATEGORIES, GARMENT_CAT];
+  const chips = ['Tutti', ...[...CATEGORIES, GARMENT_CAT].sort((a, b) => a.localeCompare(b, 'it'))];
   const visible = PRODUCTS.filter(p => !p.variantOf)
     .filter(p => state.category === 'Tutti' || p.categoria === state.category)
     .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
@@ -2415,12 +2413,12 @@ function renderDetail(){
             ${p.pricing.formatChoices.map(c => `<button class="pill ${c===f.formato?'active':''}" data-formula-formato="${esc(c)}">${esc(c)}</button>`).join('')}
           </div>
         </div>
-        <div>
+        ${p.pricing.hideTempi ? '' : `<div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Tempi di stampa</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${p.pricing.tempiChoices.map(c => `<button class="pill ${c===f.tempi?'active':''}" data-formula-tempi="${esc(c)}">${esc(c)}</button>`).join('')}
           </div>
-        </div>
+        </div>`}
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Con o senza struttura</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
