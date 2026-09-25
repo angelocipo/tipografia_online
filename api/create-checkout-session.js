@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
     const fIdx = Math.min(Math.max(Number.isInteger(formatIdx) ? formatIdx : 0, 0), product.formatRates.length - 1);
     const cIdx = Math.min(Math.max(Number.isInteger(cartaIdx) ? cartaIdx : 2, 0), product.cartaMultiplier.length - 1);
     const q = Math.max(1, parseInt(qty, 10) || 1);
-    const total = Math.round(product.formatRates[fIdx] * q * product.cartaMultiplier[cIdx] * 1.22 * 100) / 100;
+    const total = Math.round((product.formatRates[fIdx] * q * product.cartaMultiplier[cIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
     unitAmountCents = Math.round(total * 100);
     description = `${product.nome} — ${product.formatChoices[fIdx]}, ${product.cartaChoices[cIdx]}, ${q}pz`;
     } else if (product.type === 'libretti') {
