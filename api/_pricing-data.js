@@ -2,8 +2,6 @@
 // Only what's needed to recompute price safely (never trust a price sent from the browser).
 
 const ROLLUP_VARIANTS = [
-  { label: '80/85 × 200 cm', price: 60 },
-  { label: '150 × 200 cm', price: 350 },
   { label: '200 × 200 cm', price: 530 },
 ];
 
@@ -18,7 +16,7 @@ const PRICING = {
   '197': { nome: 'Stampa Roll-Up 80/85 × 200 cm', ean: '0652026573206', type: 'formula',
     rollupRate: (qty) => (qty > 6 ? 20 : qty > 4 ? 25 : 30),
     strutturaRates: [30, 0], // index 0 = "Con struttura", 1 = "Solo stampa"
-    rate24h: 10 },
+    rate24h: 10, forceTempi: '24H' },
   '5833': { nome: 'Stampa Roll-Up 200 × 200 cm', ean: '0652026573213', type: 'size', variants: ROLLUP_VARIANTS },
   '5850': { nome: 'Stampa Roll-Up 150 × 200 cm', ean: '0652026573220', type: 'formula',
     rollupRate: (qty) => (qty > 1 ? 90 : 95),

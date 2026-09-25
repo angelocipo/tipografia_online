@@ -28,10 +28,11 @@ module.exports = async (req, res) => {
     if (product.type === 'formula') {
       const qty = Math.max(1, parseInt(formula?.qty, 10) || 1);
       const strutturaIdx = formula?.strutturaIdx === 1 ? 1 : 0;
-      const rush = formula?.tempi === '24H' ? product.rate24h : 0;
+      const tempi = product.forceTempi || (formula?.tempi === '24H' ? '24H' : '72H');
+      const rush = tempi === '24H' ? product.rate24h : 0;
       const total = qty * (product.rollupRate(qty) + product.strutturaRates[strutturaIdx] + rush);
       unitAmountCents = Math.round(total * 100);
-      description = `${product.nome} — ${qty}pz, ${formula?.tempi === '24H' ? '24H' : '72H'}, ${strutturaIdx === 0 ? 'con struttura' : 'solo stampa'}`;
+      description = `${product.nome} — ${qty}pz, ${tempi}, ${strutturaIdx === 0 ? 'con struttura' : 'solo stampa'}`;
     } else if (product.type === 'tiersDelivery') {
       const dIdx = Number.isInteger(deliveryIndex) ? deliveryIndex : 0;
       const tiers = product.tiersByDelivery[Math.min(Math.max(dIdx, 0), product.tiersByDelivery.length - 1)];
