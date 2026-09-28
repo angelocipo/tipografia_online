@@ -27,7 +27,11 @@ const PRICING = {
       [{qty:100,price:33},{qty:250,price:36},{qty:500,price:41},{qty:1000,price:48},{qty:2500,price:74},{qty:5000,price:107},{qty:10000,price:166},{qty:20000,price:299},{qty:30000,price:440},{qty:40000,price:573},{qty:50000,price:712},{qty:60000,price:851},{qty:70000,price:990},{qty:80000,price:1119},{qty:90000,price:1257},{qty:100000,price:1395}],
       [{qty:100,price:66},{qty:250,price:69},{qty:500,price:74},{qty:1000,price:81},{qty:2500,price:107},{qty:5000,price:141},{qty:10000,price:204},{qty:20000,price:364},{qty:30000,price:527},{qty:40000,price:685},{qty:50000,price:848},{qty:60000,price:1012},{qty:70000,price:1176},{qty:80000,price:1330},{qty:90000,price:1492},{qty:100000,price:1655}],
     ] },
-  '5560': { nome: 'Volantini A4 gr 170', ean: '0652026573244', type: 'tiers', tiers: [{qty:1000,price:82},{qty:2500,price:137},{qty:5000,price:236},{qty:10000,price:429},{qty:20000,price:804},{qty:30000,price:1163},{qty:40000,price:1596},{qty:50000,price:1937},{qty:60000,price:2249},{qty:70000,price:2614},{qty:80000,price:2972},{qty:90000,price:3361},{qty:100000,price:3600}] },
+  '5560': { nome: 'Volantini A4 gr 170', ean: '0652026573244', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:24.27},{qty:25,price:28.8},{qty:50,price:34.72},{qty:75,price:41.49},{qty:100,price:47.97},{qty:250,price:55.22},{qty:500,price:65.41},{qty:1000,price:85.3},{qty:2500,price:137.28},{qty:5000,price:232.38},{qty:7500,price:338.32},{qty:10000,price:423.04},{qty:15000,price:608.5},{qty:20000,price:783.94}],
+      [{qty:10,price:61.34},{qty:25,price:66.37},{qty:50,price:72.37},{qty:75,price:79.5},{qty:100,price:86.45},{qty:250,price:93.95},{qty:500,price:104.35},{qty:1000,price:124.69},{qty:2500,price:174.94},{qty:5000,price:295.55},{qty:7500,price:428.29},{qty:10000,price:513.01},{qty:15000,price:752.06},{qty:20000,price:954.32}],
+    ] },
   '5840': { nome: 'Volantini A6 gr 130', ean: '0652026573251', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:100,price:25},{qty:250,price:30},{qty:500,price:31},{qty:1000,price:35},{qty:2500,price:44},{qty:5000,price:67},{qty:10000,price:108},{qty:20000,price:190},{qty:30000,price:277},{qty:40000,price:346},{qty:50000,price:437},{qty:60000,price:526},{qty:70000,price:596},{qty:80000,price:687},{qty:90000,price:776},{qty:100000,price:847}],
