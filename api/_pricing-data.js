@@ -63,51 +63,51 @@ const PRICING = {
     formats: [
       { label: 'Orizzontale 5,5×8,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: '1 Settimana', prices: [35,37,40,45,54,71,105,136,165] },
-          { label: '2 Giorni lavorativi', prices: [67,69,73,78,87,104,137,169,198] },
+          { label: 'Budget 1 Settimana', prices: [35,37,40,45,54,71,105,136,165] },
+          { label: 'Express 2 gg', prices: [67,69,73,78,87,104,137,169,198] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: '1 Settimana', prices: [39,43,45,49,58,78,116,153,203] },
-          { label: '2 Giorni lavorativi', prices: [73,77,79,82,90,111,149,185,262] },
+          { label: 'Budget 1 Settimana', prices: [39,43,45,49,58,78,116,153,203] },
+          { label: 'Express 2 gg', prices: [73,77,79,82,90,111,149,185,262] },
         ] },
-        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
       ] },
       { label: 'Verticale 5,5×8,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: '1 Settimana', prices: [35,37,40,45,54,71,105,136,165] },
-          { label: '2 Giorni lavorativi', prices: [67,69,73,78,87,104,137,169,198] },
+          { label: 'Budget 1 Settimana', prices: [35,37,40,45,54,71,105,136,165] },
+          { label: 'Express 2 gg', prices: [67,69,73,78,87,104,137,169,198] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: '1 Settimana', prices: [39,43,45,49,58,78,116,153,203] },
-          { label: '2 Giorni lavorativi', prices: [73,77,79,82,90,111,149,185,262] },
+          { label: 'Budget 1 Settimana', prices: [39,43,45,49,58,78,116,153,203] },
+          { label: 'Express 2 gg', prices: [73,77,79,82,90,111,149,185,262] },
         ] },
-        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
       ] },
       { label: 'Orizzontale 9×5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: '1 Settimana', prices: [36,41,43,46,52,67,98,124,149] },
-          { label: '2 Giorni lavorativi', prices: [68,75,76,79,85,100,131,157,182] },
+          { label: 'Budget 1 Settimana', prices: [36,41,43,46,52,67,98,124,149] },
+          { label: 'Express 2 gg', prices: [68,75,76,79,85,100,131,157,182] },
         ] },
-        { label: 'gr. 400', deliveries: [ { label: '1 Settimana', prices: [39,43,45,48,57,76,113,150,200] } ] },
-        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 400', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,43,45,48,57,76,113,150,200] } ] },
+        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
       ] },
       { label: 'Verticale 5×9 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: '1 Settimana', prices: [36,41,43,46,52,67,98,124,149] },
-          { label: '2 Giorni lavorativi', prices: [68,75,76,79,85,100,131,157,182] },
+          { label: 'Budget 1 Settimana', prices: [36,41,43,46,52,67,98,124,149] },
+          { label: 'Express 2 gg', prices: [68,75,76,79,85,100,131,157,182] },
         ] },
-        { label: 'gr. 400', deliveries: [ { label: '1 Settimana', prices: [39,43,45,48,57,76,113,150,200] } ] },
-        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 400', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,43,45,48,57,76,113,150,200] } ] },
+        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
       ] },
       // Order of `formats` MUST match index.html exactly — the client sends a numeric
       // formatIndex, so a different order here charges the price of a different format.
       { label: 'Quadrato 5,5×5,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: '1 Settimana', prices: [34,39,41,41,45,56,78,97,114] },
-          { label: '2 Giorni lavorativi', prices: [67,72,75,73,78,89,110,129,147] },
+          { label: 'Budget 1 Settimana', prices: [34,39,41,41,45,56,78,97,114] },
+          { label: 'Express 2 gg', prices: [67,72,75,73,78,89,110,129,147] },
         ] },
-        { label: 'gr. 400', deliveries: [ { label: '1 Settimana', prices: [37,40,41,43,49,62,89,115,138] } ] },
-        { label: 'gr. 500', deliveries: [ { label: '1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 400', deliveries: [ { label: 'Budget 1 Settimana', prices: [37,40,41,43,49,62,89,115,138] } ] },
+        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [39,42,44,48,56,73,109,142,176] } ] },
       ] },
     ] },
   '198': { nome: 'Foto Quadro Personalizzato', ean: '0652026573312', type: 'fotoQuadro', basePrice: 30 },
@@ -206,7 +206,7 @@ const PRICING = {
     formats: ['30×40 cm', '40×60 cm', '50×70 cm', '70×100 cm'],
     spessoreChoices: ['2 mm', '5 mm'],
     stampaChoices: ['1 lato', '2 lati'],
-    consegnaChoices: ['1 Settimana', '2 gg Lavorativi'],
+    consegnaChoices: ['Budget 1 Settimana', 'Express 2 gg'],
     // rates[spessoreIdx][stampaIdx][consegnaIdx] -> [30x40,40x60,50x70,70x100]
     // Listino +20% applicato il 14/09/2026 (base storica: 31,35,43,58 / 65,69,76,93 ecc.)
     rates: [
