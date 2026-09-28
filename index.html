@@ -336,8 +336,18 @@ const PRODUCTS = [
     gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.webp'],
     intro:'Volantini formato A4 (210 × 297 mm), stampa fronte/retro in quadricromia offset su carta patinata 170 g/m².',
     features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
-    specs:{'Formato':'A4 · 210×297 mm','Carta':'Patinata opaca 170 g/m²','Tempi':'7 giorni lavorativi'},
-    pricing:{type:'tiers', unit:'copie', tiers:[{qty:1000,price:82},{qty:2500,price:137},{qty:5000,price:236},{qty:10000,price:429},{qty:20000,price:804},{qty:30000,price:1163},{qty:40000,price:1596},{qty:50000,price:1937},{qty:60000,price:2249},{qty:70000,price:2614},{qty:80000,price:2972},{qty:90000,price:3361},{qty:100000,price:3600}]} },
+    specs:{'Formato':'A4 · 210×297 mm','Carta':'Patinata opaca 170 g/m²','Tempi':'Budget 1 settimana o Express 2 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      defaultQtyIdx: 7, // apertura su 1000 copie
+      readyDays: [[4,6], [2,2]], // "Pronto previsto" in giorni lavorativi per consegna (null = non mostrato)
+      readyCutoffHour: 9,
+      tiersByDelivery: [
+        [{qty:10,price:24.27},{qty:25,price:28.8},{qty:50,price:34.72},{qty:75,price:41.49},{qty:100,price:47.97},{qty:250,price:55.22},{qty:500,price:65.41},{qty:1000,price:85.3},{qty:2500,price:137.28},{qty:5000,price:232.38},{qty:7500,price:338.32},{qty:10000,price:423.04},{qty:15000,price:608.5},{qty:20000,price:783.94}],
+        [{qty:10,price:61.34},{qty:25,price:66.37},{qty:50,price:72.37},{qty:75,price:79.5},{qty:100,price:86.45},{qty:250,price:93.95},{qty:500,price:104.35},{qty:1000,price:124.69},{qty:2500,price:174.94},{qty:5000,price:295.55},{qty:7500,price:428.29},{qty:10000,price:513.01},{qty:15000,price:752.06},{qty:20000,price:954.32}],
+      ],
+    } },
   { id:'5840', ean:'0652026573251', nome:'Volantini A6 gr 130 Opaca o Lucida', categoria:'Volantini',
     img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.webp',
     gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.webp'],
@@ -1217,7 +1227,7 @@ async function startStripeCheckout(btn){
     let human = null;
     if (pricingType === 'tiers') body.tierIndex = idx;
     if (pricingType === 'tiersDelivery') {
-      const cur = state.deliveryIdxById[productId] || { deliveryIdx: 0, qtyIdx: 0 };
+      const cur = state.deliveryIdxById[productId] || deliveryDefault(PRODUCTS.find(x => x.id === productId));
       body.deliveryIndex = cur.deliveryIdx;
       body.tierIndex = cur.qtyIdx;
     }
@@ -1487,6 +1497,34 @@ function locandineState(p){
   const fresh = { formatIdx: 0, cartaIdx: 2, qty: p.pricing.qty.default };
   state.locandineById[p.id] = fresh;
   return fresh;
+}
+// Giorni di fermo produzione: festività nazionali italiane + tedesche.
+// IT: 1/1, 6/1, 25/4, 1/5, 2/6, 15/8, 1/11, 8/12, 25/12, 26/12, Pasquetta.
+// DE: 1/1, Venerdì Santo, Pasquetta, 1/5, Ascensione, Lunedì di Pentecoste, 3/10, 25/12, 26/12.
+function easterSunday(y){
+  const a = y%19, b = Math.floor(y/100), c = y%100, dd = Math.floor(b/4), e = b%4,
+    f = Math.floor((b+8)/25), g = Math.floor((b-f+1)/3), hh = (19*a+b-dd-g+15)%30, i = Math.floor(c/4), k = c%4,
+    l = (32+2*e+2*i-hh-k)%7, m = Math.floor((a+11*hh+22*l)/451), month = Math.floor((hh+l-7*m+114)/31), day = ((hh+l-7*m+114)%31)+1;
+  return new Date(y, month-1, day);
+}
+function isItalianHoliday(d){
+  const md = (d.getMonth()+1) + '-' + d.getDate();
+  if (['1-1','1-6','4-25','5-1','6-2','8-15','10-3','11-1','12-8','12-25','12-26'].includes(md)) return true;
+  const es = easterSunday(d.getFullYear());
+  return [-2, 1, 39, 50].some(off => { const x = new Date(es); x.setDate(x.getDate()+off); return x.getMonth() === d.getMonth() && x.getDate() === d.getDate(); });
+}
+function isBusinessDay(d){ return d.getDay() !== 0 && d.getDay() !== 6 && !isItalianHoliday(d); }
+// Ora di Roma; ordine entro cutoff in giorno lavorativo = giorno 0, altrimenti si parte dal giorno lavorativo successivo.
+function readyRange(minDays, maxDays, cutoffHour){
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/Rome', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  let d = new Date(+parts.year, +parts.month-1, +parts.day);
+  if (!isBusinessDay(d) || +parts.hour >= cutoffHour){ do { d.setDate(d.getDate()+1); } while (!isBusinessDay(d)); }
+  const add = n => { const x = new Date(d); let c = 0; while (c < n){ x.setDate(x.getDate()+1); if (isBusinessDay(x)) c++; } return x; };
+  return [add(minDays), add(maxDays)];
+}
+function fmtReadyDate(d){ return d.toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' }); }
+function deliveryDefault(p){
+  return { deliveryIdx: 0, qtyIdx: p?.pricing?.defaultQtyIdx ?? 0 };
 }
 function computeLocandinePrice(p, f){
   return Math.round((p.pricing.formatRates[f.formatIdx] * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
@@ -2204,7 +2242,7 @@ function renderDetail(){
       ${paymentBlockHtml(p, tier.price, idx)}`;
   } else if (p.pricing.type === 'tiersDelivery'){
     const deliveryIdx = state.deliveryIdxById[p.id]?.deliveryIdx ?? 0;
-    const idx = state.deliveryIdxById[p.id]?.qtyIdx ?? 0;
+    const idx = state.deliveryIdxById[p.id]?.qtyIdx ?? deliveryDefault(p).qtyIdx;
     const tiers = p.pricing.tiersByDelivery[deliveryIdx];
     const tier = tiers[Math.min(idx, tiers.length-1)];
     pricingHtml = `
@@ -2213,6 +2251,8 @@ function renderDetail(){
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           ${p.pricing.deliveryChoices.map((c,i) => `<button class="pill ${i===deliveryIdx?'active':''}" data-delivery-idx="${i}">${esc(c)}</button>`).join('')}
         </div>
+        ${(() => { const rd = p.pricing.readyDays?.[deliveryIdx]; if (!rd) return ''; const [a, b] = readyRange(rd[0], rd[1], p.pricing.readyCutoffHour ?? 9);
+          return `<div style="margin-top:10px; font-size:13.5px;">Pronto previsto: <strong>${a.getTime() === b.getTime() ? fmtReadyDate(a) : 'tra ' + fmtReadyDate(a) + ' e ' + fmtReadyDate(b)}</strong> <span style="color:oklch(0.5 0.01 90);">· ordinando entro le ${p.pricing.readyCutoffHour ?? 9}:00</span><div style="margin-top:2px; font-size:12px; color:oklch(0.5 0.01 90);">Data indicativa: può variare per motivi legati al trasporto.</div></div>`; })()}
       </div>
       <div style="margin-bottom:18px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
@@ -2651,13 +2691,14 @@ function renderDetail(){
   if (range) range.addEventListener('input', (e) => { state.tierIdxById[p.id] = parseInt(e.target.value,10); renderDetail(); });
   const deliveryRange = document.getElementById('deliveryQtyRange');
   if (deliveryRange) deliveryRange.addEventListener('input', (e) => {
-    const cur = state.deliveryIdxById[p.id] || { deliveryIdx: 0, qtyIdx: 0 };
+    const cur = state.deliveryIdxById[p.id] || deliveryDefault(p);
     state.deliveryIdxById[p.id] = { ...cur, qtyIdx: parseInt(e.target.value,10) };
     renderDetail();
   });
   app.querySelectorAll('[data-delivery-idx]').forEach(el => el.addEventListener('click', () => {
-    const cur = state.deliveryIdxById[p.id] || { deliveryIdx: 0, qtyIdx: 0 };
-    state.deliveryIdxById[p.id] = { deliveryIdx: parseInt(el.dataset.deliveryIdx,10), qtyIdx: 0 };
+    const cur = state.deliveryIdxById[p.id] || deliveryDefault(p);
+    // Con defaultQtyIdx la quantità scelta resta quando si cambia consegna.
+    state.deliveryIdxById[p.id] = { deliveryIdx: parseInt(el.dataset.deliveryIdx,10), qtyIdx: p.pricing.defaultQtyIdx != null ? cur.qtyIdx : 0 };
     renderDetail();
   }));
   app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
