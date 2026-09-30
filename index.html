@@ -516,6 +516,60 @@ const PRODUCTS = [
         [{qty:10,price:26},{qty:25,price:27},{qty:50,price:29},{qty:75,price:31},{qty:100,price:33},{qty:250,price:48},{qty:500,price:59},{qty:1000,price:81},{qty:2500,price:138},{qty:5000,price:236},{qty:7500,price:336},{qty:10000,price:446},{qty:15000,price:665},{qty:20000,price:866},{qty:25000,price:1089},{qty:30000,price:1260}],
       ],
     } },
+  { id:'5910', ean:'', nome:'Spille ø2,5 cm', categoria:'Gadget',
+    img:'img/spille-700.webp',
+    gallery:['img/spille-700.webp'],
+    intro:'Spilla tonda ø2,5 cm, stampa 4/0 colori.',
+    features:['Stampa 4/0 colori','Formato tondo ø2,5 cm','Da 1 a 2.500 pezzi'],
+    specs:{'Formato':'diametro 2,5 cm','Stampa':'4/0 colori','Tempi':'Standard 7–10 gg · Express 4–5 gg · Overnight 1 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa. Express fino a 250 pz, Overnight fino a 100 pz.
+    pricing:{ type:'tiersDelivery', unit:'pezzi',
+      deliveryChoices: ['Standard 7–10 gg', 'Express 4–5 gg', 'Overnight 1 gg'],
+      readyDays: [[7,10], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      defaultQtyIdx: 10, // apertura su Standard 100 pz
+      tiersByDelivery: [
+        [{qty:1,price:14.88},{qty:2,price:15.36},{qty:3,price:15.86},{qty:4,price:16.35},{qty:5,price:16.86},{qty:10,price:19.31},{qty:15,price:23.23},{qty:20,price:25.22},{qty:25,price:27.36},{qty:50,price:38.45},{qty:100,price:59.66},{qty:150,price:80.9},{qty:200,price:102.11},{qty:250,price:123.3},{qty:500,price:225.76},{qty:1000,price:427.5},{qty:1500,price:646.3},{qty:2000,price:854.05},{qty:2500,price:1005.63}],
+        [{qty:1,price:34.75},{qty:2,price:35.33},{qty:3,price:35.94},{qty:4,price:36.53},{qty:5,price:37.15},{qty:10,price:40.16},{qty:15,price:44.98},{qty:20,price:48.02},{qty:25,price:51.07},{qty:50,price:62.96},{qty:100,price:87.15},{qty:150,price:110.93},{qty:200,price:134.69},{qty:250,price:160.02}],
+        [{qty:1,price:59.15},{qty:2,price:59.71},{qty:3,price:60.27},{qty:4,price:60.85},{qty:5,price:61.44},{qty:10,price:64.3},{qty:15,price:68.54},{qty:20,price:70.91},{qty:25,price:73.28},{qty:50,price:85.15},{qty:100,price:108.91}],
+      ],
+    } },
+  { id:'5911', ean:'', variantOf:'5910', nome:'Spille ø3,8 cm', categoria:'Gadget',
+    img:'img/spille-700.webp',
+    gallery:['img/spille-700.webp'],
+    intro:'Spilla tonda ø3,8 cm, stampa 4/0 colori.',
+    features:['Stampa 4/0 colori','Formato tondo ø3,8 cm','Da 1 a 2.500 pezzi'],
+    specs:{'Formato':'diametro 3,8 cm','Stampa':'4/0 colori','Tempi':'Standard 7–10 gg · Express 4–5 gg · Overnight 1 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa. Express fino a 250 pz, Overnight fino a 100 pz.
+    pricing:{ type:'tiersDelivery', unit:'pezzi',
+      deliveryChoices: ['Standard 7–10 gg', 'Express 4–5 gg', 'Overnight 1 gg'],
+      readyDays: [[7,10], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      defaultQtyIdx: 10, // apertura su Standard 100 pz
+      tiersByDelivery: [
+        [{qty:1,price:16.59},{qty:2,price:17.1},{qty:3,price:17.62},{qty:4,price:18.14},{qty:5,price:18.62},{qty:10,price:20.53},{qty:15,price:24.46},{qty:20,price:26.53},{qty:25,price:28.59},{qty:50,price:38.99},{qty:100,price:60.16},{qty:150,price:82.58},{qty:200,price:104.99},{qty:250,price:127.38},{qty:500,price:240.06},{qty:1000,price:464.78},{qty:1500,price:695.2},{qty:2000,price:920.24},{qty:2500,price:1150.11}],
+        [{qty:1,price:36.83},{qty:2,price:37.46},{qty:3,price:38.08},{qty:4,price:38.72},{qty:5,price:39.31},{qty:10,price:42.43},{qty:15,price:47.65},{qty:20,price:49.57},{qty:25,price:51.23},{qty:50,price:64.22},{qty:100,price:87.66},{qty:150,price:113.14},{qty:200,price:140.03},{qty:250,price:166.9}],
+        [{qty:1,price:61.14},{qty:2,price:61.73},{qty:3,price:62.32},{qty:4,price:62.93},{qty:5,price:63.46},{qty:10,price:65.76},{qty:15,price:69.62},{qty:20,price:71.95},{qty:25,price:74.27},{qty:50,price:85.98},{qty:100,price:109.6}],
+      ],
+    } },
+  { id:'5912', ean:'', variantOf:'5910', nome:'Spille ø5 cm', categoria:'Gadget',
+    img:'img/spille-700.webp',
+    gallery:['img/spille-700.webp'],
+    intro:'Spilla tonda ø5 cm, stampa 4/0 colori.',
+    features:['Stampa 4/0 colori','Formato tondo ø5 cm','Da 1 a 2.500 pezzi'],
+    specs:{'Formato':'diametro 5 cm','Stampa':'4/0 colori','Tempi':'Standard 7–10 gg · Express 4–5 gg · Overnight 1 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa. Express fino a 250 pz, Overnight fino a 100 pz.
+    pricing:{ type:'tiersDelivery', unit:'pezzi',
+      deliveryChoices: ['Standard 7–10 gg', 'Express 4–5 gg', 'Overnight 1 gg'],
+      readyDays: [[7,10], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      defaultQtyIdx: 10, // apertura su Standard 100 pz
+      tiersByDelivery: [
+        [{qty:1,price:17.81},{qty:2,price:18.42},{qty:3,price:19.01},{qty:4,price:19.63},{qty:5,price:20.21},{qty:10,price:22.61},{qty:15,price:26.48},{qty:20,price:28.91},{qty:25,price:31.33},{qty:50,price:44.4},{qty:100,price:71.81},{qty:150,price:99.89},{qty:200,price:127.34},{qty:250,price:154.75},{qty:500,price:292.48},{qty:1000,price:568.4},{qty:1500,price:849.3},{qty:2000,price:1124.18},{qty:2500,price:1379.79}],
+        [{qty:1,price:39.01},{qty:2,price:39.76},{qty:3,price:40.54},{qty:4,price:41.31},{qty:5,price:42.1},{qty:10,price:45.79},{qty:15,price:49.49},{qty:20,price:52.99},{qty:25,price:55.74},{qty:50,price:69.5},{qty:100,price:100.21},{qty:150,price:133.92},{qty:200,price:166.85},{qty:250,price:199.73}],
+        [{qty:1,price:62.7},{qty:2,price:63.25},{qty:3,price:63.81},{qty:4,price:64.35},{qty:5,price:64.9},{qty:10,price:67.62},{qty:15,price:72},{qty:20,price:74.77},{qty:25,price:77.49},{qty:50,price:91.25},{qty:100,price:123.6}],
+      ],
+    } },
   { id:'198', ean:'0652026573312', nome:'Foto Quadro Personalizzato', categoria:'Quadri',
     img:'img/AdobeStock_325367840-foto-quadro-copia.webp',
     gallery:['img/AdobeStock_325367840-foto-quadro-copia.webp'],
@@ -1530,7 +1584,7 @@ function readyInfoHtml(p, deliveryLabel, deliveryIdx){
   let rd = p.pricing.readyDays?.[deliveryIdx];
   if (rd === undefined) rd = /\b2\s*g/i.test(deliveryLabel || '') ? [2,2] : [4,6];
   if (!rd) return '';
-  const cutoff = p.pricing.readyCutoffHour ?? 9;
+  const cutoff = p.pricing.readyCutoffHours?.[deliveryIdx] ?? p.pricing.readyCutoffHour ?? 9;
   const [a, b] = readyRange(rd[0], rd[1], cutoff);
   return `<div style="margin-top:10px; font-size:13.5px;">Pronto previsto: <strong>${a.getTime() === b.getTime() ? fmtReadyDate(a) : 'tra ' + fmtReadyDate(a) + ' e ' + fmtReadyDate(b)}</strong> <span style="color:oklch(0.5 0.01 90);">· ordinando entro le ${cutoff}:00</span><div style="margin-top:2px; font-size:12px; color:oklch(0.5 0.01 90);">Data indicativa: può variare per motivi legati al trasporto.</div></div>`;
 }
@@ -1590,9 +1644,10 @@ function computeBv24hPrice(p, f){
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
 // Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
-const CATEGORY_PAGES = { '5720': 'Adesivi' };
+const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille' };
 // Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
-const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure' };
+const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure' };
+const CATEGORY_INTROS = { 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
 // URL leggibili: #libretti-chiesa-personalizzati invece di #5805. Lo slug è derivato dal nome
 // prodotto; i vecchi link con l'id numerico continuano a funzionare (vedi initialHash).
 function productSlug(p){
@@ -1698,7 +1753,7 @@ function renderCategoryPage(){
         ${esc(cat)}
         <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
       </h1>
-      <p style="font-size:15px; color:color-mix(in srgb, var(--color-text) 78%, transparent); margin:0 0 6px; max-width:62ch; line-height:1.6;">Adesivi stampati su vinile e carta adesiva, per interni ed esterni. Scegli il prodotto per configurare formato, quantità e tempi di consegna.</p>
+      <p style="font-size:15px; color:color-mix(in srgb, var(--color-text) 78%, transparent); margin:0 0 6px; max-width:62ch; line-height:1.6;">${esc(CATEGORY_INTROS[cat] || 'Adesivi stampati su vinile e carta adesiva, per interni ed esterni. Scegli il prodotto per configurare formato, quantità e tempi di consegna.')}</p>
       <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 32px; font-family:ui-monospace,monospace;">${items.length} prodott${items.length === 1 ? 'o' : 'i'} · prezzi all inclusive, IVA compresa.</p>
       <div class="p-cards">${items.map(p => productCardHtml(p)).join('')}</div>
       <div style="margin-top:36px;">
@@ -2711,7 +2766,9 @@ function renderDetail(){
   app.querySelectorAll('[data-delivery-idx]').forEach(el => el.addEventListener('click', () => {
     const cur = state.deliveryIdxById[p.id] || deliveryDefault(p);
     // Con defaultQtyIdx la quantità scelta resta quando si cambia consegna.
-    state.deliveryIdxById[p.id] = { deliveryIdx: parseInt(el.dataset.deliveryIdx,10), qtyIdx: p.pricing.defaultQtyIdx != null ? cur.qtyIdx : 0 };
+    const dNew = parseInt(el.dataset.deliveryIdx,10);
+    const maxQ = p.pricing.tiersByDelivery[dNew].length - 1;
+    state.deliveryIdxById[p.id] = { deliveryIdx: dNew, qtyIdx: p.pricing.defaultQtyIdx != null ? Math.min(cur.qtyIdx, maxQ) : 0 };
     renderDetail();
   }));
   app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
