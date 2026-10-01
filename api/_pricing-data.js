@@ -216,6 +216,70 @@ const PRICING = {
         [ [40.8,46.8,58.8,84], [80.4,87.6,99.6,126] ] ], // 5mm, 2 lati: [1 sett, 2gg]
     ],
   },
+  '5920': { nome: 'Banner PVC 400gr 100×50 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:22.78},{qty:2,price:29.55},{qty:3,price:36.06},{qty:4,price:42.54},{qty:5,price:49.01},{qty:6,price:55.47},{qty:7,price:61.95},{qty:8,price:68.42},{qty:9,price:74.88},{qty:10,price:81.36},{qty:11,price:105.04},{qty:12,price:111.52},{qty:13,price:117.97},{qty:14,price:124.45},{qty:15,price:130.93}],
+    ] },
+  '5921': { nome: 'Banner PVC 400gr 100×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:27.02},{qty:2,price:37.62},{qty:3,price:47.82},{qty:4,price:58.03},{qty:5,price:68.21},{qty:6,price:78.42},{qty:7,price:88.64},{qty:8,price:99.1},{qty:9,price:109.31},{qty:10,price:119.52},{qty:11,price:146.24},{qty:12,price:156.35},{qty:13,price:167.02},{qty:14,price:177.15},{qty:15,price:187.26}],
+    ] },
+  '5922': { nome: 'Banner PVC 400gr 150×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:31.28},{qty:2,price:45.2},{qty:3,price:59.18},{qty:4,price:73.17},{qty:5,price:87.46},{qty:6,price:101.44},{qty:7,price:115.42},{qty:8,price:128.48},{qty:9,price:142.35},{qty:10,price:156.51},{qty:11,price:188.11},{qty:12,price:201.98},{qty:13,price:215.87},{qty:14,price:230.54},{qty:15,price:244.42}],
+    ] },
+  '5923': { nome: 'Banner PVC 400gr 150×150 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:41.15},{qty:2,price:60.37},{qty:3,price:80.19},{qty:4,price:100.16},{qty:5,price:120.1},{qty:6,price:138.4},{qty:7,price:158.1},{qty:8,price:177.78},{qty:9,price:217.71},{qty:10,price:237.41},{qty:11,price:257.09},{qty:12,price:276.78},{qty:13,price:296.46},{qty:14,price:316.16},{qty:15,price:335.86}],
+    ] },
+  '5924': { nome: 'Banner PVC 400gr 200×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:35.25},{qty:2,price:52.61},{qty:3,price:70.29},{qty:4,price:88.29},{qty:5,price:105.97},{qty:6,price:140.24},{qty:7,price:158.34},{qty:8,price:175.9},{qty:9,price:193.44},{qty:10,price:211.79},{qty:11,price:247.47},{qty:12,price:265.02},{qty:13,price:282.58},{qty:14,price:301.87},{qty:15,price:319.44}],
+    ] },
+  '5925': { nome: 'Banner PVC 400gr 200×150 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:46.98},{qty:2,price:72.3},{qty:3,price:97.92},{qty:4,price:123.52},{qty:5,price:147.36},{qty:6,price:172.62},{qty:7,price:197.89},{qty:8,price:223.18},{qty:9,price:248.43},{qty:10,price:273.71},{qty:11,price:319.98},{qty:12,price:345.25},{qty:13,price:370.54},{qty:14,price:395.79},{qty:15,price:421.06}],
+    ] },
+  '5926': { nome: 'Banner PVC 400gr 200×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:55.07},{qty:2,price:88.42},{qty:3,price:121.79},{qty:4,price:153.3},{qty:5,price:186.22},{qty:6,price:240.75},{qty:7,price:273.68},{qty:8,price:306.61},{qty:9,price:339.52},{qty:10,price:372.45},{qty:11,price:426.96},{qty:12,price:459.89},{qty:13,price:492.82},{qty:14,price:525.76},{qty:15,price:558.67}],
+    ] },
+  '5927': { nome: 'Banner PVC 400gr 250×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:39.34},{qty:2,price:60.69},{qty:3,price:82.3},{qty:4,price:103.68},{qty:5,price:125.02},{qty:6,price:145.6},{qty:7,price:185.25},{qty:8,price:207.22},{qty:9,price:228.42},{qty:10,price:249.58},{qty:11,price:270.78},{qty:12,price:293.17},{qty:13,price:333.76},{qty:14,price:354.93},{qty:15,price:376.11}],
+    ] },
+  '5928': { nome: 'Banner PVC 400gr 250×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:62.8},{qty:2,price:103.92},{qty:3,price:143.34},{qty:4,price:183.95},{qty:5,price:224.53},{qty:6,price:265.09},{qty:7,price:327.3},{qty:8,price:367.86},{qty:9,price:408.45},{qty:10,price:449.06},{qty:11,price:489.65},{qty:12,price:530.22},{qty:13,price:592.4},{qty:14,price:632.99},{qty:15,price:673.55}],
+    ] },
+  '5929': { nome: 'Banner PVC 400gr 250×250 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:76.5},{qty:2,price:127.28},{qty:3,price:175.92},{qty:4,price:226.08},{qty:5,price:276.18},{qty:6,price:351.84},{qty:7,price:401.97},{qty:8,price:452.1},{qty:9,price:502.22},{qty:10,price:552.37},{qty:11,price:628.02},{qty:12,price:678.18},{qty:13,price:728.29},{qty:14,price:740.94},{qty:15,price:787.73}],
+    ] },
+  '5930': { nome: 'Banner PVC 400gr 300×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:43.38},{qty:2,price:68.77},{qty:3,price:94.46},{qty:4,price:119.86},{qty:5,price:144.48},{qty:6,price:169.66},{qty:7,price:214.13},{qty:8,price:239.33},{qty:9,price:264.53},{qty:10,price:290.9},{qty:11,price:316.06},{qty:12,price:341.28},{qty:13,price:385.95},{qty:14,price:411.12},{qty:15,price:436.88}],
+    ] },
+  '5931': { nome: 'Banner PVC 400gr 300×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:70.61},{qty:2,price:119.52},{qty:3,price:166.45},{qty:4,price:236.29},{qty:5,price:284.59},{qty:6,price:332.86},{qty:7,price:402.72},{qty:8,price:450.99},{qty:9,price:499.28},{qty:10,price:571.86},{qty:11,price:619.76},{qty:12,price:666.93},{qty:13,price:739.34},{qty:14,price:755.74},{qty:15,price:800.78}],
+    ] },
+  '5932': { nome: 'Banner PVC 400gr 300×300 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:187.97},{qty:2,price:257.68},{qty:3,price:444.53},{qty:4,price:515.33},{qty:5,price:702.18},{qty:6,price:772.99},{qty:7,price:959.87},{qty:8,price:1030.67},{qty:9,price:1166.11},{qty:10,price:1231.71},{qty:11,price:1412.45},{qty:12,price:1478.03},{qty:13,price:1658.8},{qty:14,price:1724.38},{qty:15,price:1858.56}],
+    ] },
+  '5933': { nome: 'Banner PVC 400gr 400×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:51.47},{qty:2,price:85.25},{qty:3,price:118.75},{qty:4,price:169.89},{qty:5,price:203.9},{qty:6,price:237.14},{qty:7,price:290.99},{qty:8,price:324.21},{qty:9,price:357.44},{qty:10,price:410.88},{qty:11,price:444.11},{qty:12,price:478.16},{qty:13,price:532.16},{qty:14,price:566.32},{qty:15,price:600.51}],
+    ] },
+  '5934': { nome: 'Banner PVC 400gr 400×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:86.19},{qty:2,price:148.91},{qty:3,price:212.59},{qty:4,price:297.82},{qty:5,price:361.46},{qty:6,price:425.14},{qty:7,price:510.38},{qty:8,price:574.06},{qty:9,price:637.71},{qty:10,price:722.96},{qty:11,price:753.46},{qty:12,price:812.88},{qty:13,price:897.28},{qty:14,price:956.69},{qty:15,price:1016.1}],
+    ] },
+  '5935': { nome: 'Banner PVC 400gr 400×300 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:210.74},{qty:2,price:302.62},{qty:3,price:511.94},{qty:4,price:605.23},{qty:5,price:814.56},{qty:6,price:907.86},{qty:7,price:1065.49},{qty:8,price:1151.9},{qty:9,price:1353.46},{qty:10,price:1439.86},{qty:11,price:1641.41},{qty:12,price:1679.9},{qty:13,price:1877.23},{qty:14,price:1959.87},{qty:15,price:2157.18}],
+    ] },
   '5720': { nome: 'Adesivo PVC 42×10 cm', ean: '0652026573305', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],

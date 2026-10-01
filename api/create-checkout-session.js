@@ -154,7 +154,7 @@ module.exports = async (req, res) => {
       const base = wCm * 0.002 + 29 + ((2*hCm + 2*wCm) / 100) * 50;
       const total = base * 1.5;
       unitAmountCents = Math.round(total * 100);
-      description = `${product.nome} — ${h}×${w} ${String(unit || 'CM').toUpperCase()}, prezzo € ${base.toFixed(2)} + caparra 50% (€ ${(base/2).toFixed(2)})`;
+      description = `${product.nome} — ${h}×${w} ${String(unit || 'CM').toUpperCase()}, prezzo € ${base.toFixed(2).replace('.', ',')} + caparra 50% (€ ${(base/2).toFixed(2).replace('.', ',')})`;
     } else if (product.type === 'scatolaGioielli') {
       const { misuraIdx, coloreIdx, qty } = formula || {};
       const mIdx = Math.min(Math.max(Number.isInteger(misuraIdx) ? misuraIdx : 0, 0), product.misuraRate.length - 1);
