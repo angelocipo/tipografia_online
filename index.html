@@ -186,7 +186,7 @@ function struttura215cm(sel) {
 }
 
 const GARMENT_CAT = 'Stampa su indumento';
-const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
+const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Banner', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
 // Plastificazione: sovrapprezzo IVA incl. per quantità (per ogni motivo).
@@ -667,6 +667,246 @@ const PRODUCTS = [
         [{qty:50,price:94.1},{qty:75,price:104.19},{qty:100,price:107.68},{qty:250,price:140.9},{qty:500,price:196.72},{qty:1000,price:315.52},{qty:2500,price:683.86},{qty:5000,price:1282.29},{qty:7500,price:1904.51},{qty:10000,price:2484.3},{qty:15000,price:3694.27},{qty:20000,price:4906.4},{qty:25000,price:6098.06},{qty:30000,price:7310.21},{qty:40000,price:9734.51},{qty:50000,price:11859.82}],
         [{qty:50,price:127.71},{qty:75,price:139.15},{qty:100,price:141.3},{qty:250,price:174.53},{qty:500,price:230.4},{qty:1000,price:349.23},{qty:2500,price:743.41},{qty:5000,price:1367.18},{qty:7500,price:2040.08},{qty:10000,price:2645.22},{qty:15000,price:3931.22},{qty:20000,price:5219.38},{qty:25000,price:6461.71},{qty:30000,price:7749.87},{qty:40000,price:10326.22},{qty:50000,price:12578.22}],
         [{qty:50,price:149.9},{qty:75,price:162.54},{qty:100,price:163.97},{qty:250,price:196.27},{qty:500,price:256.16},{qty:1000,price:377.12},{qty:2500,price:774.34}],
+      ],
+    } },
+  { id:'5920', ean:'', nome:'Banner PVC 400gr 100×50 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 100×50 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'100×50 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:22.78},{qty:2,price:29.55},{qty:3,price:36.06},{qty:4,price:42.54},{qty:5,price:49.01},{qty:6,price:55.47},{qty:7,price:61.95},{qty:8,price:68.42},{qty:9,price:74.88},{qty:10,price:81.36},{qty:11,price:105.04},{qty:12,price:111.52},{qty:13,price:117.97},{qty:14,price:124.45},{qty:15,price:130.93}],
+      ],
+    } },
+  { id:'5921', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 100×100 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 100×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'100×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:27.02},{qty:2,price:37.62},{qty:3,price:47.82},{qty:4,price:58.03},{qty:5,price:68.21},{qty:6,price:78.42},{qty:7,price:88.64},{qty:8,price:99.1},{qty:9,price:109.31},{qty:10,price:119.52},{qty:11,price:146.24},{qty:12,price:156.35},{qty:13,price:167.02},{qty:14,price:177.15},{qty:15,price:187.26}],
+      ],
+    } },
+  { id:'5922', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 150×100 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 150×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'150×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:31.28},{qty:2,price:45.2},{qty:3,price:59.18},{qty:4,price:73.17},{qty:5,price:87.46},{qty:6,price:101.44},{qty:7,price:115.42},{qty:8,price:128.48},{qty:9,price:142.35},{qty:10,price:156.51},{qty:11,price:188.11},{qty:12,price:201.98},{qty:13,price:215.87},{qty:14,price:230.54},{qty:15,price:244.42}],
+      ],
+    } },
+  { id:'5923', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 150×150 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 150×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'150×150 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:41.15},{qty:2,price:60.37},{qty:3,price:80.19},{qty:4,price:100.16},{qty:5,price:120.1},{qty:6,price:138.4},{qty:7,price:158.1},{qty:8,price:177.78},{qty:9,price:217.71},{qty:10,price:237.41},{qty:11,price:257.09},{qty:12,price:276.78},{qty:13,price:296.46},{qty:14,price:316.16},{qty:15,price:335.86}],
+      ],
+    } },
+  { id:'5924', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 200×100 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 200×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'200×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:35.25},{qty:2,price:52.61},{qty:3,price:70.29},{qty:4,price:88.29},{qty:5,price:105.97},{qty:6,price:140.24},{qty:7,price:158.34},{qty:8,price:175.9},{qty:9,price:193.44},{qty:10,price:211.79},{qty:11,price:247.47},{qty:12,price:265.02},{qty:13,price:282.58},{qty:14,price:301.87},{qty:15,price:319.44}],
+      ],
+    } },
+  { id:'5925', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 200×150 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 200×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'200×150 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:46.98},{qty:2,price:72.3},{qty:3,price:97.92},{qty:4,price:123.52},{qty:5,price:147.36},{qty:6,price:172.62},{qty:7,price:197.89},{qty:8,price:223.18},{qty:9,price:248.43},{qty:10,price:273.71},{qty:11,price:319.98},{qty:12,price:345.25},{qty:13,price:370.54},{qty:14,price:395.79},{qty:15,price:421.06}],
+      ],
+    } },
+  { id:'5926', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 200×200 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 200×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'200×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:55.07},{qty:2,price:88.42},{qty:3,price:121.79},{qty:4,price:153.3},{qty:5,price:186.22},{qty:6,price:240.75},{qty:7,price:273.68},{qty:8,price:306.61},{qty:9,price:339.52},{qty:10,price:372.45},{qty:11,price:426.96},{qty:12,price:459.89},{qty:13,price:492.82},{qty:14,price:525.76},{qty:15,price:558.67}],
+      ],
+    } },
+  { id:'5927', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 250×100 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 250×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'250×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:39.34},{qty:2,price:60.69},{qty:3,price:82.3},{qty:4,price:103.68},{qty:5,price:125.02},{qty:6,price:145.6},{qty:7,price:185.25},{qty:8,price:207.22},{qty:9,price:228.42},{qty:10,price:249.58},{qty:11,price:270.78},{qty:12,price:293.17},{qty:13,price:333.76},{qty:14,price:354.93},{qty:15,price:376.11}],
+      ],
+    } },
+  { id:'5928', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 250×200 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 250×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'250×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:62.8},{qty:2,price:103.92},{qty:3,price:143.34},{qty:4,price:183.95},{qty:5,price:224.53},{qty:6,price:265.09},{qty:7,price:327.3},{qty:8,price:367.86},{qty:9,price:408.45},{qty:10,price:449.06},{qty:11,price:489.65},{qty:12,price:530.22},{qty:13,price:592.4},{qty:14,price:632.99},{qty:15,price:673.55}],
+      ],
+    } },
+  { id:'5929', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 250×250 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 250×250 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'250×250 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:76.5},{qty:2,price:127.28},{qty:3,price:175.92},{qty:4,price:226.08},{qty:5,price:276.18},{qty:6,price:351.84},{qty:7,price:401.97},{qty:8,price:452.1},{qty:9,price:502.22},{qty:10,price:552.37},{qty:11,price:628.02},{qty:12,price:678.18},{qty:13,price:728.29},{qty:14,price:740.94},{qty:15,price:787.73}],
+      ],
+    } },
+  { id:'5930', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×100 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:43.38},{qty:2,price:68.77},{qty:3,price:94.46},{qty:4,price:119.86},{qty:5,price:144.48},{qty:6,price:169.66},{qty:7,price:214.13},{qty:8,price:239.33},{qty:9,price:264.53},{qty:10,price:290.9},{qty:11,price:316.06},{qty:12,price:341.28},{qty:13,price:385.95},{qty:14,price:411.12},{qty:15,price:436.88}],
+      ],
+    } },
+  { id:'5931', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×200 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:70.61},{qty:2,price:119.52},{qty:3,price:166.45},{qty:4,price:236.29},{qty:5,price:284.59},{qty:6,price:332.86},{qty:7,price:402.72},{qty:8,price:450.99},{qty:9,price:499.28},{qty:10,price:571.86},{qty:11,price:619.76},{qty:12,price:666.93},{qty:13,price:739.34},{qty:14,price:755.74},{qty:15,price:800.78}],
+      ],
+    } },
+  { id:'5932', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×300 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×300 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×300 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:187.97},{qty:2,price:257.68},{qty:3,price:444.53},{qty:4,price:515.33},{qty:5,price:702.18},{qty:6,price:772.99},{qty:7,price:959.87},{qty:8,price:1030.67},{qty:9,price:1166.11},{qty:10,price:1231.71},{qty:11,price:1412.45},{qty:12,price:1478.03},{qty:13,price:1658.8},{qty:14,price:1724.38},{qty:15,price:1858.56}],
+      ],
+    } },
+  { id:'5933', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 400×100 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 400×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'400×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:51.47},{qty:2,price:85.25},{qty:3,price:118.75},{qty:4,price:169.89},{qty:5,price:203.9},{qty:6,price:237.14},{qty:7,price:290.99},{qty:8,price:324.21},{qty:9,price:357.44},{qty:10,price:410.88},{qty:11,price:444.11},{qty:12,price:478.16},{qty:13,price:532.16},{qty:14,price:566.32},{qty:15,price:600.51}],
+      ],
+    } },
+  { id:'5934', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 400×200 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 400×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'400×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:86.19},{qty:2,price:148.91},{qty:3,price:212.59},{qty:4,price:297.82},{qty:5,price:361.46},{qty:6,price:425.14},{qty:7,price:510.38},{qty:8,price:574.06},{qty:9,price:637.71},{qty:10,price:722.96},{qty:11,price:753.46},{qty:12,price:812.88},{qty:13,price:897.28},{qty:14,price:956.69},{qty:15,price:1016.1}],
+      ],
+    } },
+  { id:'5935', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 400×300 cm', categoria:'Banner',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 400 g formato 400×300 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'400×300 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:210.74},{qty:2,price:302.62},{qty:3,price:511.94},{qty:4,price:605.23},{qty:5,price:814.56},{qty:6,price:907.86},{qty:7,price:1065.49},{qty:8,price:1151.9},{qty:9,price:1353.46},{qty:10,price:1439.86},{qty:11,price:1641.41},{qty:12,price:1679.9},{qty:13,price:1877.23},{qty:14,price:1959.87},{qty:15,price:2157.18}],
       ],
     } },
   { id:'5910', ean:'', nome:'Spille ø2,5 cm', categoria:'Gadget',
@@ -1272,9 +1512,8 @@ PRODUCTS.forEach(p => {
     : (SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici');
 });
 
-// Due decimali solo quando servono: 9,70 resta 9,70 ma i listini a cifra tonda (es. Volantini
-// Prezzi Strategici) mostrano 82, non 82,00. L'addebito Stripe coincide sempre al centesimo.
-function fmtEUR(n){ const v = Math.round(Number(n)*100)/100; const dec = v % 1 !== 0 ? 2 : 0; return v.toLocaleString('it-IT', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
+// Sempre due decimali (82 → 82,00). L'addebito Stripe coincide sempre al centesimo.
+function fmtEUR(n){ const v = Math.round(Number(n)*100)/100; return v.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function priceFrom(p){
   if (p.pricing.type === 'tiers') return p.pricing.tiers[0].price;
   if (p.pricing.type === 'tiersDelivery') return Math.min(...p.pricing.tiersByDelivery.map(t => t[0].price));
@@ -1797,12 +2036,12 @@ function computeBv24hPrice(p, f){
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
 // Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
-const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille' };
+const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner' };
 // Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
-const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure' };
+const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr tutte le misure' };
 // Titolo mostrato in cima alla pagina di categoria (solo visuale; il nome interno resta invariato).
-const CATEGORY_TITLES = { 'Adesivi': 'Adesivo PVC' };
-const CATEGORY_INTROS = { 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
+const CATEGORY_TITLES = { 'Adesivi': 'Adesivo PVC', 'Banner': 'Banner PVC 400gr' };
+const CATEGORY_INTROS = { 'Banner': 'Banner in PVC 400 g, stampa 4/0 colori, taglio lungo tutto il perimetro. Scegli la misura per configurare la quantità.', 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
 // URL leggibili: #libretti-chiesa-personalizzati invece di #5805. Lo slug è derivato dal nome
 // prodotto; i vecchi link con l'id numerico continuano a funzionare (vedi initialHash).
 function productSlug(p){
@@ -1913,7 +2152,7 @@ function renderCategoryPage(){
       </h1>
       <p style="font-size:15px; color:color-mix(in srgb, var(--color-text) 78%, transparent); margin:0 0 6px; max-width:62ch; line-height:1.6;">${esc(CATEGORY_INTROS[cat] || 'Adesivi stampati su vinile e carta adesiva, per interni ed esterni. Scegli il prodotto per configurare formato, quantità e tempi di consegna.')}</p>
       <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 32px; font-family:ui-monospace,monospace;">${items.length} prodott${items.length === 1 ? 'o' : 'i'} · prezzi all inclusive, IVA compresa.</p>
-      <div class="p-cards">${items.map(p => productCardHtml(p, cat === 'Adesivi' ? p.nome.replace(/^Adesivo PVC\s+/, '') : null)).join('')}</div>
+      <div class="p-cards">${items.map(p => productCardHtml(p, cat === 'Adesivi' ? p.nome.replace(/^Adesivo PVC\s+/, '') : cat === 'Banner' ? p.nome.replace(/^Banner PVC 400gr\s+/, '') : null)).join('')}</div>
       <div style="margin-top:36px;">
         <button class="chip" data-home="1">← Torna al catalogo</button>
       </div>

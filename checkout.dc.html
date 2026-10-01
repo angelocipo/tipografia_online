@@ -55,7 +55,7 @@
         </div>
         <div style="text-align:right;">
           <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
-          <div style="font-size:12px;font-weight:700;color:#c0392b;">Prodotto € {{ productPrice }} + spedizione {{ shippingLabel }}</div>
+          <div style="font-size:12px;font-weight:700;color:#c0392b;">Prodotto € {{ productPriceFmt }} + spedizione {{ shippingLabel }}</div>
         </div>
       </div>
       <sc-if value="{{ hasDetails }}" hint-placeholder-val="{{ false }}">
@@ -139,12 +139,12 @@
       <div class="field" style="margin:var(--space-4) 0;">
         <label id="ship-zone-label">Consegna</label>
         <div class="seg" role="radiogroup" aria-labelledby="ship-zone-label">
-          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_centro" checked="{{ isZoneRomaCentro }}" onChange="{{ setShipZone }}">Roma Sud/EUR/Centro — € 20</label>
-          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30</label>
-          <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25</label>
+          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_centro" checked="{{ isZoneRomaCentro }}" onChange="{{ setShipZone }}">Roma Sud/EUR/Centro — € 20,00</label>
+          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30,00</label>
+          <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25,00</label>
         </div>
         <sc-if value="{{ isFlatShipping }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;">Ordine sopra € 100: consegna a tariffa fissa € 8, indipendente dalla zona.</p>
+          <p class="card-body" style="margin:var(--space-2) 0 0;">Ordine sopra € 100,00: consegna a tariffa fissa € 8,00, indipendente dalla zona.</p>
         </sc-if>
         <p class="card-body" style="margin:var(--space-2) 0 0;">Nessuna consegna in Vaticano.</p>
       </div>
@@ -213,6 +213,7 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+const eur = n => Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 class Component extends DCLogic {
   state = {
     productId: null, productName: '', productPrice: null, productCollection: 'misura', orderBody: null, design: {},
@@ -233,7 +234,7 @@ class Component extends DCLogic {
       lato_lungo: 'Lato lungo', lato_corto: 'Lato corto', pagCol: 'Pagine a colori', pagBn: 'Pagine bianco/nero',
       latiIdx: 'Lati', cartaIdx: 'Carta', misuraIdx: 'Misura', coloreIdx: 'Colore', qty: 'Quantità',
       formatIdx: 'Formato', soggettiIdx: 'Soggetti', larghezza: 'Larghezza', altezza: 'Altezza',
-      sagomaIdx: 'Forma', materialeIdx: 'Materiale', lavorazioneIdx: 'Lavorazione', altroColore: 'Altro colore',
+      sagomaIdx: 'Forma', materialeIdx: 'Materiale', lavorazioneIdx: 'Lavorazione', altroColore: 'Altro colore', tipo: 'Tipo',
       base: 'Base', copie: 'Copie', swatchIdx: 'Variante', unit: 'Unità', formato: 'Formato', pannelli: 'Pannelli',
       creazione: 'Creazione file', creazione_file: 'Creazione file', spessore: 'Spessore', holder: 'Porta badge',
       stampa: 'Stampa', plastificazione: 'Plastificazione', cordino: 'Cordino', colore_cordino: 'Colore cordino',
@@ -396,8 +397,9 @@ class Component extends DCLogic {
       productEan: s.productEan || '',
       hasEan: !!s.productEan,
       productPrice: s.productPrice,
-      orderTotal: orderTotal.toFixed(2).replace(/\.00$/, ''),
-      shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + shippingFee),
+      orderTotal: eur(orderTotal),
+      productPriceFmt: eur(parseFloat(s.productPrice) || 0),
+      shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: (parseFloat(s.productPrice) || 0) >= 100 && s.productCollection !== 'strategici',
       isZoneRomaCentro: s.shipZone === 'roma_centro',
       isZoneRomaResto: s.shipZone === 'roma_resto',

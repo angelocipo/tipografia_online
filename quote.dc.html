@@ -104,10 +104,10 @@
     <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
       <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 70%, transparent);line-height:1.6;margin-bottom:20px;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:14px;">
         <div style="font-weight:600;color:var(--color-text);margin-bottom:4px;">Shipping options</div>
-        <div>Italy (+1 day) — € 25 (option applied to this quote)</div>
-        <div>Rome South/EUR/Centre — € 20</div>
-        <div>Rest of Rome — € 30</div>
-        <div>Free shipping on orders from € 50. No delivery to the Vatican.</div>
+        <div>Italy (+1 day) — € 25.00 (option applied to this quote)</div>
+        <div>Rome South/EUR/Centre — € 20.00</div>
+        <div>Rest of Rome — € 30.00</div>
+        <div>Free shipping on orders from € 50.00. No delivery to the Vatican.</div>
       </div>
     </sc-if>
 
@@ -130,7 +130,7 @@ class Component extends DCLogic {
     const pid = params.get('pid');
     const ean = params.get('ean') || '';
     const collection = params.get('collection') || 'strategici';
-    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, free from € 50.
+    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, free from € 50.00.
     // Zone rates roma_centro 20 / roma_resto 30 / italia 25 — the quote uses the checkout default zone.
     const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, gratuita: 0 };
     const zona = params.get('zona') || 'italia';
