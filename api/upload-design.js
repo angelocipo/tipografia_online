@@ -1,93 +1,122 @@
-// Receives ONE design file as a raw binary POST body and PARKS it in Vercel Blob under
-// designs/<ref>/. No email is sent here: the file is attached to the owner's order email by
-// api/stripe-webhook.js only when the payment completes. Unpaid uploads expire after 7 days.
+// Riceve il materiale da stampare e lo inoltra per email al titolare come allegato (via Resend).
+// Viene chiamato dalla pagina "grazie", a PAGAMENTO CONFERMATO: i file restano nel browser
+// del cliente (IndexedDB, vedi tp-files.js) finché l'ordine non è pagato. Prima partivano
+// alla selezione del file, quindi arrivavano anche gli upload di chi non completava l'ordine.
 //
-//   POST /api/upload-design?ref=DES-AB12CD&name=logo.pdf
-//   Content-Type: application/octet-stream
-//   body: raw file bytes
-//
-// Content-Type is deliberately NOT application/json: the Vercel Node runtime then leaves
-// the request stream untouched so we can read the bytes without base64 inflation.
-// Requires BLOB_READ_WRITE_TOKEN (created automatically when a Blob store is connected).
-const { put, list, del } = require('@vercel/blob');
-const EXPIRE_MS = 7 * 24 * 3600 * 1000;
+// Limite tecnico: il body di una funzione serverless Vercel non può superare ~4,5 MB.
+// I file arrivano in base64 (+33%), quindi il client limita il totale a 2,5 MB reali.
+// Per file più grandi il cliente incolla un link (WeTransfer, Drive, Canva…).
 
-const MAX_BYTES = 4 * 1024 * 1024; // Vercel serverless request bodies cap out at 4.5 MB — hard platform limit
-const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'ai', 'eps', 'psd', 'tif', 'tiff', 'zip'];
-
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on('data', (c) => {
-      size += c.length;
-      if (size > MAX_BYTES) { reject(Object.assign(new Error('too-large'), { code: 'too-large' })); req.destroy(); return; }
-      chunks.push(c);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
+// Stesso indirizzo usato dalle notifiche d'ordine in stripe-webhook.js: prima questo file
+// leggeva OWNER_EMAIL (variabile che su Vercel non esiste) e ripiegava su
+// ordini@tipografia.online, casella diversa da quella dove arrivano gli ordini.
+const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_EMAIL || process.env.OWNER_EMAIL || 'info@tipografia.online';
+// Il mittente DEVE stare su un dominio verificato in Resend. Su Vercel RESEND_FROM era
+// impostata su un indirizzo gmail.com: Resend rifiutava ogni invio con 403. Se la variabile
+// non punta a tipografia.online la ignoriamo e usiamo il dominio verificato.
+const VERIFIED_DOMAIN = 'tipografia.online';
+function safeFrom() {
+  const raw = (process.env.RESEND_FROM || '').trim();
+  const addr = (raw.match(/<([^>]+)>/) || [null, raw])[1] || '';
+  if (addr.toLowerCase().endsWith('@' + VERIFIED_DOMAIN)) return raw;
+  if (raw) console.warn(`RESEND_FROM "${raw}" non è su @${VERIFIED_DOMAIN}: ignorata.`);
+  return `Tipografia Online <admin@${VERIFIED_DOMAIN}>`;
 }
+const RESEND_FROM = safeFrom();
 
-function safeName(raw) {
-  return String(raw || 'design')
-    .replace(/[\\/]/g, '_')
-    .replace(/[^\w.\-À-ÿ ]/g, '')
-    .slice(-120) || 'design';
+const MAX_TOTAL_B64 = 4.2 * 1024 * 1024;
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
 module.exports = async (req, res) => {
-  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
-  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
-
-  const url = new URL(req.url, 'http://localhost');
-  const ref = safeName(url.searchParams.get('ref') || 'DES-000000');
-  const filename = safeName(url.searchParams.get('name') || 'design');
-  const product = (url.searchParams.get('product') || '').slice(0, 120);
-  const ext = (filename.split('.').pop() || '').toLowerCase();
-
-  if (!ALLOWED_EXT.includes(ext)) {
-    res.status(415).json({ error: `Formato .${ext} non supportato. Usa ${ALLOWED_EXT.join(', ')}.` });
-    return;
-  }
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    res.status(500).json({ error: 'Servizio di upload non configurato (BLOB_READ_WRITE_TOKEN).' });
-    return;
-  }
-
-  let buf;
-  try {
-    buf = await readBody(req);
-  } catch (err) {
-    if (err.code === 'too-large') {
-      res.status(413).json({ error: 'File troppo grande (max 4 MB). Inviacelo via email dopo l\'ordine.' });
-      return;
-    }
-    res.status(400).json({ error: 'Lettura del file non riuscita.' });
-    return;
-  }
-  if (!buf || !buf.length) { res.status(400).json({ error: 'File vuoto.' }); return; }
-
-  try {
-    await put(`designs/${ref}/${filename}`, buf, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: 'application/octet-stream',
+  // Diagnostica: apri /api/upload-design nel browser per verificare la configurazione.
+  // Non espone nessun valore, solo se le variabili esistono.
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      ok: true,
+      resendKey: !!process.env.RESEND_API_KEY,
+      destinatario: OWNER_EMAIL,
+      mittente: RESEND_FROM,
+      maxMb: +(MAX_TOTAL_B64 / 1024 / 1024).toFixed(1),
     });
-  } catch (err) {
-    console.error('upload-design: Blob put failed', err);
-    res.status(502).json({ error: 'Invio del file non riuscito, riprova.' });
-    return;
+  }
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'RESEND_API_KEY non configurata' });
   }
 
-  // Housekeeping: drop files from carts that never reached payment. Never blocks the reply.
   try {
-    const { blobs } = await list({ prefix: 'designs/', limit: 1000 });
-    const old = blobs.filter((b) => Date.now() - new Date(b.uploadedAt).getTime() > EXPIRE_MS).map((b) => b.url);
-    if (old.length) await del(old);
-  } catch (err) {
-    console.error('upload-design: cleanup failed', err);
-  }
+    const { files, link, customer, product, note, ref } = req.body || {};
+    const list = Array.isArray(files) ? files.filter((f) => f && f.name && f.data) : [];
+    const cleanLink = typeof link === 'string' ? link.trim().slice(0, 500) : '';
 
-  res.status(200).json({ ok: true, ref, filename, bytes: buf.length });
+    if (!list.length && !cleanLink) {
+      return res.status(200).json({ ok: true, skipped: true });
+    }
+
+    const totalB64 = list.reduce((n, f) => n + String(f.data).length, 0);
+    if (totalB64 > MAX_TOTAL_B64) {
+      return res.status(413).json({ error: 'File troppo grandi. Usa il campo link.' });
+    }
+
+    const c = customer || {};
+    const cleanRef = typeof ref === 'string' ? ref.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20) : '';
+    const rows = [
+      ['Riferimento', cleanRef || '—'],
+      ['Prodotto', product || '—'],
+      ['Cliente', c.name || '—'],
+      ['Email', c.email || '—'],
+      ['Telefono', c.phone || '—'],
+      ['Azienda', c.company || ''],
+      ['File allegati', list.length ? list.map((f) => f.name).join(', ') : 'nessuno'],
+      ['Link fornito', cleanLink ? `<a href="${esc(cleanLink)}">${esc(cleanLink)}</a>` : 'nessuno'],
+      ['Note', note || ''],
+    ].filter(([, v]) => v !== '');
+
+    const html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#1d1f20;">
+      <h2 style="font-size:18px;margin:0 0 4px;">Materiale da stampare ricevuto</h2>
+      <p style="font-size:13px;color:#666;margin:0 0 16px;">Inviato a pagamento confermato. Cerca su Stripe l'ordine con lo stesso riferimento.</p>
+      <table style="border-collapse:collapse;font-size:14px;">
+        ${rows.map(([k, v]) => `<tr><td style="padding:4px 14px 4px 0;color:#666;">${esc(k)}</td><td style="padding:4px 0;">${k === 'Link fornito' ? v : esc(v)}</td></tr>`).join('')}
+      </table>
+    </body></html>`;
+
+    const payload = {
+      from: RESEND_FROM,
+      to: OWNER_EMAIL,
+      subject: `Materiale da stampare${cleanRef ? ' ' + cleanRef : ''} — ${product || 'ordine'}${c.name ? ' — ' + c.name : ''}`,
+      html,
+    };
+    if (list.length) {
+      payload.attachments = list.slice(0, 10).map((f) => ({
+        filename: String(f.name).slice(0, 120),
+        content: String(f.data),
+      }));
+    }
+
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify(payload),
+    });
+    const text = await r.text();
+    if (!r.ok) {
+      console.error(`Resend upload-design failed → to=${OWNER_EMAIL} from=${RESEND_FROM} status=${r.status} body=${text}`);
+      // Riportiamo il messaggio esatto di Resend: un 403 nudo non dice se il dominio non
+      // è verificato, se la chiave è limitata o se il destinatario non è ammesso.
+      let detail = '';
+      try { const j = JSON.parse(text); detail = j.message || j.error || ''; } catch (e) { detail = text; }
+      return res.status(502).json({ error: `Resend ${r.status}: ${String(detail).slice(0, 300)}` });
+    }
+    console.log(`Materiale inviato a ${OWNER_EMAIL} — rif ${cleanRef || 'nessuno'}, ${list.length} allegato/i`);
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('upload-design error', err);
+    return res.status(500).json({ error: err.message });
+  }
 };

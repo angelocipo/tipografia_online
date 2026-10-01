@@ -11,19 +11,30 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // _aruba-client, and any one of those missing would crash this function on import, which is
 // exactly the failure that silently killed every order confirmation. It is loaded lazily below.
 
-// Email sending is INLINED here on purpose. It used to live in ./_email-client, but that helper
-// went missing from a deployment and the top-level require crashed the whole function — the
-// webhook never returned 200, so Stripe retried forever and no confirmation was ever sent.
-// Keeping it inline means this endpoint has no local dependency that can go missing.
-const RESEND_FROM = process.env.RESEND_FROM || 'Tshirt Shop Online <ordini@tshirt-shop.online>';
+// Email sending is INLINED here on purpose. It used to live in ./_email-client, and a top-level
+// require of a file missing from a deployment crashes the whole function — the webhook never
+// returns 200, Stripe retries forever and no confirmation is ever sent. Keeping it inline means
+// this endpoint has no local dependency that can go missing. (api/_email-client.js still exists
+// and is used by the endpoints that need attachments.)
+// Il mittente DEVE stare su un dominio verificato in Resend. Su Vercel RESEND_FROM era
+// impostata su un indirizzo gmail.com: Resend rifiutava ogni invio con 403, quindi né il
+// cliente né il titolare ricevevano le email d'ordine. Se la variabile non punta al dominio
+// verificato la ignoriamo.
+const VERIFIED_DOMAIN = 'tipografia.online';
+function safeFrom() {
+  const raw = (process.env.RESEND_FROM || '').trim();
+  const addr = (raw.match(/<([^>]+)>/) || [null, raw])[1] || '';
+  if (addr.toLowerCase().endsWith('@' + VERIFIED_DOMAIN)) return raw;
+  if (raw) console.warn(`RESEND_FROM "${raw}" non è su @${VERIFIED_DOMAIN}: ignorata.`);
+  return `Tipografia Online <admin@${VERIFIED_DOMAIN}>`;
+}
+const RESEND_FROM = safeFrom();
 
-async function sendEmail({ to, subject, html, attachments }) {
-  const payload = { from: RESEND_FROM, to, subject, html };
-  if (attachments && attachments.length) payload.attachments = attachments;
+async function sendEmail({ to, subject, html }) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ from: RESEND_FROM, to, subject, html }),
   });
   const text = await r.text();
   if (!r.ok) {
@@ -33,29 +44,7 @@ async function sendEmail({ to, subject, html, attachments }) {
   return text;
 }
 
-const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_EMAIL || 'info@tshirt-shop.online';
-
-// Design files parked by api/upload-design.js under designs/<ref>/. Loaded lazily so a missing
-// package or token can never stop the order confirmation from going out.
-async function collectDesignFiles(refField) {
-  const refs = String(refField || '').split(',').map((s) => s.trim()).filter(Boolean);
-  if (!refs.length || !process.env.BLOB_READ_WRITE_TOKEN) return { attachments: [], urls: [] };
-  const { list } = require('@vercel/blob');
-  const attachments = [], urls = [];
-  for (const ref of refs) {
-    const { blobs } = await list({ prefix: `designs/${ref}/` });
-    for (const b of blobs) {
-      const r = await fetch(b.url);
-      if (!r.ok) { console.error('Design file download failed', b.pathname, r.status); continue; }
-      const buf = Buffer.from(await r.arrayBuffer());
-      // pathname = designs/<ref>/<name>-<randomSuffix>.<ext> → strip the suffix for the attachment name
-      const base = b.pathname.split('/').pop().replace(/-[A-Za-z0-9]{20,}(\.[^.]+)$/, '$1');
-      attachments.push({ filename: `${ref}_${base}`, content: buf.toString('base64') });
-      urls.push(b.url);
-    }
-  }
-  return { attachments, urls };
-}
+const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_EMAIL || 'info@tipografia.online';
 
 function buffer(req) {
   return new Promise((resolve, reject) => {
@@ -82,18 +71,17 @@ async function rawBody(req) {
   throw new Error('Body della richiesta vuoto.');
 }
 
-// Order reference in airline-booking style: a 6-character code like "K7QF2M".
+// Order reference in airline-booking style: a 6-character code like "N9M5FR".
 //
 // Derived deterministically from the Stripe session id — no counter, no storage, and the same
 // order always produces the same code (a cold start cannot repeat or reset it, which is what the
 // old in-memory 00001 counter did). The alphabet omits I, O, 0 and 1 so the code can be read out
 // over the phone without ambiguity.
 //
-// IMPORTANT: grazie.html contains a character-for-character copy of this function. Change one,
+// IMPORTANT: grazie.dc.html contains a character-for-character copy of this function. Change one,
 // change the other, or the code on screen stops matching the code in the email.
 // Math.imul is required, not a plain `*`: 32-bit values times these primes exceed 2^53, so the
-// low bits get rounded away before >>>0 reads them. That collapsed one character position to 5
-// possible values and produced duplicate codes.
+// low bits get rounded away before >>>0 reads them.
 const REF_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 function orderRef(session) {
   const src = String(session.id || '');
@@ -170,11 +158,15 @@ module.exports = async (req, res) => {
           // No SDI code = "consumatore finale", invoice made available via portal instead of pushed by SDI.
           sdiCode: md.inv_sdi || '0000000',
         },
-        lines: lineItems.data.map((li) => ({
+        lines: lineItems.data.map((li, i) => ({
           description: li.description,
           quantity: li.quantity,
           unitPrice: li.amount_total / 100 / li.quantity,
           vatRate: 22, // adjust if any product carries a different aliquota
+          // The product is always the FIRST line item; any further line is shipping,
+          // which has no EAN of its own.
+          ean: i === 0 ? (md.product_ean || '') : '',
+          sku: i === 0 ? (md.product_id || '') : '',
         })),
       };
       const buyerEmail = md.inv_email || session.customer_details?.email || session.customer_email;
@@ -184,37 +176,26 @@ module.exports = async (req, res) => {
       // notification was skipped entirely and the shop never learned about the order.
       if (buyerEmail) {
         try {
-          await sendEmail({ to: buyerEmail, subject: `Conferma ordine #${order.number} — Tshirt Shop Online`, html: summaryHtml });
+          await sendEmail({ to: buyerEmail, subject: `Conferma ordine #${order.number} — Tipografia Online`, html: summaryHtml });
           console.log('Buyer confirmation sent to', buyerEmail);
         } catch (mailErr) {
           console.error('Buyer confirmation FAILED for session', session.id, mailErr);
         }
       }
-      let design = { attachments: [], urls: [] };
-      try {
-        design = await collectDesignFiles(md.design_ref);
-      } catch (blobErr) {
-        console.error('Design files lookup FAILED for', md.design_ref, blobErr);
-      }
       try {
         await sendEmail({
           to: OWNER_EMAIL,
-          subject: `Nuovo ordine #${order.number} — € ${total.toFixed(2)}${design.attachments.length ? ` — ${design.attachments.length} file` : ''}`,
-          html: summaryHtml.replace('</body></html>', ownerBlockHtml(order, buyerEmail, session, design.attachments.length) + '</body></html>'),
-          attachments: design.attachments,
+          subject: `Nuovo ordine #${order.number} — € ${total.toFixed(2)}`,
+          html: summaryHtml.replace('</body></html>', ownerBlockHtml(order, buyerEmail, session) + '</body></html>'),
         });
-        console.log('Owner notification sent to', OWNER_EMAIL, 'with', design.attachments.length, 'file(s)');
-        // Delete only after the mail with the files went out — otherwise a Stripe retry can resend them.
-        if (design.urls.length) {
-          try { await require('@vercel/blob').del(design.urls); } catch (e) { console.error('Blob delete failed', e); }
-        }
+        console.log('Owner notification sent to', OWNER_EMAIL);
       } catch (mailErr) {
         console.error('Owner notification FAILED to', OWNER_EMAIL, mailErr);
       }
 
-      // Aruba is NOT connected yet (it needs a professional account) — invoices are issued by
-      // hand for now. Set ARUBA_ENABLED=1 in the environment to switch the automatic submission
-      // back on; until then we skip it instead of failing on every order.
+      // Aruba is NOT connected yet — invoices are issued by hand for now. Set ARUBA_ENABLED=1
+      // in the environment to switch the automatic submission back on; until then we skip it
+      // instead of failing on every order.
       if (process.env.ARUBA_ENABLED === '1') {
         try {
           const { createInvoiceForOrder } = require('./create-invoice');
@@ -247,100 +228,44 @@ module.exports = async (req, res) => {
 // Order confirmation email. Table-based and fully inline-styled: email clients
 // strip <style> blocks and ignore flexbox. Colours and type follow the site's
 // own system — steel accent on a light technical ground, condensed headings.
-// (Repainted with the shop's own palette: ink #201e1d, accent red #ec3013, Archivo.)
 // ---------------------------------------------------------------------------
 
-const BG = '#f3f2f2';
-const INK = '#201e1d';
-const STEEL = '#ec3013';
-const STEEL_DARK = '#201e1d';
-const RULE = '#cfcccc';
-const MUTED = '#605d5d';
-const ON_DARK = '#a8a4a4';
-const HEAD_FONT = "Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif";
-const BODY_FONT = "Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif";
+const BG = '#f2f2f3';
+const INK = '#1d1f20';
+const STEEL = '#5980a6';
+const STEEL_DARK = '#26333f';
+const RULE = '#dfe4e9';
+const MUTED = '#6b7378';
+const HEAD_FONT = "'Barlow Condensed','Arial Narrow',Helvetica,Arial,sans-serif";
+const BODY_FONT = "Barlow,Helvetica,Arial,sans-serif";
 
 function eur(n) {
-  const s = (Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
-  return '€ ' + s;
+  return '€ ' + n.toFixed(2).replace('.', ',');
 }
 
 function cornerRow() {
   return `<tr>
-    <td colspan="2" style="padding:0;"><div style="height:1px;background:${RULE};font-size:0;line-height:0;">&nbsp;</div></td>
+    <td style="padding:8px 12px;font:400 12px/1 ${BODY_FONT};color:${STEEL};">+</td>
+    <td style="padding:8px 12px;font:400 12px/1 ${BODY_FONT};color:${STEEL};text-align:right;">+</td>
   </tr>`;
-}
-
-function esc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
 }
 
 function orderEmailHtml(order, total, md) {
   md = md || {};
-  const designRows = [];
-  if (md.design_ref) {
-    designRows.push(`Riferimento file: <strong style="color:${INK};">${md.design_ref}</strong>${md.design_files ? ` — ${md.design_files}` : ''}`);
-  }
-  if (md.design_link) {
-    designRows.push(`Link file: <a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`);
-  }
-  const noteBlock = md.customer_note
-    ? `<tr><td style="padding:22px 32px 0;">
-        <div style="border:1px solid ${RULE};padding:14px 16px;font:400 13px/1.7 ${BODY_FONT};color:${MUTED};">
-          <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${STEEL};padding-bottom:8px;">Consegna richiesta / note</div>
-          <div style="color:${INK};">${esc(md.customer_note)}</div>
-          <div style="padding-top:8px;">Se la data richiesta non fosse compatibile con la produzione ti contattiamo subito.</div>
-        </div>
-      </td></tr>`
-    : '';
-  const designBlock = designRows.length
-    ? `<tr><td style="padding:22px 32px 0;">
-        <div style="border:1px solid ${RULE};padding:14px 16px;font:400 13px/1.7 ${BODY_FONT};color:${MUTED};">
-          <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${STEEL};padding-bottom:8px;">Materiale da stampare</div>
-          ${designRows.join('<br>')}
-          <div style="padding-top:8px;">Cita questo riferimento in ogni comunicazione sull'ordine.</div>
-        </div>
-      </td></tr>`
-    : '';
   const rows = order.lines.map((l) => {
     const lineTotal = l.unitPrice * l.quantity;
+    const eanLine = l.ean
+      ? `<div style="padding-top:4px;font:400 12px/1.4 ${BODY_FONT};color:${MUTED};letter-spacing:.04em;">EAN ${l.ean}</div>`
+      : '';
     return `<tr>
-      <td style="padding:14px 0;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};">${l.description}</td>
+      <td style="padding:14px 0;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};">${l.description}${eanLine}</td>
       <td style="padding:14px 0 14px 16px;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${MUTED};text-align:right;white-space:nowrap;">${l.quantity}×</td>
       <td style="padding:14px 0 14px 16px;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};text-align:right;white-space:nowrap;">${eur(lineTotal)}</td>
     </tr>`;
   }).join('');
 
-  const billingRows = [
-    ['Intestatario', order.customer.name || '—'],
-    ['Tipo', order.customer.isCompany ? 'Azienda' : 'Privato'],
-    ['P. IVA / CF', order.customer.vatNumber || order.customer.fiscalCode || '—'],
-    ['Indirizzo', [order.customer.address, order.customer.cap, order.customer.city].filter(Boolean).join(', ') || '—'],
-    ['Email', md.inv_email || '—'],
-  ];
-  if (order.customer.isCompany) {
-    billingRows.push(['PEC / SDI', [md.inv_pec, md.inv_sdi].filter(Boolean).join(' — ') || '—']);
-  }
-  const billingBlock = `<tr><td style="padding:26px 32px 0;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid ${STEEL};border-collapse:separate;">
-          <tr><td style="padding:14px 16px 4px;">
-            <div style="font:700 11px/1 ${BODY_FONT};letter-spacing:.16em;text-transform:uppercase;color:${STEEL};">Dati per la fatturazione</div>
-            <div style="font:800 20px/1.2 ${HEAD_FONT};color:${INK};padding-top:6px;">La fattura sarà intestata così</div>
-          </td></tr>
-          <tr><td style="padding:8px 16px 16px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-              ${billingRows.map(([k, v]) => `<tr>
-                <td style="padding:7px 0;border-bottom:1px solid ${RULE};font:600 12px/1.4 ${BODY_FONT};letter-spacing:.06em;text-transform:uppercase;color:${MUTED};width:140px;">${k}</td>
-                <td style="padding:7px 0;border-bottom:1px solid ${RULE};font:400 14px/1.4 ${BODY_FONT};color:${INK};">${v}</td>
-              </tr>`).join('')}
-            </table>
-            <div style="padding-top:10px;font:400 13px/1.6 ${BODY_FONT};color:${MUTED};">Serve una correzione? Rispondi a questa email entro un giorno lavorativo, prima dell'emissione.</div>
-          </td></tr>
-        </table>
-      </td></tr>`;
-
+  // "Dati del mittente" — the customer's own company on the parcel instead of ours.
+  // Collected in checkout.dc.html; until now it only reached the server log, never the email.
   const senderRows = md.sender_use === '1' ? [
     ['Ragione sociale', md.sender_company || '—'],
     ['Indirizzo', [md.sender_address, md.sender_cap, md.sender_city].filter(Boolean).join(', ') || '—'],
@@ -350,8 +275,8 @@ function orderEmailHtml(order, total, md) {
     ? `<tr><td style="padding:26px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid ${STEEL};border-collapse:separate;">
           <tr><td style="padding:14px 16px 4px;">
-            <div style="font:700 11px/1 ${BODY_FONT};letter-spacing:.16em;text-transform:uppercase;color:${STEEL};">Dati del mittente</div>
-            <div style="font:800 20px/1.2 ${HEAD_FONT};color:${INK};padding-top:6px;">Il pacco parte a nome tuo</div>
+            <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.16em;text-transform:uppercase;color:${STEEL};">Dati del mittente</div>
+            <div style="font:600 20px/1.2 ${HEAD_FONT};color:${INK};padding-top:6px;">Il pacco parte a nome tuo</div>
           </td></tr>
           <tr><td style="padding:8px 16px 16px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
@@ -366,6 +291,22 @@ function orderEmailHtml(order, total, md) {
       </td></tr>`
     : '';
 
+  // Material to print — files uploaded at checkout (sent as attachments by
+  // /api/send-design-files) and/or a link the customer pasted.
+  const designRows = [];
+  if (md.design_files) designRows.push(`File caricati: <strong style="color:${INK};">${md.design_files}</strong>`);
+  if (md.design_ref) designRows.push(`Riferimento materiale: <strong style="color:${INK};">${md.design_ref}</strong>`);
+  if (md.design_link) designRows.push(`Link file: <a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`);
+  const designBlock = designRows.length
+    ? `<tr><td style="padding:22px 32px 0;">
+        <div style="border:1px solid ${RULE};padding:14px 16px;font:400 13px/1.7 ${BODY_FONT};color:${MUTED};">
+          <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${STEEL};padding-bottom:8px;">Materiale da stampare</div>
+          ${designRows.join('<br>')}
+          <div style="padding-top:8px;">Riferimento ordine <strong style="color:${INK};">#${order.number}</strong> — citalo in ogni comunicazione.</div>
+        </div>
+      </td></tr>`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${BG};">
@@ -374,8 +315,8 @@ function orderEmailHtml(order, total, md) {
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border:1px solid ${RULE};">
 
       <tr><td style="background:${STEEL_DARK};padding:26px 32px;">
-        <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.18em;text-transform:uppercase;color:${ON_DARK};">Tshirt Shop Online</div>
-        <div style="font:800 34px/1.05 ${HEAD_FONT};letter-spacing:-.01em;color:#ffffff;padding-top:8px;">Ordine confermato</div>
+        <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.18em;text-transform:uppercase;color:${STEEL};">Tipografia Online</div>
+        <div style="font:600 34px/1.05 ${HEAD_FONT};letter-spacing:.01em;color:#ffffff;padding-top:8px;">Ordine confermato</div>
       </td></tr>
 
       <tr><td style="padding:0 32px;">
@@ -401,28 +342,27 @@ function orderEmailHtml(order, total, md) {
           ${rows}
           <tr>
             <td colspan="2" style="padding:18px 0 0;font:600 13px/1 ${BODY_FONT};letter-spacing:.1em;text-transform:uppercase;color:${MUTED};">Totale pagato</td>
-            <td style="padding:18px 0 0;font:800 30px/1 ${HEAD_FONT};color:${INK};text-align:right;white-space:nowrap;">${eur(total)}</td>
+            <td style="padding:18px 0 0;font:600 30px/1 ${HEAD_FONT};color:${INK};text-align:right;white-space:nowrap;">${eur(total)}</td>
           </tr>
           <tr><td colspan="3" style="padding-top:4px;font:400 12px/1.4 ${BODY_FONT};color:${MUTED};text-align:right;">IVA inclusa</td></tr>
         </table>
       </td></tr>
 
-      ${billingBlock}
       ${senderBlock}
       ${designBlock}
-      ${noteBlock}
       <tr><td style="padding:28px 32px 0;">
         <div style="border-top:1px solid ${RULE};padding-top:18px;font:400 14px/1.6 ${BODY_FONT};color:${MUTED};">
-          Riceverai la fattura entro un giorno lavorativo, insieme alle istruzioni per l'invio del materiale da stampare.
+          Riceverai a breve la fattura elettronica e le istruzioni per l'invio del materiale da stampare.
         </div>
       </td></tr>
+
       <tr><td style="padding:0 32px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${cornerRow()}</table>
       </td></tr>
 
       <tr><td style="padding:0 32px 28px;">
         <div style="font:400 12px/1.6 ${BODY_FONT};color:${MUTED};">
-          Tshirt Shop Online · Roma EUR · <a href="https://tshirt-shop.online" style="color:${STEEL};text-decoration:none;">tshirt-shop.online</a>
+          Tipografia Online · Roma EUR · <a href="https://tipografia.online" style="color:${STEEL};text-decoration:none;">tipografia.online</a>
         </div>
       </td></tr>
 
@@ -432,7 +372,7 @@ function orderEmailHtml(order, total, md) {
 </body></html>`;
 }
 
-function ownerBlockHtml(order, buyerEmail, session, attachedCount) {
+function ownerBlockHtml(order, buyerEmail, session) {
   const md = session.metadata || {};
   const rowsData = [
     ['Cliente', order.customer.name],
@@ -444,11 +384,14 @@ function ownerBlockHtml(order, buyerEmail, session, attachedCount) {
       ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city].filter(Boolean).join(', ')
       : 'Come fatturazione'],
   ];
-  if (md.customer_note) {
-    rowsData.push(['Consegna / note', esc(md.customer_note)]);
+  if (md.product_ean || md.product_id) {
+    rowsData.push(['EAN / Cod. prodotto', [md.product_ean, md.product_id].filter(Boolean).join(' · ')]);
   }
-  if (md.design_ref) {
-    rowsData.push(['File design', `${md.design_ref}${md.design_files ? ' — ' + md.design_files : ''} (${attachedCount ? attachedCount + ' allegati a questa email' : 'NESSUN file trovato — chiedilo al cliente'})`]);
+  if (md.sender_use === '1') {
+    rowsData.push(['Mittente sul pacco', [md.sender_company, md.sender_address, md.sender_cap, md.sender_city].filter(Boolean).join(', ') || '—']);
+  }
+  if (md.design_files) {
+    rowsData.push(['File design', `${md.design_files}${md.design_ref ? ' — rif. ' + md.design_ref : ''} (ricevuti come allegati in email separata)`]);
   }
   if (md.design_link) {
     rowsData.push(['Link file', `<a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`]);
