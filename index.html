@@ -89,8 +89,8 @@
 </head>
 <body>
 
-<nav class="nav">
-  <span class="nav-brand" id="logoHome" style="cursor:pointer;">Tipografia Online <span style="opacity:.55;font-weight:400;">by Printing Italy</span></span>
+<nav class="nav" style="position:sticky; top:0; z-index:100; background:var(--color-bg);">
+  <span class="nav-brand" id="logoHome" style="cursor:pointer; display:flex; align-items:center;"><img src="img/tipografia-online-logo.webp" alt="Tipografia Online by Printing Italy" width="591" height="190" style="height:44px; width:auto; display:block;"></span>
   <button id="backBtn" class="btn btn-secondary blueprint" style="display:none;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>← Tutti i prodotti</button>
   <a href="contattateci.dc.html" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi preventivo</a>
 </nav>
@@ -2514,7 +2514,7 @@ function renderGrid(){
         </h2>
         ${(!compact && title === 'Prezzi Strategici') ? '<p style="font-size:16px; font-weight:650; color:oklch(0.42 0.12 155); margin:0 0 6px;">Prezzi strategici. Qualità professionale. Risultati concreti.</p>' : ''}
         ${compact ? '' : `<p style="font-size:13.5px; color:oklch(0.5 0.01 90); margin:0;">${esc(subtitle)}</p>`}
-        ${(!compact && title === 'Prezzi Strategici') ? '<p style="font-size:15px; color:oklch(0.5 0.01 90); margin:10px 0 0; max-width:none; line-height:1.6;">Ordina i tuoi stampati online anche senza competenze grafiche. Ti aiutiamo a preparare il file corretto e a ottenere un risultato professionale. Abbiamo selezionato una serie di articoli tipografici pensati per chi vuole comunicare in modo efficace senza sprechi: formati ottimizzati, materiali affidabili e costi calibrati per ottenere il massimo rendimento per ogni stampa. Volantini, poster, materiali promozionali e prodotti con standard professionali.</p>' : ''}
+        ${(!compact && title === 'Prezzi Strategici') ? '<p style="font-size:15px; font-weight:650; color:oklch(0.42 0.12 155); margin:10px 0 0; line-height:1.6;">I prezzi scontati di questa sezione sono validi solo per gli acquisti online: per approfittarne, ordina direttamente dal sito.</p>' : ''}
       </div>
       <div class="p-cards">
         ${items.map(cardHtml).join('')}
