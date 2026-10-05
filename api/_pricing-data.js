@@ -260,6 +260,10 @@ const PRICING = {
     tiersByDelivery: [
       [{qty:1,price:43.38},{qty:2,price:68.77},{qty:3,price:94.46},{qty:4,price:119.86},{qty:5,price:144.48},{qty:6,price:169.66},{qty:7,price:214.13},{qty:8,price:239.33},{qty:9,price:264.53},{qty:10,price:290.9},{qty:11,price:316.06},{qty:12,price:341.28},{qty:13,price:385.95},{qty:14,price:411.12},{qty:15,price:436.88}],
     ] },
+  '5936': { nome: 'Banner PVC 400gr 300×150 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:58.64},{qty:2,price:96.16},{qty:3,price:132.13},{qty:4,price:169.17},{qty:5,price:206.21},{qty:6,price:243.25},{qty:7,price:301.31},{qty:8,price:338.34},{qty:9,price:375.38},{qty:10,price:412.42},{qty:11,price:449.46},{qty:12,price:486.5},{qty:13,price:544.53},{qty:14,price:581.57},{qty:15,price:618.61}],
+    ] },
   '5931': { nome: 'Banner PVC 400gr 300×200 cm', ean: '', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:1,price:70.61},{qty:2,price:119.52},{qty:3,price:166.45},{qty:4,price:236.29},{qty:5,price:284.59},{qty:6,price:332.86},{qty:7,price:402.72},{qty:8,price:450.99},{qty:9,price:499.28},{qty:10,price:571.86},{qty:11,price:619.76},{qty:12,price:666.93},{qty:13,price:739.34},{qty:14,price:755.74},{qty:15,price:800.78}],
@@ -279,6 +283,96 @@ const PRICING = {
   '5935': { nome: 'Banner PVC 400gr 400×300 cm', ean: '', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:1,price:210.74},{qty:2,price:302.62},{qty:3,price:511.94},{qty:4,price:605.23},{qty:5,price:814.56},{qty:6,price:907.86},{qty:7,price:1065.49},{qty:8,price:1151.9},{qty:9,price:1353.46},{qty:10,price:1439.86},{qty:11,price:1641.41},{qty:12,price:1679.9},{qty:13,price:1877.23},{qty:14,price:1959.87},{qty:15,price:2157.18}],
+    ] },
+  '5940': { nome: 'Banner PVC 500gr con occhielli 100×50 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:23.98},{qty:2,price:32.27},{qty:3,price:40.19},{qty:4,price:48.16},{qty:5,price:56.1},{qty:6,price:64.22},{qty:7,price:72.91},{qty:8,price:81.6},{qty:9,price:90.29},{qty:10,price:98.96},{qty:11,price:120.7},{qty:12,price:127.78},{qty:13,price:135.68},{qty:14,price:144.05},{qty:15,price:152.61}],
+      [{qty:1,price:58.02},{qty:2,price:65.89},{qty:3,price:74.05},{qty:4,price:82.72},{qty:5,price:91.38},{qty:6,price:100.03},{qty:7,price:108.74},{qty:8,price:117.41},{qty:9,price:126.1},{qty:10,price:134.77},{qty:11,price:179.7},{qty:12,price:186.88},{qty:13,price:195.41},{qty:14,price:203.98},{qty:15,price:212.54}],
+      [{qty:1,price:87.6},{qty:2,price:96.13},{qty:3,price:104.74},{qty:4,price:113.42},{qty:5,price:122.08},{qty:6,price:130.75},{qty:7,price:139.42},{qty:8,price:148.13},{qty:9,price:156.8},{qty:10,price:165.47},{qty:11,price:211.87},{qty:12,price:219.04},{qty:13,price:227.6},{qty:14,price:236.14},{qty:15,price:244.7}],
+    ] },
+  '5941': { nome: 'Banner PVC 500gr con occhielli 100×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:30.13},{qty:2,price:43.78},{qty:3,price:57.12},{qty:4,price:70.48},{qty:5,price:83.82},{qty:6,price:97.47},{qty:7,price:110.85},{qty:8,price:123.31},{qty:9,price:136.56},{qty:10,price:149.81},{qty:11,price:186.69},{qty:12,price:200.27},{qty:13,price:213.81},{qty:14,price:228.02},{qty:15,price:242.18}],
+      [{qty:1,price:64.08},{qty:2,price:77.39},{qty:3,price:90.72},{qty:4,price:104.1},{qty:5,price:117.78},{qty:6,price:131.58},{qty:7,price:145.36},{qty:8,price:157.62},{qty:9,price:171.2},{qty:10,price:184.8},{qty:11,price:245.44},{qty:12,price:259.62},{qty:13,price:273.73},{qty:14,price:287.95},{qty:15,price:302.13}],
+      [{qty:1,price:93.47},{qty:2,price:107.18},{qty:3,price:120.93},{qty:4,price:134.72},{qty:5,price:148.5},{qty:6,price:162.29},{qty:7,price:176.05},{qty:8,price:188.3},{qty:9,price:201.9},{qty:10,price:215.5},{qty:11,price:277.6},{qty:12,price:291.78},{qty:13,price:305.89},{qty:14,price:320.11},{qty:15,price:334.29}],
+    ] },
+  '5942': { nome: 'Banner PVC 500gr con occhielli 150×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:35.71},{qty:2,price:54.38},{qty:3,price:73.09},{qty:4,price:92.75},{qty:5,price:112.77},{qty:6,price:131.06},{qty:7,price:150.8},{qty:8,price:170.51},{qty:9,price:190.21},{qty:10,price:209.94},{qty:11,price:242.35},{qty:12,price:262.05},{qty:13,price:281.79},{qty:14,price:301.5},{qty:15,price:321.22}],
+      [{qty:1,price:69.33},{qty:2,price:88.66},{qty:3,price:108.58},{qty:4,price:128.59},{qty:5,price:148.59},{qty:6,price:166.88},{qty:7,price:186.61},{qty:8,price:206.3},{qty:9,price:226.03},{qty:10,price:245.76},{qty:11,price:302.3},{qty:12,price:322},{qty:13,price:341.73},{qty:14,price:361.44},{qty:15,price:381.15}],
+      [{qty:1,price:99.44},{qty:2,price:119.34},{qty:3,price:139.31},{qty:4,price:159.28},{qty:5,price:179.3},{qty:6,price:197.58},{qty:7,price:217.31},{qty:8,price:237.02},{qty:9,price:256.74},{qty:10,price:276.45},{qty:11,price:334.46},{qty:12,price:354.18},{qty:13,price:373.89},{qty:14,price:393.6},{qty:15,price:413.31}],
+    ] },
+  '5943': { nome: 'Banner PVC 500gr con occhielli 200×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:40.94},{qty:2,price:64.69},{qty:3,price:88.96},{qty:4,price:114.35},{qty:5,price:137.97},{qty:6,price:176.67},{qty:7,price:200.75},{qty:8,price:225.79},{qty:9,price:250.83},{qty:10,price:275.87},{qty:11,price:315.18},{qty:12,price:338.8},{qty:13,price:363.71},{qty:14,price:388.74},{qty:15,price:413.79}],
+      [{qty:1,price:74.56},{qty:2,price:99.5},{qty:3,price:124.78},{qty:4,price:150.16},{qty:5,price:173.78},{qty:6,price:235.68},{qty:7,price:260.69},{qty:8,price:285.74},{qty:9,price:310.77},{qty:10,price:335.81},{qty:11,price:398.54},{qty:12,price:422.74},{qty:13,price:447.78},{qty:14,price:472.82},{qty:15,price:497.84}],
+      [{qty:1,price:105.02},{qty:2,price:130.21},{qty:3,price:155.5},{qty:4,price:180.86},{qty:5,price:204.48},{qty:6,price:267.84},{qty:7,price:292.86},{qty:8,price:317.9},{qty:9,price:342.93},{qty:10,price:367.98},{qty:11,price:431.31},{qty:12,price:456.35},{qty:13,price:481.41},{qty:14,price:506.43},{qty:15,price:531.47}],
+    ] },
+  '5944': { nome: 'Banner PVC 500gr con occhielli 200×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:65.06},{qty:2,price:121.55},{qty:3,price:171.23},{qty:4,price:220.54},{qty:5,price:270.3},{qty:6,price:321.49},{qty:7,price:370.34},{qty:8,price:394.19},{qty:9,price:438.5},{qty:10,price:482.78},{qty:11,price:554.05},{qty:12,price:599.36},{qty:13,price:637.33},{qty:14,price:682.06},{qty:15,price:726.85}],
+      [{qty:1,price:100.86},{qty:2,price:157.38},{qty:3,price:207.07},{qty:4,price:256.37},{qty:5,price:306.11},{qty:6,price:381.44},{qty:7,price:430.26},{qty:8,price:454.14},{qty:9,price:498.45},{qty:10,price:542.72},{qty:11,price:638.1},{qty:12,price:683.41},{qty:13,price:721.41},{qty:14,price:766.13},{qty:15,price:810.91}],
+      [{qty:1,price:131.57},{qty:2,price:188.06},{qty:3,price:237.78},{qty:4,price:287.07},{qty:5,price:336.82},{qty:6,price:413.6},{qty:7,price:462.42},{qty:8,price:486.3},{qty:9,price:530.61},{qty:10,price:574.88},{qty:11,price:671.73},{qty:12,price:717.04},{qty:13,price:755.01},{qty:14,price:799.76},{qty:15,price:844.51}],
+    ] },
+  '5945': { nome: 'Banner PVC 500gr con occhielli 250×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:75.17},{qty:2,price:128.54},{qty:3,price:182.85},{qty:4,price:237.09},{qty:5,price:291.36},{qty:6,price:345.65},{qty:7,price:419.76},{qty:8,price:474.06},{qty:9,price:528.34},{qty:10,price:582.59},{qty:11,price:636.86},{qty:12,price:641.26},{qty:13,price:710.93},{qty:14,price:761.09},{qty:15,price:811.3}],
+      [{qty:1,price:110.96},{qty:2,price:164.37},{qty:3,price:218.67},{qty:4,price:272.91},{qty:5,price:327.18},{qty:6,price:381.47},{qty:7,price:479.71},{qty:8,price:533.98},{qty:9,price:588.29},{qty:10,price:642.54},{qty:11,price:696.82},{qty:12,price:701.2},{qty:13,price:794.98},{qty:14,price:845.15},{qty:15,price:895.36}],
+      [{qty:1,price:141.7},{qty:2,price:195.09},{qty:3,price:249.36},{qty:4,price:303.63},{qty:5,price:357.87},{qty:6,price:412.16},{qty:7,price:511.89},{qty:8,price:566.16},{qty:9,price:620.45},{qty:10,price:674.7},{qty:11,price:728.98},{qty:12,price:733.38},{qty:13,price:828.62},{qty:14,price:878.77},{qty:15,price:928.99}],
+    ] },
+  '5946': { nome: 'Banner PVC 500gr con occhielli 300×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:50.11},{qty:2,price:88.96},{qty:3,price:126.19},{qty:4,price:156.94},{qty:5,price:192.88},{qty:6,price:228.83},{qty:7,price:277.87},{qty:8,price:313.84},{qty:9,price:349.78},{qty:10,price:385.71},{qty:11,price:421.65},{qty:12,price:457.63},{qty:13,price:493.9},{qty:14,price:528.45},{qty:15,price:563.06}],
+      [{qty:1,price:83.74},{qty:2,price:124.78},{qty:3,price:162},{qty:4,price:192.77},{qty:5,price:228.7},{qty:6,price:264.66},{qty:7,price:337.81},{qty:8,price:373.78},{qty:9,price:409.71},{qty:10,price:445.66},{qty:11,price:481.6},{qty:12,price:517.57},{qty:13,price:577.97},{qty:14,price:612.53},{qty:15,price:647.14}],
+      [{qty:1,price:113.92},{qty:2,price:155.5},{qty:3,price:192.7},{qty:4,price:223.47},{qty:5,price:259.41},{qty:6,price:295.34},{qty:7,price:369.98},{qty:8,price:405.94},{qty:9,price:441.87},{qty:10,price:477.82},{qty:11,price:513.78},{qty:12,price:549.73},{qty:13,price:611.57},{qty:14,price:646.16},{qty:15,price:680.75}],
+    ] },
+  '5947': { nome: 'Banner PVC 500gr con occhielli 300×150 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:70.11},{qty:2,price:120.58},{qty:3,price:168.96},{qty:4,price:218.78},{qty:5,price:268.62},{qty:6,price:318.45},{qty:7,price:387.62},{qty:8,price:437.46},{qty:9,price:487.3},{qty:10,price:537.1},{qty:11,price:586.96},{qty:12,price:636.8},{qty:13,price:656.06},{qty:14,price:702.11},{qty:15,price:748.22}],
+      [{qty:1,price:105.92},{qty:2,price:156.38},{qty:3,price:204.77},{qty:4,price:254.61},{qty:5,price:304.45},{qty:6,price:354.26},{qty:7,price:447.55},{qty:8,price:497.41},{qty:9,price:547.23},{qty:10,price:597.06},{qty:11,price:646.9},{qty:12,price:696.72},{qty:13,price:740.13},{qty:14,price:786.18},{qty:15,price:832.29}],
+      [{qty:1,price:136.62},{qty:2,price:187.1},{qty:3,price:235.47},{qty:4,price:285.31},{qty:5,price:335.14},{qty:6,price:384.96},{qty:7,price:479.73},{qty:8,price:529.57},{qty:9,price:579.39},{qty:10,price:629.22},{qty:11,price:679.06},{qty:12,price:728.9},{qty:13,price:773.73},{qty:14,price:819.79},{qty:15,price:865.92}],
+    ] },
+  '5948': { nome: 'Banner PVC 500gr con occhielli 300×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:85.28},{qty:2,price:148.54},{qty:3,price:212.78},{qty:4,price:296.91},{qty:5,price:361.15},{qty:6,price:425.41},{qty:7,price:509.54},{qty:8,price:573.78},{qty:9,price:638.03},{qty:10,price:672.11},{qty:11,price:731.54},{qty:12,price:790.91},{qty:13,price:869.79},{qty:14,price:929.22},{qty:15,price:988.62}],
+      [{qty:1,price:121.1},{qty:2,price:184.37},{qty:3,price:248.59},{qty:4,price:356.85},{qty:5,price:421.1},{qty:6,price:485.36},{qty:7,price:593.58},{qty:8,price:657.84},{qty:9,price:722.1},{qty:10,price:780.3},{qty:11,price:839.71},{qty:12,price:899.12},{qty:13,price:1002.13},{qty:14,price:1061.54},{qty:15,price:1120.93}],
+      [{qty:1,price:151.81},{qty:2,price:215.06},{qty:3,price:279.31},{qty:4,price:389.01},{qty:5,price:453.26},{qty:6,price:517.52},{qty:7,price:627.22},{qty:8,price:691.46},{qty:9,price:755.71},{qty:10,price:815.38},{qty:11,price:874.82},{qty:12,price:934.19},{qty:13,price:1038.66},{qty:14,price:1098.08},{qty:15,price:1157.47}],
+    ] },
+  '5949': { nome: 'Banner PVC 500gr con occhielli 300×300 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:205.58},{qty:2,price:296.56},{qty:3,price:500.14},{qty:4,price:592.77},{qty:5,price:796.3},{qty:6,price:888.99},{qty:7,price:1040.08},{qty:8,price:1125.76},{qty:9,price:1321.44},{qty:10,price:1407.17},{qty:11,price:1558},{qty:12,price:1639.89},{qty:13,price:1831.26},{qty:14,price:1913.18},{qty:15,price:2104.51}],
+      [{qty:1,price:241.38},{qty:2,price:332.37},{qty:3,price:560.08},{qty:4,price:652.7},{qty:5,price:880.37},{qty:6,price:973.06},{qty:7,price:1148.27},{qty:8,price:1233.95},{qty:9,price:1453.74},{qty:10,price:1539.46},{qty:11,price:1714.43},{qty:12,price:1796.32},{qty:13,price:2011.82},{qty:14,price:2093.74},{qty:15,price:2309.18}],
+      [{qty:1,price:272.1},{qty:2,price:363.09},{qty:3,price:592.24},{qty:4,price:684.88},{qty:5,price:914},{qty:6,price:1006.69},{qty:7,price:1183.36},{qty:8,price:1269.04},{qty:9,price:1490.29},{qty:10,price:1576.02},{qty:11,price:1752.46},{qty:12,price:1834.34},{qty:13,price:2051.31},{qty:14,price:2133.2},{qty:15,price:2350.13}],
+    ] },
+  '5950': { nome: 'Banner PVC 500gr con occhielli 400×100 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:60.1},{qty:2,price:108.51},{qty:3,price:159.58},{qty:4,price:213.7},{qty:5,price:262.69},{qty:6,price:310.96},{qty:7,price:361.34},{qty:8,price:398.88},{qty:9,price:443.57},{qty:10,price:500.37},{qty:11,price:543.14},{qty:12,price:585.89},{qty:13,price:642.27},{qty:14,price:683.81},{qty:15,price:725.26}],
+      [{qty:1,price:93.71},{qty:2,price:144.32},{qty:3,price:195.38},{qty:4,price:273.66},{qty:5,price:322.62},{qty:6,price:370.9},{qty:7,price:444.72},{qty:8,price:482.24},{qty:9,price:527.01},{qty:10,price:608.66},{qty:11,price:651.54},{qty:12,price:694.32},{qty:13,price:775.7},{qty:14,price:817.23},{qty:15,price:858.72}],
+      [{qty:1,price:124.26},{qty:2,price:175.02},{qty:3,price:226.11},{qty:4,price:305.82},{qty:5,price:354.78},{qty:6,price:403.07},{qty:7,price:477.68},{qty:8,price:514.03},{qty:9,price:559.68},{qty:10,price:641.31},{qty:11,price:684.18},{qty:12,price:726.96},{qty:13,price:809.22},{qty:14,price:850.74},{qty:15,price:892.21}],
+    ] },
+  '5951': { nome: 'Banner PVC 500gr con occhielli 400×150 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:85.82},{qty:2,price:150.14},{qty:3,price:215.49},{qty:4,price:300.18},{qty:5,price:365.49},{qty:6,price:430.83},{qty:7,price:515.52},{qty:8,price:580.83},{qty:9,price:646.18},{qty:10,price:680.16},{qty:11,price:740.58},{qty:12,price:800.98},{qty:13,price:880.37},{qty:14,price:940.8},{qty:15,price:1001.18}],
+      [{qty:1,price:121.65},{qty:2,price:185.97},{qty:3,price:251.31},{qty:4,price:360.11},{qty:5,price:425.42},{qty:6,price:490.78},{qty:7,price:599.58},{qty:8,price:664.91},{qty:9,price:730.24},{qty:10,price:788.34},{qty:11,price:848.75},{qty:12,price:909.17},{qty:13,price:1012.69},{qty:14,price:1073.12},{qty:15,price:1133.5}],
+      [{qty:1,price:152.35},{qty:2,price:216.67},{qty:3,price:282},{qty:4,price:392.29},{qty:5,price:457.58},{qty:6,price:522.94},{qty:7,price:633.2},{qty:8,price:698.53},{qty:9,price:763.86},{qty:10,price:823.44},{qty:11,price:883.84},{qty:12,price:944.26},{qty:13,price:1049.25},{qty:14,price:1109.66},{qty:15,price:1170.05}],
+    ] },
+  '5952': { nome: 'Banner PVC 500gr con occhielli 400×200 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:105.47},{qty:2,price:188.42},{qty:3,price:272.58},{qty:4,price:376.61},{qty:5,price:460.77},{qty:6,price:544.98},{qty:7,price:648.98},{qty:8,price:681.2},{qty:9,price:759.04},{qty:10,price:856.3},{qty:11,price:934.14},{qty:12,price:1011.97},{qty:13,price:1069.41},{qty:14,price:1142.5},{qty:15,price:1215.62}],
+      [{qty:1,price:141.3},{qty:2,price:224.22},{qty:3,price:308.4},{qty:4,price:436.56},{qty:5,price:520.7},{qty:6,price:604.91},{qty:7,price:733.02},{qty:8,price:765.28},{qty:9,price:843.09},{qty:10,price:964.5},{qty:11,price:1042.34},{qty:12,price:1120.14},{qty:13,price:1202.83},{qty:14,price:1275.92},{qty:15,price:1349.06}],
+      [{qty:1,price:171.98},{qty:2,price:254.94},{qty:3,price:339.1},{qty:4,price:468.74},{qty:5,price:552.86},{qty:6,price:637.06},{qty:7,price:766.66},{qty:8,price:798.88},{qty:9,price:876.74},{qty:10,price:999.58},{qty:11,price:1077.41},{qty:12,price:1155.23},{qty:13,price:1236.34},{qty:14,price:1309.42},{qty:15,price:1382.54}],
+    ] },
+  '5953': { nome: 'Banner PVC 500gr con occhielli 400×250 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:127.12},{qty:2,price:230.1},{qty:3,price:333.1},{qty:4,price:459.98},{qty:5,price:562.98},{qty:6,price:617.97},{qty:7,price:736.38},{qty:8,price:831.62},{qty:9,price:926.86},{qty:10,price:1003.73},{qty:11,price:1093.06},{qty:12,price:1183.41},{qty:13,price:1299.22},{qty:14,price:1388.56},{qty:15,price:1479.2}],
+      [{qty:1,price:162.94},{qty:2,price:265.92},{qty:3,price:368.93},{qty:4,price:519.92},{qty:5,price:622.91},{qty:6,price:677.9},{qty:7,price:820.45},{qty:8,price:915.68},{qty:9,price:1010.93},{qty:10,price:1112.26},{qty:11,price:1201.58},{qty:12,price:1291.6},{qty:13,price:1432.64},{qty:14,price:1522},{qty:15,price:1611.5}],
+      [{qty:1,price:193.65},{qty:2,price:296.64},{qty:3,price:399.62},{qty:4,price:552.08},{qty:5,price:655.09},{qty:6,price:710.06},{qty:7,price:854.06},{qty:8,price:949.3},{qty:9,price:1044.56},{qty:10,price:1144.88},{qty:11,price:1235.68},{qty:12,price:1326.69},{qty:13,price:1466.16},{qty:14,price:1557.06},{qty:15,price:1648.05}],
+    ] },
+  '5954': { nome: 'Banner PVC 500gr con occhielli 400×300 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:1,price:232.64},{qty:2,price:353.95},{qty:3,price:585.98},{qty:4,price:707.52},{qty:5,price:891.07},{qty:6,price:1003.49},{qty:7,price:1225.39},{qty:8,price:1337.84},{qty:9,price:1512.42},{qty:10,price:1619.84},{qty:11,price:1836.29},{qty:12,price:1943.73},{qty:13,price:2160.22},{qty:14,price:2267.65},{qty:15,price:2484.1}],
+      [{qty:1,price:268.45},{qty:2,price:389.76},{qty:3,price:645.94},{qty:4,price:767.46},{qty:5,price:975.14},{qty:6,price:1087.54},{qty:7,price:1333.6},{qty:8,price:1446.03},{qty:9,price:1644.7},{qty:10,price:1752.13},{qty:11,price:1992.75},{qty:12,price:2100.18},{qty:13,price:2340.78},{qty:14,price:2448.21},{qty:15,price:2688.78}],
+      [{qty:1,price:299.17},{qty:2,price:420.46},{qty:3,price:678.1},{qty:4,price:799.62},{qty:5,price:1008.77},{qty:6,price:1121.17},{qty:7,price:1368.69},{qty:8,price:1481.12},{qty:9,price:1681.28},{qty:10,price:1788.69},{qty:11,price:2030.75},{qty:12,price:2138.18},{qty:13,price:2380.26},{qty:14,price:2487.68},{qty:15,price:2729.71}],
     ] },
   '5720': { nome: 'Adesivo PVC 42×10 cm', ean: '0652026573305', type: 'tiersDelivery',
     tiersByDelivery: [
