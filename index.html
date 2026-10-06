@@ -2780,7 +2780,7 @@ function renderDetail(){
     pricingHtml = `
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità</div>
-        <input type="number" min="1" id="swQtyInput" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" id="swQtyInput" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
       </div>
       <div style="margin-bottom:18px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Scegli il volto</div>
@@ -2814,7 +2814,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
-          <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="adesQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="adesQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Forma a sagoma</div>
@@ -2870,7 +2870,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Copie stesso soggetto</div>
-          <input type="number" min="${p.pricing.copie.min}" id="prespCopie" value="${f.copie}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.copie.min}" id="prespCopie" value="${f.copie}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Lavorazioni</div>
@@ -2911,7 +2911,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
-          <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="bvQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="bvQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Stampa</div>
@@ -2960,7 +2960,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
-          <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="locQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="locQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -2978,7 +2978,7 @@ function renderDetail(){
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
-          <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="scatolaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="scatolaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Misura Scatola</div>
@@ -3006,15 +3006,15 @@ function renderDetail(){
         <div class="p-two">
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità di Rilegature (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
-            <input type="number" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="rilQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="rilQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine a Colori</div>
-            <input type="number" min="${p.pricing.pagCol.min}" max="${p.pricing.pagCol.max}" id="rilPagCol" value="${f.pagCol}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.pagCol.min}" max="${p.pricing.pagCol.max}" id="rilPagCol" value="${f.pagCol}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
           <div>
             <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine Bianco Nero</div>
-            <input type="number" min="${p.pricing.pagBn.min}" max="${p.pricing.pagBn.max}" id="rilPagBn" value="${f.pagBn}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.pagBn.min}" max="${p.pricing.pagBn.max}" id="rilPagBn" value="${f.pagBn}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
           </div>
         </div>
         <div>
@@ -3248,7 +3248,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità <span style="opacity:.6;">(soggetti diversi)</span></div>
-          <input type="number" min="1" max="100" id="forexQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" max="100" id="forexQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -3266,7 +3266,7 @@ function renderDetail(){
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità</div>
-          <input type="number" min="1" id="formulaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" id="formulaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
@@ -3321,7 +3321,7 @@ function renderDetail(){
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità <span style="opacity:.6;">(soggetti diversi)</span></div>
-          <input type="number" min="1" max="100" id="strQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" max="100" id="strQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
         </div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
@@ -3347,7 +3347,7 @@ function renderDetail(){
             const shown = Math.min(Math.max(Number(current) || min, min), max);
             return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
               <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
-              <input type="${step < 1 ? 'text' : 'number'}" inputmode="${step < 1 ? 'decimal' : 'numeric'}" min="${min}" max="${max}" step="${step}" data-quote-step="${step}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
+              <input type="text" inputmode="${step < 1 ? 'decimal' : 'numeric'}" min="${min}" max="${max}" step="${step}" data-quote-step="${step}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
             </div>`;
           }
           return `<div>
