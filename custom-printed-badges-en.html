@@ -110,10 +110,10 @@ const PRODUCTS = [
           const lanyardRateNo = sel.cordino === 'Yes' ? 0.21 : 0;
           return 2*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRateNo;
         }
-        const dims = { '8.5×5.5 cm Landscape':[85,55,0.24], '8.5×5.5 cm Portrait':[55,85,0.63], '10×15 cm Portrait':[100,150,1.36], '7.5×10 cm Portrait':[75,100,1.10] };
-        const [w,h,holderRate] = dims[formato] || [85,55,0.24]; // mm + costo porta badge (Amazon ×2)
+        const dims = { '8.5×5.5 cm Landscape':[85,55,0.85], '8.5×5.5 cm Portrait':[55,85,0.85], '10×15 cm Portrait':[100,150,1.36], '7.5×10 cm Portrait':[75,100,1.10] };
+        const [w,h,holderRate] = dims[formato] || [85,55,0.85]; // mm + costo porta badge (Amazon ×2)
         const lanyardRate = sel.cordino === 'Yes' ? 0.21 : 0;
-        return 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate*(q <= 100 ? 1.25 : 1) + q*lanyardRate + q*excelRate;
+        return 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate*(1.25 - 0.25*Math.min(1, Math.max(0, (q-100)/100))) + q*lanyardRate + q*excelRate;
       },
       options:[
       { key:'qty', label:'Quantity (35–1,000)', type:'slider', unitSuffix:'pcs', choices:['35','100','200','300','500','750','1000'] },
