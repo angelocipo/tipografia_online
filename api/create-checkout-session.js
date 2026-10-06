@@ -135,10 +135,10 @@ module.exports = async (req, res) => {
       const w = Math.min(32, Math.max(5, dim1(larghezza) || 5)) * 10; // cm → mm
       const h = Math.min(44, Math.max(5, dim1(altezza) || 5)) * 10;
       const cartaRate = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[materiale] ?? 0.13;
-      const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.39 }[stampa] ?? 0.4;
+      const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.47 }[stampa] ?? 0.4;
       const perfRate = perforazione === 'Si' ? 0.05 : 0;
       const piegheRate = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[pieghe] ?? 0;
-      const total = (cartaRate + stampaRate) * q * (w+20) * (h+20) / 440 / 320 + perfRate*q + piegheRate*q + 10; // €10 spese fisse d'ordine
+      const total = ((cartaRate + stampaRate) * q * (w+20) * (h+20) / 440 / 320 + perfRate*q + piegheRate*q + 10) * 1.6; // €10 spese fisse d'ordine, ricarico ×1,6
       unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${w/10}×${h/10} cm, ${materiale || 'gr. 100'}, ${stampa || '1 lato a colori'}${perfRate ? ', perforazione' : ''}${piegheRate ? ', ' + pieghe : ''}, ${q}pz`;
     } else if (product.type === 'strutturaEventi') {
@@ -172,7 +172,7 @@ module.exports = async (req, res) => {
     } else if (product.type === 'badgeEn') {
       const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, colore_cordino, creazione_file } = formula || {};
       const q = Math.max(35, parseInt(qty, 10) || 35);
-      const stampaRate = { '1 side full color':0.4, '2 sides full color':0.7, '1 side B/W':0.07, '2 sides B/W':0.14, '1 side color + 1 side B/W':0.39 }[stampa] || 0.4;
+      const stampaRate = { '1 side full color':0.4, '2 sides full color':0.7, '1 side B/W':0.07, '2 sides B/W':0.14, '1 side color + 1 side B/W':0.47 }[stampa] || 0.4;
       const excelRate = creazione_file === 'Yes, create the file for me' ? 0.5 : 0;
       let total, desc;
       if (holder === 'Without' || formato === 'Custom size (without badge holder)') {
@@ -180,13 +180,13 @@ module.exports = async (req, res) => {
         const vol = { '80 gsm':0.10, '100 gsm':0.13, '200 gsm':0.25, '300 gsm':0.37, '350 gsm':0.43, '400 gsm':0.49 }[carta] || 0.68;
         const plastRate = plastificazione === 'Yes' ? 0.2 : 0;
         const lanyardRate = cordino === 'Yes' ? 0.21 : 0;
-        total = 2*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRate;
+        total = (2*1.6*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRate) * 1.4313; // badge: 50 pz + porta badge + cordino = € 85
         desc = `${product.nome} — without holder, ${w}×${h}cm, ${q}pcs${cordino === 'Yes' ? `, lanyard ${colore_cordino || '01 White'}` : ''}`;
       } else {
         const dims = { '8.5×5.5 cm Landscape':[85,55,0.20], '8.5×5.5 cm Portrait':[55,85,0.69], '10×15 cm Portrait':[100,150,1.09], '7.5×10 cm Portrait':[75,100,0.88] };
         const [w,h,holderRate] = dims[formato] || [85,55,0.20]; // mm + costo porta badge (Amazon ×1,6)
         const lanyardRate = cordino === 'Yes' ? 0.21 : 0;
-        total = 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate + q*lanyardRate + q*excelRate;
+        total = (2*1.6*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate + q*lanyardRate + q*excelRate) * 1.4313; // badge: 50 pz + porta badge + cordino = € 85
         desc = `${product.nome} — ${formato || 'with badge holder'}, ${q}pcs${cordino === 'Yes' ? `, lanyard ${colore_cordino || '01 White'}` : ''}`;
       }
       unitAmountCents = Math.round(total * 100);
@@ -194,7 +194,7 @@ module.exports = async (req, res) => {
     } else if (product.type === 'badge') {
       const { qty, holder, formato, larghezza, altezza, stampa, carta, plastificazione, cordino, colore_cordino, creazione_file } = formula || {};
       const q = Math.max(35, parseInt(qty, 10) || 35);
-      const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato a colori + 1 lato bianco nero':0.39 }[stampa] || 0.4;
+      const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato a colori + 1 lato bianco nero':0.47 }[stampa] || 0.4;
       const excelRate = creazione_file === 'Si, create voi il file da stampa' ? 0.5 : 0;
       let total, desc;
       if (holder === 'Senza' || formato === 'Su misura (senza porta badge)') {
@@ -202,13 +202,13 @@ module.exports = async (req, res) => {
         const vol = { 'gr. 80':0.10, 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 350':0.43, 'gr. 400':0.49 }[carta] || 0.68;
         const plastRate = plastificazione === 'Si' ? 0.2 : 0;
         const lanyardRate = cordino === 'Si' ? 0.21 : 0;
-        total = 2*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRate;
+        total = (2*1.6*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRate) * 1.4313; // badge: 50 pz + porta badge + cordino = € 85
         desc = `${product.nome} — senza porta badge, ${w}×${h}cm, ${q}pz${cordino === 'Si' ? `, cordino ${colore_cordino || '01 Bianco'}` : ''}`;
       } else {
         const dims = { '8,5×5,5 cm Landscape':[85,55,0.20], '8,5×5,5 cm Portrait':[55,85,0.69], '10×15 cm Portrait':[100,150,1.09], '7,5×10 cm Portrait':[75,100,0.88] };
         const [w,h,holderRate] = dims[formato] || [85,55,0.20]; // mm + costo porta badge (Amazon ×1,6)
         const lanyardRate = cordino === 'Si' ? 0.21 : 0;
-        total = 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate + q*lanyardRate + q*excelRate;
+        total = (2*1.6*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate + q*lanyardRate + q*excelRate) * 1.4313; // badge: 50 pz + porta badge + cordino = € 85
         desc = `${product.nome} — ${formato || 'con porta badge'}, ${q}pz${cordino === 'Si' ? `, cordino ${colore_cordino || '01 Bianco'}` : ''}`;
       }
       unitAmountCents = Math.round(total * 100);
