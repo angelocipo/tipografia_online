@@ -1633,10 +1633,10 @@ const PRODUCTS = [
           const lanyardRateNo = sel.cordino === 'Si' ? 0.21 : 0;
           return 2*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRateNo;
         }
-        const dims = { '8,5×5,5 cm Landscape':[85,55,0.20], '8,5×5,5 cm Portrait':[55,85,0.69], '10×15 cm Portrait':[100,150,1.09], '7,5×10 cm Portrait':[75,100,0.88] };
-        const [w,h,holderRate] = dims[formato] || [85,55,0.20]; // mm + costo porta badge (Amazon ×1,6)
+        const dims = { '8,5×5,5 cm Landscape':[85,55,0.24], '8,5×5,5 cm Portrait':[55,85,0.63], '10×15 cm Portrait':[100,150,1.36], '7,5×10 cm Portrait':[75,100,1.10] };
+        const [w,h,holderRate] = dims[formato] || [85,55,0.24]; // mm + costo porta badge (Amazon ×2)
         const lanyardRate = sel.cordino === 'Si' ? 0.21 : 0;
-        return 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate + q*lanyardRate + q*excelRate;
+        return 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate*(q <= 100 ? 1.25 : 1) + q*lanyardRate + q*excelRate;
       },
       options:[
       { key:'qty', label:'Quantità (35–1.000)', type:'slider', unitSuffix:'pz', choices:['35','100','200','300','500','750','1000'] },
@@ -3480,6 +3480,7 @@ function renderDetail(){
     const done = after || renderDetail;
     el.addEventListener('input', (e) => {
       const raw = e.target.value.trim();
+      const caret = e.target.selectionStart;
       if (raw === '') return;
       if (dec && /[.,]$/.test(raw)) return; // separatore appena digitato: aspetta il decimale
       let n = parseVal(raw);
@@ -3490,7 +3491,7 @@ function renderDetail(){
       // Il re-render sostituisce l'input: rimetti il focus, il testo digitato (virgola o punto)
       // e il cursore dopo le cifre.
       const again = document.getElementById(id);
-      if (again) { if (dec) again.value = raw; again.focus(); try { const L = again.value.length; again.setSelectionRange(L, L); } catch (err) {} }
+      if (again) { if (dec) again.value = raw; again.focus(); try { const L = again.value.length, P = caret == null ? L : Math.min(caret, L); again.setSelectionRange(P, P); } catch (err) {} }
     });
     el.addEventListener('blur', (e) => {
       // Re-rendering detaches the focused input, and removing a focused element fires blur on
