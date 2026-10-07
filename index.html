@@ -2555,6 +2555,7 @@ function renderCategoryPage(){
   const num = s => parseFloat(s.replace(',', '.'));
   const sizeOf = p => {
     const r = /([\d,.]+)\s*×\s*([\d,.]+)/.exec(p.nome);
+    if (cat === 'Block Notes') { const a = / A(\d) /.exec(p.nome); return a ? -Number(a[1]) : 0; } // A6, A5, A4
     if (r && /^Banner/.test(cat)) return num(r[1]) * 1e4 + num(r[2]); // banner: per prima misura, poi seconda
     if (r) return num(r[1]) * num(r[2]) - (/ A\d /.test(p.nome) ? 2e6 : 1e6);
     const m = /ø\s*([\d,.]+)/.exec(p.nome);
