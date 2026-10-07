@@ -187,7 +187,7 @@ function struttura215cm(sel) {
 }
 
 const GARMENT_CAT = 'Stampa su indumento';
-const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Banner', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
+const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Block Notes', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Banner', 'Quadri', 'Gadget', 'Eventi', 'Servizi'];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
 // Plastificazione: sovrapprezzo IVA incl. per quantità (per ogni motivo).
@@ -279,6 +279,13 @@ const oracalLabel = (c) => `${c.code} ${c.nome}`;
 const ORACAL_HEX = Object.fromEntries(ORACAL_751.map(c => [oracalLabel(c), c.hex]));
 const ORACAL_LABELS = ORACAL_751.slice().sort((a, b) => Number(a.code) - Number(b.code)).map(oracalLabel);
 
+// Block notes: tipo di legatura (non incide sul prezzo). o = orientamento, e = lato incollato.
+const LEGATURA_BLOCK_NOTES = [
+  { label:'Formato verticale, legatura a sinistra', o:'v', e:'l' },
+  { label:'Formato orizzontale, legatura a sinistra', o:'h', e:'l' },
+  { label:'Formato verticale, legatura in alto', o:'v', e:'t' },
+  { label:'Formato orizzontale, legatura in alto', o:'h', e:'t' },
+];
 const PRODUCTS = [
   { id:'197', ean:'0652026573206', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
     templatePdfs:[{'label':'80×200 cm','path':'template/rollup-80x200.pdf'},{'label':'85×200 cm','path':'template/rollup-85x200.pdf'}],
@@ -427,6 +434,61 @@ const PRODUCTS = [
       tiersByDelivery: [
         [{qty:20,price:52},{qty:30,price:66},{qty:40,price:82},{qty:50,price:97},{qty:55,price:103},{qty:60,price:109},{qty:65,price:116},{qty:70,price:122},{qty:75,price:128},{qty:80,price:133},{qty:85,price:139},{qty:90,price:144},{qty:95,price:148},{qty:100,price:151},{qty:150,price:175},{qty:200,price:190},{qty:250,price:204},{qty:300,price:222},{qty:400,price:268},{qty:500,price:295},{qty:750,price:385},{qty:1000,price:454},{qty:1500,price:633},{qty:2000,price:792},{qty:3000,price:1118},{qty:4000,price:1437},{qty:5000,price:1770},{qty:6000,price:2104}],
         [{qty:20,price:129},{qty:30,price:129},{qty:40,price:129},{qty:50,price:129},{qty:55,price:135},{qty:60,price:142},{qty:65,price:148},{qty:70,price:154},{qty:75,price:160},{qty:80,price:166},{qty:85,price:171},{qty:90,price:177},{qty:95,price:180},{qty:100,price:183},{qty:150,price:207},{qty:200,price:222},{qty:250,price:236},{qty:300,price:254},{qty:400,price:325},{qty:500,price:352},{qty:750,price:466},{qty:1000,price:534},{qty:1500,price:768},{qty:2000,price:954},{qty:3000,price:1366},{qty:4000,price:1737},{qty:5000,price:2149},{qty:6000,price:2521}],
+      ],
+    } },
+  { id:'5960', ean:'', nome:'Block Notes A4 50 fogli', categoria:'Block Notes',
+    templatePdf:'template/formato-21x29-7.pdf',
+    img:'img/block-notes-700.webp',
+    gallery:['img/block-notes-700.webp'],
+    intro:'Block notes DIN A4 (21×29,7 cm) da 50 fogli incollati, con 4 tipi di legatura: verticale o orizzontale, incollaggio a sinistra o in alto. Carta offset bianca 80 g, stampa 4/0 colori.',
+    features:['50 fogli incollati, 4 tipi di legatura','Carta offset bianca 80 g','Stampa 4/0 colori (solo fronte)','Da 10 a 900 pezzi'],
+    specs:{'Formato':'DIN A4 (21×29,7 cm)','Fogli':'50','Carta':'80 g offset bianca','Stampa':'4/0 colori','Legatura':'Verticale o orizzontale, a sinistra o in alto','Tempi':'Standard 6–8 gg · Express 3–4 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 200 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      legaturaChoices: LEGATURA_BLOCK_NOTES,
+      deliveryChoices: ['Standard 6–8 gg','Express 3–4 gg','Overnight 1 gg'],
+      readyDays: [[6,8], [3,4], [1,1]],
+      readyCutoffHours: [12, 10, 10],
+      tiersByDelivery: [
+        [{qty:10,price:76.29},{qty:25,price:101.14},{qty:50,price:138.51},{qty:75,price:176.26},{qty:100,price:226.54},{qty:150,price:298.85},{qty:200,price:390.48},{qty:250,price:464.1},{qty:300,price:556.32},{qty:400,price:720.18},{qty:500,price:882.06},{qty:600,price:1055.07},{qty:700,price:1215.82},{qty:750,price:1307.79},{qty:800,price:1381.12},{qty:900,price:1546.43}],
+        [{qty:10,price:110.27},{qty:25,price:135.23},{qty:50,price:172.21},{qty:75,price:209.98},{qty:100,price:285.2},{qty:150,price:357.55},{qty:200,price:474.1},{qty:250,price:547.71},{qty:300,price:664.83},{qty:400,price:853.6},{qty:500,price:1040.4},{qty:600,price:1238.32},{qty:700,price:1423.98},{qty:750,price:1540.85},{qty:800,price:1614.19},{qty:900,price:1804.42}],
+        [{qty:10,price:133.7},{qty:25,price:158.62},{qty:50,price:193.97},{qty:75,price:235.74},{qty:100,price:311.82},{qty:150,price:384.18},{qty:200,price:501.58}],
+      ],
+    } },
+  { id:'5961', ean:'', variantOf:'5960', nome:'Block Notes A5 50 fogli', categoria:'Block Notes',
+    templatePdf:'template/formato-14-8x21.pdf',
+    img:'img/block-notes-700.webp',
+    gallery:['img/block-notes-700.webp'],
+    intro:'Block notes DIN A5 (14,8×21 cm) da 50 fogli incollati, con 4 tipi di legatura: verticale o orizzontale, incollaggio a sinistra o in alto. Carta offset bianca 80 g, stampa 4/0 colori.',
+    features:['50 fogli incollati, 4 tipi di legatura','Carta offset bianca 80 g','Stampa 4/0 colori (solo fronte)','Da 10 a 1000 pezzi'],
+    specs:{'Formato':'DIN A5 (14,8×21 cm)','Fogli':'50','Carta':'80 g offset bianca','Stampa':'4/0 colori','Legatura':'Verticale o orizzontale, a sinistra o in alto','Tempi':'Standard 6–8 gg · Express 3–4 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 200 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      legaturaChoices: LEGATURA_BLOCK_NOTES,
+      deliveryChoices: ['Standard 6–8 gg','Express 3–4 gg','Overnight 1 gg'],
+      readyDays: [[6,8], [3,4], [1,1]],
+      readyCutoffHours: [12, 10, 10],
+      tiersByDelivery: [
+        [{qty:10,price:57.09},{qty:25,price:71.3},{qty:50,price:94.5},{qty:75,price:114.64},{qty:100,price:136.72},{qty:150,price:174.32},{qty:200,price:231.68},{qty:250,price:272.32},{qty:300,price:312.38},{qty:400,price:412.4},{qty:500,price:498.42},{qty:600,price:598.18},{qty:700,price:680.72},{qty:750,price:740.58},{qty:800,price:781.84},{qty:900,price:864.37},{qty:1000,price:946.42}],
+        [{qty:10,price:91.15},{qty:25,price:105.65},{qty:50,price:129.31},{qty:75,price:148.34},{qty:100,price:170.42},{qty:150,price:208.05},{qty:200,price:290.34},{qty:250,price:331.02},{qty:300,price:371.09},{qty:400,price:496.02},{qty:500,price:582.03},{qty:600,price:706.7},{qty:700,price:789.23},{qty:750,price:874},{qty:800,price:915.26},{qty:900,price:997.81},{qty:1000,price:1104.75}],
+        [{qty:10,price:114.54},{qty:25,price:129.04},{qty:50,price:152.7},{qty:75,price:171.01},{qty:100,price:192.26},{qty:150,price:233.81},{qty:200,price:316.94}],
+      ],
+    } },
+  { id:'5962', ean:'', variantOf:'5960', nome:'Block Notes A6 50 fogli', categoria:'Block Notes',
+    templatePdf:'template/formato-10-5x14-8.pdf',
+    img:'img/block-notes-700.webp',
+    gallery:['img/block-notes-700.webp'],
+    intro:'Block notes DIN A6 (10,5×14,8 cm) da 50 fogli incollati, con 4 tipi di legatura: verticale o orizzontale, incollaggio a sinistra o in alto. Carta offset bianca 80 g, stampa 4/0 colori.',
+    features:['50 fogli incollati, 4 tipi di legatura','Carta offset bianca 80 g','Stampa 4/0 colori (solo fronte)','Da 10 a 900 pezzi'],
+    specs:{'Formato':'DIN A6 (10,5×14,8 cm)','Fogli':'50','Carta':'80 g offset bianca','Stampa':'4/0 colori','Legatura':'Verticale o orizzontale, a sinistra o in alto','Tempi':'Standard 6–8 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      legaturaChoices: LEGATURA_BLOCK_NOTES,
+      deliveryChoices: ['Standard 6–8 gg'],
+      readyDays: [[6,8]],
+      readyCutoffHours: [12],
+      tiersByDelivery: [
+        [{qty:10,price:46.5},{qty:25,price:53.81},{qty:50,price:67.22},{qty:75,price:79.82},{qty:100,price:92.18},{qty:150,price:115.71},{qty:200,price:136.83},{qty:250,price:160.32},{qty:300,price:182.21},{qty:400,price:242.85},{qty:500,price:285.63},{qty:600,price:334.75},{qty:700,price:379.74},{qty:750,price:421.18},{qty:800,price:444.02},{qty:900,price:487.74}],
       ],
     } },
   { id:'5720', ean:'0652026573305', nome:'Adesivo PVC 42×10 cm', categoria:'Adesivi',
@@ -2022,6 +2084,11 @@ async function startStripeCheckout(btn){
       const cur = state.deliveryIdxById[productId] || deliveryDefault(PRODUCTS.find(x => x.id === productId));
       body.deliveryIndex = cur.deliveryIdx;
       body.tierIndex = cur.qtyIdx;
+      const pp = PRODUCTS.find(x => x.id === productId);
+      if (pp && pp.pricing.legaturaChoices) {
+        const t = pp.pricing.tiersByDelivery[cur.deliveryIdx][cur.qtyIdx];
+        human = { 'Formato': pp.specs['Formato'], 'Legatura': pp.pricing.legaturaChoices[(state.legaturaById || {})[productId] ?? 0].label, 'Quantità': t.qty + ' pz', 'Consegna': pp.pricing.deliveryChoices[cur.deliveryIdx] };
+      }
     }
     if (pricingType === 'size') body.sizeIndex = idx;
     if (pricingType === 'imageSwatch') body.sizeIndex = idx;
@@ -2382,12 +2449,12 @@ function computeBv24hPrice(p, f){
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
 // Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
-const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner', '5940': 'Banner 500' };
+const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner', '5940': 'Banner 500', '5960': 'Block Notes' };
 // Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
-const CATALOG_NAMES = { '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr senza occhielli tutte le misure', '5940': 'Banner PVC 500gr con occhielli tutte le misure' };
+const CATALOG_NAMES = { '5960': 'Block Notes tutti i formati', '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr senza occhielli tutte le misure', '5940': 'Banner PVC 500gr con occhielli tutte le misure' };
 // Titolo mostrato in cima alla pagina di categoria (solo visuale; il nome interno resta invariato).
-const CATEGORY_TITLES = { 'Adesivi': 'Adesivo PVC', 'Banner': 'Banner PVC 400gr senza occhielli', 'Banner 500': 'Banner PVC 500gr con occhielli' };
-const CATEGORY_INTROS = { 'Banner 500': 'Banner in PVC 500 g, stampa 4/0 colori, taglio e occhielli lungo tutto il perimetro. Scegli la misura per configurare quantità e tempi di consegna.', 'Banner': 'Banner in PVC 400 g, stampa 4/0 colori, taglio lungo tutto il perimetro, senza occhielli. Per la versione con occhielli scegli il Banner PVC 500gr con occhielli. Scegli la misura per configurare la quantità.', 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
+const CATEGORY_TITLES = { 'Block Notes': 'Block Notes 50 fogli', 'Adesivi': 'Adesivo PVC', 'Banner': 'Banner PVC 400gr senza occhielli', 'Banner 500': 'Banner PVC 500gr con occhielli' };
+const CATEGORY_INTROS = { 'Block Notes': 'Block notes da 50 fogli con incollaggio in alto, carta offset bianca 80 g, stampa 4/0 colori. Scegli il formato per configurare quantità e tempi di consegna.', 'Banner 500': 'Banner in PVC 500 g, stampa 4/0 colori, taglio e occhielli lungo tutto il perimetro. Scegli la misura per configurare quantità e tempi di consegna.', 'Banner': 'Banner in PVC 400 g, stampa 4/0 colori, taglio lungo tutto il perimetro, senza occhielli. Per la versione con occhielli scegli il Banner PVC 500gr con occhielli. Scegli la misura per configurare la quantità.', 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
 // URL leggibili: #libretti-chiesa-personalizzati invece di #5805. Lo slug è derivato dal nome
 // prodotto; i vecchi link con l'id numerico continuano a funzionare (vedi initialHash).
 function productSlug(p){
@@ -2504,7 +2571,7 @@ function renderCategoryPage(){
       </h1>
       <p style="font-size:15px; color:color-mix(in srgb, var(--color-text) 78%, transparent); margin:0 0 6px; max-width:62ch; line-height:1.6;">${esc(CATEGORY_INTROS[cat] || 'Adesivi stampati su vinile e carta adesiva, per interni ed esterni. Scegli il prodotto per configurare formato, quantità e tempi di consegna.')}</p>
       <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 32px; font-family:ui-monospace,monospace;">${items.length} prodott${items.length === 1 ? 'o' : 'i'} · prezzi all inclusive, IVA compresa.</p>
-      <div class="p-cards">${items.map(p => productCardHtml(p, cat === 'Adesivi' ? p.nome.replace(/^Adesivo PVC\s+/, '') : /^Banner/.test(cat) ? p.nome.replace(/^Banner PVC (400gr|500gr con occhielli)\s+/, '') : null)).join('')}</div>
+      <div class="p-cards">${items.map(p => productCardHtml(p, cat === 'Adesivi' ? p.nome.replace(/^Adesivo PVC\s+/, '') : /^Banner/.test(cat) ? p.nome.replace(/^Banner PVC (400gr|500gr con occhielli)\s+/, '') : cat === 'Block Notes' ? p.nome.replace(/^Block Notes\s+/, '') : null)).join('')}</div>
       <div style="margin-top:36px;">
         <button class="chip" data-home="1">← Torna al catalogo</button>
       </div>
@@ -3063,7 +3130,23 @@ function renderDetail(){
     const idx = state.deliveryIdxById[p.id]?.qtyIdx ?? deliveryDefault(p).qtyIdx;
     const tiers = p.pricing.tiersByDelivery[deliveryIdx];
     const tier = tiers[Math.min(idx, tiers.length-1)];
+    const legIdx = (state.legaturaById || {})[p.id] ?? 0;
     pricingHtml = `
+      ${p.pricing.legaturaChoices ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Legatura</div>
+        <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px;">
+          ${p.pricing.legaturaChoices.map((c,i) => {
+            const w = c.o === 'v' ? 24 : 34, hh = c.o === 'v' ? 32 : 24;
+            const edge = c.e === 'l' ? 'border-left:4px solid oklch(0.45 0.01 90);' : 'border-top:4px solid oklch(0.45 0.01 90);';
+            const on = i === legIdx;
+            return `<button type="button" data-legatura-idx="${i}" aria-pressed="${on}" style="display:flex; align-items:center; gap:10px; padding:10px; text-align:left; font:inherit; font-size:12.5px; line-height:1.3; cursor:pointer; background:${on ? 'color-mix(in srgb, var(--color-accent) 10%, transparent)' : 'transparent'}; border:1px solid ${on ? 'var(--color-accent)' : 'oklch(0.88 0.005 90)'}; color:var(--color-text);">
+              <span style="flex:none; width:36px; height:34px; display:flex; align-items:center; justify-content:center;"><span style="display:block; box-sizing:border-box; width:${w}px; height:${hh}px; background:#fff; border:1px solid oklch(0.7 0.01 90); ${edge}"></span></span>
+              <span>${esc(c.label)}</span>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -3517,6 +3600,7 @@ function renderDetail(){
     state.deliveryIdxById[p.id] = { ...cur, qtyIdx: parseInt(e.target.value,10) };
     renderDetail();
   });
+  app.querySelectorAll('[data-legatura-idx]').forEach(el => el.addEventListener('click', () => { (state.legaturaById = state.legaturaById || {})[p.id] = parseInt(el.dataset.legaturaIdx,10); renderDetail(); }));
   app.querySelectorAll('[data-delivery-idx]').forEach(el => el.addEventListener('click', () => {
     const cur = state.deliveryIdxById[p.id] || deliveryDefault(p);
     const dNew = parseInt(el.dataset.deliveryIdx,10);
