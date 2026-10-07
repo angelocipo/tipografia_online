@@ -374,6 +374,22 @@ const PRICING = {
       [{qty:1,price:268.45},{qty:2,price:389.76},{qty:3,price:645.94},{qty:4,price:767.46},{qty:5,price:975.14},{qty:6,price:1087.54},{qty:7,price:1333.6},{qty:8,price:1446.03},{qty:9,price:1644.7},{qty:10,price:1752.13},{qty:11,price:1992.75},{qty:12,price:2100.18},{qty:13,price:2340.78},{qty:14,price:2448.21},{qty:15,price:2688.78}],
       [{qty:1,price:299.17},{qty:2,price:420.46},{qty:3,price:678.1},{qty:4,price:799.62},{qty:5,price:1008.77},{qty:6,price:1121.17},{qty:7,price:1368.69},{qty:8,price:1481.12},{qty:9,price:1681.28},{qty:10,price:1788.69},{qty:11,price:2030.75},{qty:12,price:2138.18},{qty:13,price:2380.26},{qty:14,price:2487.68},{qty:15,price:2729.71}],
     ] },
+  '5960': { nome: 'Block Notes A4 50 fogli', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:76.29},{qty:25,price:101.14},{qty:50,price:138.51},{qty:75,price:176.26},{qty:100,price:226.54},{qty:150,price:298.85},{qty:200,price:390.48},{qty:250,price:464.1},{qty:300,price:556.32},{qty:400,price:720.18},{qty:500,price:882.06},{qty:600,price:1055.07},{qty:700,price:1215.82},{qty:750,price:1307.79},{qty:800,price:1381.12},{qty:900,price:1546.43}],
+      [{qty:10,price:110.27},{qty:25,price:135.23},{qty:50,price:172.21},{qty:75,price:209.98},{qty:100,price:285.2},{qty:150,price:357.55},{qty:200,price:474.1},{qty:250,price:547.71},{qty:300,price:664.83},{qty:400,price:853.6},{qty:500,price:1040.4},{qty:600,price:1238.32},{qty:700,price:1423.98},{qty:750,price:1540.85},{qty:800,price:1614.19},{qty:900,price:1804.42}],
+      [{qty:10,price:133.7},{qty:25,price:158.62},{qty:50,price:193.97},{qty:75,price:235.74},{qty:100,price:311.82},{qty:150,price:384.18},{qty:200,price:501.58}],
+    ] },
+  '5961': { nome: 'Block Notes A5 50 fogli', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:57.09},{qty:25,price:71.3},{qty:50,price:94.5},{qty:75,price:114.64},{qty:100,price:136.72},{qty:150,price:174.32},{qty:200,price:231.68},{qty:250,price:272.32},{qty:300,price:312.38},{qty:400,price:412.4},{qty:500,price:498.42},{qty:600,price:598.18},{qty:700,price:680.72},{qty:750,price:740.58},{qty:800,price:781.84},{qty:900,price:864.37},{qty:1000,price:946.42}],
+      [{qty:10,price:91.15},{qty:25,price:105.65},{qty:50,price:129.31},{qty:75,price:148.34},{qty:100,price:170.42},{qty:150,price:208.05},{qty:200,price:290.34},{qty:250,price:331.02},{qty:300,price:371.09},{qty:400,price:496.02},{qty:500,price:582.03},{qty:600,price:706.7},{qty:700,price:789.23},{qty:750,price:874},{qty:800,price:915.26},{qty:900,price:997.81},{qty:1000,price:1104.75}],
+      [{qty:10,price:114.54},{qty:25,price:129.04},{qty:50,price:152.7},{qty:75,price:171.01},{qty:100,price:192.26},{qty:150,price:233.81},{qty:200,price:316.94}],
+    ] },
+  '5962': { nome: 'Block Notes A6 50 fogli', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:46.5},{qty:25,price:53.81},{qty:50,price:67.22},{qty:75,price:79.82},{qty:100,price:92.18},{qty:150,price:115.71},{qty:200,price:136.83},{qty:250,price:160.32},{qty:300,price:182.21},{qty:400,price:242.85},{qty:500,price:285.63},{qty:600,price:334.75},{qty:700,price:379.74},{qty:750,price:421.18},{qty:800,price:444.02},{qty:900,price:487.74}],
+    ] },
   '5720': { nome: 'Adesivo PVC 42×10 cm', ean: '0652026573305', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],
