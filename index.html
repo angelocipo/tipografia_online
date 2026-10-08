@@ -133,7 +133,7 @@
         <div style="display:flex;flex-direction:column;gap:var(--space-2);">
           <a href="stampa-poster-a-roma-in-24-ore.dc.html" style="font-size:13.5px;">Poster in 24 Ore</a>
           <a href="preparare-lesecutivo-per-la-stampa.dc.html" style="font-size:13.5px;">Preparare l'esecutivo di stampa</a>
-          <a href="prezzi-strategici-qualita-professionale-risultati-concreti.dc.html" style="font-size:13.5px;">Prezzi strategici</a>
+          <a href="#prezzi-strategici" style="font-size:13.5px;">Prezzi strategici</a>
         </div>
       </div>
       <div>
@@ -2505,7 +2505,9 @@ window.addEventListener('popstate', (e) => {
 });
 {
   const initialHash = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
-  if (initialHash && initialHash.indexOf('cat-') === 0 && CATEGORIES.includes(initialHash.slice(4))) {
+  if (initialHash === 'prezzi-strategici') {
+    state.onlyStrategici = true;
+  } else if (initialHash && initialHash.indexOf('cat-') === 0 && CATEGORIES.includes(initialHash.slice(4))) {
     state.categoryPage = initialHash.slice(4);
     history.replaceState({ catPage: state.categoryPage }, '', location.hash);
   } else {
@@ -2517,6 +2519,11 @@ window.addEventListener('popstate', (e) => {
   }
 }
 
+window.addEventListener('hashchange', () => {
+  if (location.hash !== '#prezzi-strategici') return;
+  state.onlyStrategici = true; state.category = 'Tutti'; state.selectedId = null; state.categoryPage = null;
+  render();
+});
 function render(){
   backBtn.style.display = (state.selectedId || state.categoryPage) ? 'block' : 'none';
   if (state.selectedId) renderDetail();
@@ -2621,11 +2628,11 @@ function renderGrid(){
       </div>
       <p style="font-size:15px;color:color-mix(in srgb, var(--color-text) 78%, transparent);margin:calc(var(--space-8) * -1) 0 var(--space-6);">Rollup, biglietti da visita, volantini, abbigliamento personalizzato, quadri su tela e molto altro: tutto pronto in tempi record.</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;">
-        ${chips.map(c => `<button class="chip ${c===state.category?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+        ${chips.map(c => `<button class="chip ${(c===state.category && !state.onlyStrategici)?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>
       ${compact ? '<div style="display:flex; flex-wrap:wrap; gap:24px; align-items:stretch;">' : ''}
       ${sectionHtml('Prezzi Strategici', 'Il nostro listino a prezzo fisso: formati e quantità pronti, senza sorprese.', strategici)}
-      ${(state.category !== 'Tutti' && state.category !== GARMENT_CAT) ? '' : `<section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
+      ${(state.onlyStrategici || (state.category !== 'Tutti' && state.category !== GARMENT_CAT)) ? '' : `<section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
         <div style="margin:0 0 20px;">
           <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
             Stampa su indumento
@@ -2683,12 +2690,12 @@ function renderGrid(){
             </a>`).join('')}
         </div>
       </section>`}
-      ${sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
-      ${sectionHtml('Quadri su Tela', 'Stampa su tela con telaio in legno: riproduzioni d\'autore e quadri dalle tue foto.', quadri)}
-      ${sectionHtml('Decalcomanie', 'Adesivi e decalcomanie pronti: vinile da applicare e rimuovere senza residui.', decalc)}
+      ${state.onlyStrategici ? '' : sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
+      ${state.onlyStrategici ? '' : sectionHtml('Quadri su Tela', 'Stampa su tela con telaio in legno: riproduzioni d\'autore e quadri dalle tue foto.', quadri)}
+      ${state.onlyStrategici ? '' : sectionHtml('Decalcomanie', 'Adesivi e decalcomanie pronti: vinile da applicare e rimuovere senza residui.', decalc)}
       ${compact ? '</div>' : ''}
     </div>`;
-  app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; render(); }));
+  app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; if (state.onlyStrategici) { state.onlyStrategici = false; history.replaceState(null, '', location.pathname + location.search); } render(); }));
   app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => {
     const cat = CATEGORY_PAGES[el.dataset.open];
     if (cat) openCategoryPage(cat); else openProduct(el.dataset.open);
