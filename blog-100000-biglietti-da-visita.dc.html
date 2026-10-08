@@ -28,11 +28,27 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-341HJWRT35');</script>
 <style>
 .idx-wrap{max-width:960px;margin:0 auto;padding:0 var(--space-6);}
-.post-cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:var(--space-8);align-items:start;}
+.post-cols{display:grid;grid-template-columns:232px minmax(0,1fr);gap:var(--space-8);align-items:start;}
 @media (max-width:720px){.post-cols{grid-template-columns:1fr;}}
 .post-body p{line-height:1.7;margin:0 0 var(--space-4);}
 
 </style>
+<script>
+(function(){
+  var tries=0, iv=setInterval(function(){
+    var v=document.querySelector('video[src="video/100000-biglietti-da-visita.mp4"]');
+    if(!v){ if(++tries>100) clearInterval(iv); return; }
+    clearInterval(iv);
+    v.volume=0.4; v.muted=false;
+    var p=v.play();
+    if(p&&p.catch) p.catch(function(){
+      v.muted=true; v.play().catch(function(){});
+      var unmute=function(){ v.muted=false; v.volume=0.4; ['pointerdown','keydown','touchstart'].forEach(function(e){document.removeEventListener(e,unmute,true);}); };
+      ['pointerdown','keydown','touchstart'].forEach(function(e){document.addEventListener(e,unmute,true);});
+    });
+  },100);
+})();
+</script>
 </helmet>
 
 <nav class="nav" style="position:sticky; top:0; z-index:100; background:var(--color-bg);">
@@ -48,14 +64,14 @@
   <article class="post-body">
     <h1 style="font-size:34px;line-height:1.15;margin:0 0 var(--space-6);">Abbiamo stampato 100.000 biglietti da visita</h1>
     <div class="post-cols">
-    <figure class="blueprint" style="position:relative;max-width:420px;width:100%;margin:0 auto;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><video src="video/100000-biglietti-da-visita.mp4" poster="img/100000-biglietti-da-visita-poster.webp" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;aspect-ratio:464/832;background:#000 url('img/100000-biglietti-da-visita-poster.webp') center/cover no-repeat;"></video></figure>
+    <figure class="blueprint" style="position:relative;max-width:232px;width:100%;margin:0 auto;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><video src="video/100000-biglietti-da-visita.mp4" poster="img/100000-biglietti-da-visita-poster.webp" controls="{{ true }}" playsInline="{{ true }}" preload="metadata" style="width:100%;height:auto;display:block;aspect-ratio:464/832;background:#000 url('img/100000-biglietti-da-visita-poster.webp') center/cover no-repeat;"></video></figure>
     <div>
     <p>Centomila biglietti da visita, stampati e consegnati da un unico ordine. Nel video ti mostriamo il lavoro finito nella nostra tipografia di Roma EUR.</p>
     <p>Che servano a un'azienda con molti dipendenti, a una rete commerciale o a una campagna promozionale, le grandi tirature sono la nostra specialità: stessa cura su ogni singolo biglietto, controllo del file prima della stampa e prezzi che scendono con la quantità.</p>
     <p>Hai bisogno di biglietti da visita, pochi o tantissimi? Scegli formato e carta nel nostro shop oppure chiedici un preventivo su misura.</p>
     <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-6);">
-      <a href="index.html#cat-Biglietti%20da%20Visita" class="btn btn-primary blueprint" style="position:relative;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Ordina biglietti da visita</a>
-      <a href="contattateci.dc.html" class="btn btn-secondary">Richiedi preventivo</a>
+      <a href="https://tipografia.online/index.html#biglietti-da-visita-prezzi-strategici" class="btn btn-primary blueprint" style="position:relative;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Ordina biglietti da visita</a>
+      <a href="https://tipografia.online/index.html#biglietti-da-visita-prezzi-strategici" class="btn btn-secondary">Richiedi preventivo</a>
     </div>
     </div>
     </div>
