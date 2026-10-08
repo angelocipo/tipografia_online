@@ -52,9 +52,12 @@
 
   <div class="idx-grid idx-grid-3">
     <sc-for list="{{ posts }}" as="p" hint-placeholder-count="6">
-      <a href="{{ p.href }}" class="card blueprint" style="display:block;text-decoration:none;color:inherit;padding:var(--space-6);">
+      <a href="{{ p.href }}" class="card blueprint" style="display:flex;flex-direction:column;gap:var(--space-4);text-decoration:none;color:inherit;padding:var(--space-4);">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-title">{{ p.title }}</div>
+        <div style="aspect-ratio:3/2;overflow:hidden;border:1px solid var(--color-divider);background:var(--color-neutral-100);">
+          <img src="{{ p.img }}" alt="{{ p.title }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div class="card-title" style="padding:0 var(--space-2) var(--space-2);">{{ p.title }}</div>
       </a>
     </sc-for>
   </div>
@@ -107,16 +110,16 @@ const FOOTER_GROUPS = [
   ]},
 ];
 const POSTS = [
-  { title: 'Maglietta personalizzata in tempi record', href: 'blog-maglietta-personalizzata-in-tempi-record.dc.html' },
-  { title: 'Modifica documenti professionale, 30 anni di Photoshop', href: 'blog-modifica-documenti-photoshop.dc.html' },
-  { title: 'Biglietti da Visita Roma Eur 24H', href: 'blog-biglietti-da-visita-roma-eur-24h.dc.html' },
-  { title: "Festeggia con T-shirt per addio al celibato personalizzate", href: 'blog-addio-al-celibato-magliette-personalizzate.dc.html' },
-  { title: 'Canvas con Foto effetto Pittura ad Olio', href: 'blog-canvas-effetto-pittura-ad-olio.dc.html' },
-  { title: 'Tele personalizzate effetto Pop Art alla Warhol', href: 'blog-tele-pop-art-warhol.dc.html' },
-  { title: 'Copia stampata Van Gogh Notte stellata', href: 'blog-van-gogh-notte-stellata.dc.html' },
-  { title: 'Need Printing services in Italy?', href: 'blog-printing-services-in-italy.dc.html' },
-  { title: "La Rivoluzione della Stampa: T-Shirt Personalizzate in 24 Ore", href: 'blog-rivoluzione-stampa-tshirt-24-ore.dc.html' },
-  { title: "Stampe su tela della Statua della Libertà in stile Warhol", href: 'blog-statua-della-liberta-warhol.dc.html' },
+  { title: 'Maglietta personalizzata in tempi record', href: 'blog-maglietta-personalizzata-in-tempi-record.dc.html', img: 'img/tshirt-dic-copia.webp' },
+  { title: 'Modifica documenti professionale, 30 anni di Photoshop', href: 'blog-modifica-documenti-photoshop.dc.html', img: 'img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp' },
+  { title: 'Biglietti da Visita Roma Eur 24H', href: 'blog-biglietti-da-visita-roma-eur-24h.dc.html', img: 'img/bv-2025-ac-copia700.webp' },
+  { title: "Festeggia con T-shirt per addio al celibato personalizzate", href: 'blog-addio-al-celibato-magliette-personalizzate.dc.html', img: 'img/100-t-shirt-copia600-1.webp' },
+  { title: 'Canvas con Foto effetto Pittura ad Olio', href: 'blog-canvas-effetto-pittura-ad-olio.dc.html', img: 'img/AdobeStock_325367840-foto-quadro-copia.webp' },
+  { title: 'Tele personalizzate effetto Pop Art alla Warhol', href: 'blog-tele-pop-art-warhol.dc.html', img: 'img/marilyn-AdobeStock_561626566-copia-scaled-copiakl.webp' },
+  { title: 'Copia stampata Van Gogh Notte stellata', href: 'blog-van-gogh-notte-stellata.dc.html', img: 'img/AdobeStock_463390374-van-gogh-grande.webp' },
+  { title: 'Need Printing services in Italy?', href: 'blog-printing-services-in-italy.dc.html', img: 'img/skyline-roma.webp' },
+  { title: "La Rivoluzione della Stampa: T-Shirt Personalizzate in 24 Ore", href: 'blog-rivoluzione-stampa-tshirt-24-ore.dc.html', img: 'img/polo-austral-hero.webp' },
+  { title: "Stampe su tela della Statua della Libertà in stile Warhol", href: 'blog-statua-della-liberta-warhol.dc.html', img: 'img/angelocipo_Lady_liberty_black_white_with_light_blue_with_Andy_w_43cdb390-52f7-4a7d-8d44-4ce515991d29.webp' },
 ];
 class Component extends DCLogic {
   renderVals() {
