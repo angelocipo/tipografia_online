@@ -297,6 +297,7 @@ class Component extends DCLogic {
         return actions.order.create({ purchase_units: [{ amount: { value: total, currency_code: 'EUR' }, description: this.state.productName }] });
       },
       onApprove: (data, actions) => actions.order.capture().then((details) => {
+        this.saveRecap();
         window.location.href = '/grazie.dc.html?token=' + (details.id || '');
       }),
       onError: (err) => this.setState({ errorMsg: 'Pagamento PayPal non riuscito, riprova.' }),
@@ -343,6 +344,20 @@ class Component extends DCLogic {
   // link e codice di riferimento, che finiscono nei metadati Stripe e quindi nell'email
   // d'ordine. I dati del cliente li mettiamo in localStorage perché la pagina "grazie" possa
   // allegarli all'email del materiale: senza, il file arriverebbe anonimo.
+  // Riepilogo per la pagina "grazie" (solo visualizzazione: l'importo addebitato lo calcola il server).
+  saveRecap() {
+    try {
+      const s = this.state, fee = this.computeShippingFee(), sub = parseFloat(s.productPrice) || 0;
+      const details = this.buildOrderDetails(s.orderBody).map(d => ({ label: String(d.label), value: String(d.value) }));
+      const sn = s.useSender ? s.sender || {} : null;
+      localStorage.setItem('tp_last_order', JSON.stringify({
+        name: s.productName || 'Ordine', details, subtotal: sub, shippingFee: fee, total: sub + fee,
+        email: (s.inv || {}).email || '',
+        sender: sn ? { company: sn.company || sn.name || '', address: sn.address || '', cap: sn.cap || '', city: sn.city || '', phone: sn.phone || '' } : null,
+      }));
+    } catch (ex) {}
+  }
+
   async submit(e) {
     e.preventDefault();
     const err = this.validate();
@@ -353,6 +368,7 @@ class Component extends DCLogic {
         name: i.name || '', email: i.email || '', phone: i.phone || '', company: i.company || '',
       }));
     } catch (ex) {}
+    this.saveRecap();
     this.setState({ submitting: true, errorMsg: null });
     const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody } = this.state;
     const shippingFee = this.computeShippingFee();
