@@ -49,7 +49,7 @@
 </helmet>
 
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="text-decoration:none;color:inherit;white-space:nowrap;font-size:18px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);">Tipografia Online <span style="opacity:.55;font-weight:400;">by Printing Italy</span></a>
+  <a href="index.html" class="nav-brand" style="display:flex; align-items:center; text-decoration:none;"><img src="img/tipografia-online-logo.webp" alt="Tipografia Online by Printing Italy" width="591" height="190" style="height:44px; width:auto; display:block;"></a>
   <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
     <a href="{{ n.href }}" aria-current="{{ n.current }}">{{ n.label }}</a>
   </sc-for>
