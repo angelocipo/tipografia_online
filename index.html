@@ -98,7 +98,11 @@
 
 <div id="app"></div>
 
-<footer style="border-top:1px solid var(--color-divider);margin-top:var(--space-8);">
+<section aria-label="Dove siamo" style="margin-top:var(--space-8);border-top:1px solid var(--color-divider);">
+  <iframe title="Tipografia Online Roma EUR — Centro Stampa Tipografia" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1485.9256672406348!2d12.50348219464745!3d41.853026610809295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13258a7b28d9ae3f%3A0x2311b6fc7c0578d9!2sCentro%20Stampa%20Tipografia!5e0!3m2!1sit!2sit!4v1791621082590!5m2!1sit!2sit" width="100%" height="380" style="border:0;display:block;filter:grayscale(.35);" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</section>
+
+<footer style="border-top:1px solid var(--color-divider);">
   <div class="idx-wrap" style="padding:var(--space-8) var(--space-6);">
     <div class="idx-grid idx-grid-4" style="margin-bottom:var(--space-8);">
       <div>
@@ -216,6 +220,31 @@ function plastCheckboxHtml(p, qty, compact){
       Plastificata <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(plastPrice(qty))})</span>
     </label>
   </div>`;
+}
+// Formato diviso in due righe: Misura (8,5×5,5 = 5,5×8,5) + Orientamento. I bottoni puntano all'indice del formato.
+// Etichetta breve per i bottoni Carta (l'etichetta completa resta nell'ordine).
+function shortPaperLabel(l){
+  const m = String(l).match(/^gr\. ?\d+/);
+  if (!m) return l;
+  if (/SBS/i.test(l)) return m[0] + ' SBS';
+  if (/offset/i.test(l)) return m[0] + ' offset';
+  return m[0];
+}
+function formatSplitHtml(formats, curIdx, attr){
+  const num = x => parseFloat(String(x).replace(',', '.'));
+  const items = formats.map((f, i) => {
+    const m = f.label.match(/^(\S+)\s+([\d,]+)×([\d,]+)/);
+    if (!m) return { i, o: '', size: f.label };
+    const d = num(m[2]) >= num(m[3]) ? [m[2], m[3]] : [m[3], m[2]];
+    return { i, o: m[1], size: d[0] + '×' + d[1] + ' cm' };
+  });
+  const cur = items[curIdx] || items[0];
+  const sizes = [...new Set(items.map(x => x.size))];
+  const lbl = t => `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${t}</div>`;
+  const sizeBtns = sizes.map(s => { const t = items.find(x => x.size === s && x.o === cur.o) || items.find(x => x.size === s); return `<button class="pill ${s===cur.size?'active':''}" ${attr}="${t.i}">${esc(s)}</button>`; }).join('');
+  const orBtns = items.filter(x => x.size === cur.size && x.o).map(x => `<button class="pill ${x.i===cur.i?'active':''}" ${attr}="${x.i}">${esc(x.o)}</button>`).join('');
+  return `<div style="margin-bottom:14px;">${lbl('Misura')}<div style="display:flex; gap:8px; flex-wrap:wrap;">${sizeBtns}</div></div>` +
+    (orBtns ? `<div style="margin-bottom:14px;">${lbl('Orientamento')}<div style="display:flex; gap:8px; flex-wrap:wrap;">${orBtns}</div></div>` : '');
 }
 function angoliPrice(qty){
   const t = ANGOLI_ARROTONDATI_TIERS.find(t => qty <= t.qty);
@@ -1656,7 +1685,7 @@ const PRODUCTS = [
       cartaChoices: ['300', '350', '400'],
       cartaMultiplier: [1, 1.5, 1.9],
       soggettiChoices: [1,2,3,4,5,6,7,8,9,10],
-      soggettiMultiplier: [1,1.85,2.7,3.55,4.4,5.25,6.1,6.95,7.8,8.65],
+      soggettiMultiplier: [1,1.9,2.8,3.7,4.6,5.5,6.4,7.3,8.2,9.1],
     } },
   { id:'284', ean:'0652026573541', nome:'Rilegature a spirale Roma EUR', categoria:'Servizi',
     img:'img/IMG_5529-copia500.webp',
@@ -1754,30 +1783,34 @@ const PRODUCTS = [
     ] } },
   { id:'202', ean:'0652026573572', nome:'Biglietti da visita a rilievo', categoria:'Biglietti da Visita',
     templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'5,5×8,5 cm','path':'template/formato-5-5x8-5.pdf'},{'label':'9×5 cm','path':'template/formato-9x5.pdf'},{'label':'5×9 cm','path':'template/formato-5x9.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
-    img:'img/bv-rilievo.webp',
-    gallery:['img/bv-rilievo.webp'],
+    img:'img/bv-rilievo-hero.webp',
+    gallery:['img/bv-rilievo-hero.webp','img/bv-rilievo.webp'],
     intro:'Biglietti da visita a rilievo prezzi strategici. Il rilievo è un inchiostro trasparente che si gonfia lasciando la carta al lato apposto liscia. La stampa del rilievo viene applicato su 1 lato, a 4 colori fronte/retro.',
-    features:['Rilievo su 1 lato, stampa f/r a 4 colori','Carta patinata gr. 300, gr. 350 o gr. 400 secondo formato','A partire da 100 esemplari (250 per il formato gr. 350)','Tempi di realizzazione: 8 giorni lavorativi','Assistenza tecnica per la realizzazione del rilievo compresa nel prezzo'],
-    specs:{'Tecnica':'Rilievo 1 lato','Stampa':'F/R 4 colori','Tempi':'8 giorni lavorativi'},
+    features:['Rilievo su 1 lato, stampa f/r a 4 colori','8,5×5,5 e 5,5×8,5: patinata opaca gr. 300, 400, 500 o cartoncino SBS gr. 350','9×5, 5×9 e quadrato 5,5×5,5: offset gr. 350','A partire da 100 esemplari (250 per l\'offset gr. 350)','Tempi di realizzazione: 7–9 giorni lavorativi (offset gr. 350: 10–12)','Assistenza tecnica per la realizzazione del rilievo compresa nel prezzo'],
+    specs:{'Tecnica':'Rilievo 1 lato','Stampa':'F/R 4 colori','Tempi':'7–9 gg lavorativi (offset 10–12)'},
     // Reconstructed 1:1 from the real APF config for this product (conditional Formato → Carta → Quantità chain).
     pricing:{ type:'businessCardRilievo', readyDays: [[8,8]], unit:'copie',
       formats: [
-        { label: 'Orizzontale 5,5×8,5 cm', papers: [
-          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:64.17},{qty:250,price:78.58},{qty:500,price:101.77},{qty:1000,price:114.90},{qty:2500,price:199.26},{qty:5000,price:323.00},{qty:10000,price:592.81},{qty:20000,price:1136.92}] },
-          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:53},{qty:500,price:83},{qty:1000,price:119},{qty:2500,price:232},{qty:5000,price:424},{qty:10000,price:807},{qty:20000,price:1578}] },
+        { label: 'Orizzontale 8,5×5,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
+          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
+          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+          { label: 'gr. 350 cartoncino SBS opaco', readyDays:[7,9], tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
         ] },
         { label: 'Verticale 5,5×8,5 cm', papers: [
-          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:64.17},{qty:250,price:78.58},{qty:500,price:101.77},{qty:1000,price:114.90},{qty:2500,price:199.26},{qty:5000,price:323.00},{qty:10000,price:592.81},{qty:20000,price:1136.92}] },
-          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:53},{qty:500,price:83},{qty:1000,price:119},{qty:2500,price:232},{qty:5000,price:424},{qty:10000,price:807},{qty:20000,price:1578}] },
+          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
+          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
+          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+          { label: 'gr. 350 cartoncino SBS opaco', readyDays:[7,9], tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
         ] },
         { label: 'Orizzontale 9×5 cm', papers: [
-          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:65.30},{qty:250,price:80.05},{qty:500,price:103.77},{qty:1000,price:117.21},{qty:2500,price:203.51},{qty:5000,price:330.11},{qty:10000,price:606.15},{qty:20000,price:1162.81}] },
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
         ] },
         { label: 'Verticale 5×9 cm', papers: [
-          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:65.30},{qty:250,price:80.05},{qty:500,price:103.77},{qty:1000,price:117.21},{qty:2500,price:203.51},{qty:5000,price:330.11},{qty:10000,price:606.15},{qty:20000,price:1162.81}] },
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
         ] },
         { label: 'Quadrato 5,5×5,5 cm', papers: [
-          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:62.28},{qty:250,price:76.14},{qty:500,price:98.43},{qty:1000,price:111.06},{qty:2500,price:192.17},{qty:5000,price:311.16},{qty:10000,price:570.59},{qty:20000,price:1093.77}] },
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
         ] },
       ],
     } },
@@ -2172,9 +2205,10 @@ async function startStripeCheckout(btn){
       const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
       const tier = paper.tiers[Math.min(cur.qtyIdx, paper.tiers.length-1)];
       const angoliOn = !!state.angoliById[productId];
-      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0, angoliArrotondati: angoliOn };
+      const motiviR = Math.min(Math.max(cur.motivi || 1, 1), 10);
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0, angoliArrotondati: angoliOn, motivi: motiviR };
       body.tierIndex = cur.qtyIdx;
-      human = { 'Formato': format.label, 'Carta': paper.label, ...(p.pricing.colorChoices ? { 'Colore': p.pricing.colorChoices[cur.colorIdx||0] } : {}), 'Quantità': tier.qty, ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
+      human = { 'Formato': format.label, 'Carta': paper.label, ...(p.pricing.colorChoices ? { 'Colore': p.pricing.colorChoices[cur.colorIdx||0] } : {}), 'Quantità': tier.qty + (motiviR > 1 ? ' per motivo' : ''), ...(motiviR > 1 ? { 'Motivi': motiviR } : {}), ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
     }
     if (pricingType === 'businessCardStrategici') {
       const cur = state.bcsIdxById[productId] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
@@ -3204,7 +3238,9 @@ function renderDetail(){
     const tier = paper.tiers[idx];
     const angoliOn = !!state.angoliById[p.id];
     const angoliSurcharge = angoliOn ? angoliPrice(tier.qty) : 0;
-    const grandTotal = tier.price + angoliSurcharge;
+    // Motivi: il 1° a prezzo pieno, ogni motivo aggiuntivo al 90%. Stessa quantità, carta e formato.
+    const motivi = Math.min(Math.max(cur.motivi || 1, 1), 10);
+    const grandTotal = Math.round((tier.price + angoliSurcharge) * (1 + 0.9 * (motivi - 1)) * 100) / 100;
     pricingHtml = `
       ${p.pricing.colorChoices ? `
       <div style="margin-bottom:14px;">
@@ -3213,25 +3249,29 @@ function renderDetail(){
           ${p.pricing.colorChoices.map((c,i) => `<button class="pill ${i===(cur.colorIdx||0)?'active':''}" data-bcr-color="${i}">${esc(c)}</button>`).join('')}
         </div>
       </div>` : ''}
+      ${formatSplitHtml(p.pricing.formats, cur.formatIdx, 'data-bcr-format')}
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          ${format.papers.map((pp,i) => `<button class="pill ${i===cur.paperIdx?'active':''}" data-bcr-paper="${i}">${esc(pp.label)}</button>`).join('')}
+          ${format.papers.map((pp,i) => `<button class="pill ${i===cur.paperIdx?'active':''}" data-bcr-paper="${i}">${esc(shortPaperLabel(pp.label))}</button>`).join('')}
         </div>
       </div>
-      <div style="margin-bottom:14px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          ${p.pricing.formats.map((f,i) => `<button class="pill ${i===cur.formatIdx?'active':''}" data-bcr-format="${i}">${esc(f.label)}</button>`).join('')}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px 14px; margin-bottom:6px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (per ogni motivo)</div>
+          <select class="qty-select" id="bcrQtyRange">
+            ${paper.tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtQty(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Soggetti</div>
+          <select class="qty-select" id="bcrMotiviSelect">
+            ${Array.from({length:10}, (_x, i) => i + 1).map(n => `<option value="${n}" ${n===motivi?'selected':''}>${n} ${n===1?'motivo':'motivi'}</option>`).join('')}
+          </select>
         </div>
       </div>
-      <div style="margin-bottom:18px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
-        <select class="qty-select" id="bcrQtyRange">
-          ${paper.tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtQty(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
-        </select>
-        ${readyInfoHtml(p, '1 Settimana', 0)}
-      </div>
+      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-bottom:6px;">Ogni motivo aggiuntivo costa il 90% del primo. ${motivi > 1 ? `Totale ${fmtQty(tier.qty * motivi)} copie (${fmtQty(tier.qty)} per motivo).` : ''}</div>
+      <div style="margin-bottom:14px;">${readyInfoHtml(paper.readyDays ? { ...p, pricing: { ...p.pricing, readyDays: [paper.readyDays] } } : p, '1 Settimana', 0)}</div>
       ${angoliCheckboxHtml(p, tier.qty)}
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
@@ -3241,7 +3281,7 @@ function renderDetail(){
       <div style="margin-bottom:18px;">
         ${uploadBlockHtml()}
       </div>
-      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, ...(p.pricing.colorChoices ? { colore: p.pricing.colorChoices[cur.colorIdx||0] } : {}), ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), qty: tier.qty })}`;
+      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, ...(p.pricing.colorChoices ? { colore: p.pricing.colorChoices[cur.colorIdx||0] } : {}), ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), ...(motivi > 1 ? { motivi: motivi + ' motivi' } : {}), qty: tier.qty })}`;
   } else if (p.pricing.type === 'businessCardStrategici'){
     const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
     const format = p.pricing.formats[cur.formatIdx];
@@ -3264,16 +3304,11 @@ function renderDetail(){
     const grandTotal = Math.round(((price + angoliSurcharge + plastSurcharge) * motiviFactor + graficaSurcharge) * 100) / 100;
     const copieTot = qty * motivi;
     pricingHtml = `
+      ${formatSplitHtml(p.pricing.formats, cur.formatIdx, 'data-bcs-format')}
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           ${format.papers.map((pp,i) => `<button class="pill ${i===cur.paperIdx?'active':''}" data-bcs-paper="${i}">${esc(pp.label)}</button>`).join('')}
-        </div>
-      </div>
-      <div style="margin-bottom:14px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          ${p.pricing.formats.map((f,i) => `<button class="pill ${i===cur.formatIdx?'active':''}" data-bcs-format="${i}">${esc(f.label)}</button>`).join('')}
         </div>
       </div>
       <div style="margin-bottom:14px;">
@@ -3666,9 +3701,16 @@ function renderDetail(){
     renderDetail();
   });
   app.querySelectorAll('[data-bcr-format]').forEach(el => el.addEventListener('click', () => {
-    state.bcrIdxById[p.id] = { formatIdx: parseInt(el.dataset.bcrFormat,10), paperIdx: 0, qtyIdx: 0 };
+    const cur = state.bcrIdxById[p.id] || {};
+    state.bcrIdxById[p.id] = { formatIdx: parseInt(el.dataset.bcrFormat,10), paperIdx: 0, qtyIdx: 0, colorIdx: cur.colorIdx || 0, motivi: cur.motivi || 1 };
     renderDetail();
   }));
+  const bcrMotivi = document.getElementById('bcrMotiviSelect');
+  if (bcrMotivi) bcrMotivi.addEventListener('change', (e) => {
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+    state.bcrIdxById[p.id] = { ...cur, motivi: parseInt(e.target.value,10) };
+    renderDetail();
+  });
   app.querySelectorAll('[data-bcr-paper]').forEach(el => el.addEventListener('click', () => {
     const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
     state.bcrIdxById[p.id] = { ...cur, paperIdx: parseInt(el.dataset.bcrPaper,10), qtyIdx: 0 };
