@@ -288,10 +288,13 @@ module.exports = async (req, res) => {
       let priceRilievo = tier.price;
       let angoliSuffixRilievo = '';
       if (formula && formula.angoliArrotondati) { priceRilievo += angoliArrotondatiPrice(tier.qty); angoliSuffixRilievo = ', Angoli arrotondati'; }
+      const motiviRawR = formula && Number(formula.motivi);
+      const motiviR = Number.isFinite(motiviRawR) ? Math.min(Math.max(Math.round(motiviRawR), 1), 10) : 1;
+      priceRilievo = priceRilievo * (1 + 0.9 * (motiviR - 1));
       unitAmountCents = Math.round(priceRilievo * 100);
       const cIdx = Number.isInteger(colorIndex) ? colorIndex : 0;
       const colorLabel = product.colorChoices ? `, ${product.colorChoices[Math.min(Math.max(cIdx, 0), product.colorChoices.length - 1)]}` : '';
-      description = `${product.nome} — ${format.label}, ${paper.label}${colorLabel}, ${tier.qty} copie${angoliSuffixRilievo}`;
+      description = `${product.nome} — ${format.label}, ${paper.label}${colorLabel}, ${tier.qty} copie${motiviR > 1 ? ` × ${motiviR} motivi` : ''}${angoliSuffixRilievo}`;
     } else if (product.type === 'size') {
       const idx = Number.isInteger(sizeIndex) ? sizeIndex : 0;
       const variant = product.variants[Math.min(Math.max(idx, 0), product.variants.length - 1)];

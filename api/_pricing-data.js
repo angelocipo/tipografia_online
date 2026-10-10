@@ -166,24 +166,26 @@ const PRICING = {
   '5047-en': { nome: 'Custom Printed Badges', ean: '0652026573558', type: 'badgeEn' },
   '202': { nome: 'Biglietti da visita a rilievo', ean: '0652026573572', type: 'businessCardRilievo',
     formats: [
-      { label: 'Quadrato 5,5×5,5 cm', papers: [
-        { label: 'gr. 350 offset', tiers: [{qty:250,price:72},{qty:500,price:92},{qty:1000,price:121},{qty:2500,price:211},{qty:5000,price:355},{qty:10000,price:681}] },
-      ] },
-      { label: 'Orizzontale 5,5×8,5 cm', papers: [
-        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:49},{qty:500,price:87},{qty:1000,price:99},{qty:2500,price:184},{qty:5000,price:308},{qty:10000,price:578},{qty:20000,price:1122}] },
-        { label: 'gr. 350 offset', tiers: [{qty:250,price:72},{qty:500,price:92},{qty:1000,price:121},{qty:2500,price:211},{qty:5000,price:355},{qty:10000,price:681}] },
-        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:53},{qty:500,price:83},{qty:1000,price:119},{qty:2500,price:232},{qty:5000,price:424},{qty:10000,price:807},{qty:20000,price:1578}] },
+      { label: 'Orizzontale 8,5×5,5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
+        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
+        { label: 'gr. 500 patinata opaca', tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+        { label: 'gr. 350 cartoncino SBS opaco', tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
       ] },
       { label: 'Verticale 5,5×8,5 cm', papers: [
-        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:49},{qty:500,price:87},{qty:1000,price:99},{qty:2500,price:184},{qty:5000,price:308},{qty:10000,price:578},{qty:20000,price:1122}] },
-        { label: 'gr. 350 offset', tiers: [{qty:250,price:72},{qty:500,price:92},{qty:1000,price:121},{qty:2500,price:211},{qty:5000,price:355},{qty:10000,price:681}] },
-        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:53},{qty:500,price:83},{qty:1000,price:119},{qty:2500,price:232},{qty:5000,price:424},{qty:10000,price:807},{qty:20000,price:1578}] },
+        { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
+        { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
+        { label: 'gr. 500 patinata opaca', tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+        { label: 'gr. 350 cartoncino SBS opaco', tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
       ] },
       { label: 'Orizzontale 9×5 cm', papers: [
-        { label: 'gr. 350 offset', tiers: [{qty:250,price:72},{qty:500,price:92},{qty:1000,price:121},{qty:2500,price:211},{qty:5000,price:355},{qty:10000,price:681}] },
+        { label: 'gr. 350 offset', tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
       ] },
       { label: 'Verticale 5×9 cm', papers: [
-        { label: 'gr. 350 offset', tiers: [{qty:250,price:72},{qty:500,price:92},{qty:1000,price:121},{qty:2500,price:211},{qty:5000,price:355},{qty:10000,price:681}] },
+        { label: 'gr. 350 offset', tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+      ] },
+      { label: 'Quadrato 5,5×5,5 cm', papers: [
+        { label: 'gr. 350 offset', tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
       ] },
     ] },
   '205': { nome: 'Biglietti da visita con oro/argento lucido', ean: '0652026573589', type: 'businessCardRilievo',
@@ -520,7 +522,7 @@ const PRICING = {
     latiChoices: ['1 lato', '2 lati'],
     cartaMultiplier: [1, 1.5, 1.9],
     cartaChoices: ['300', '350', '400'],
-    soggettiMultiplier: [1,1.85,2.7,3.55,4.4,5.25,6.1,6.95,7.8,8.65],
+    soggettiMultiplier: [1,1.9,2.8,3.7,4.6,5.5,6.4,7.3,8.2,9.1],
     soggettiChoices: [1,2,3,4,5,6,7,8,9,10],
   },
 };
