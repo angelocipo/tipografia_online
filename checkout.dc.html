@@ -156,6 +156,9 @@
         <sc-if value="{{ isFlatShipping }}" hint-placeholder-val="{{ false }}">
           <p class="card-body" style="margin:var(--space-2) 0 0;">Ordine sopra € 100,00: consegna a tariffa fissa € 8,00, indipendente dalla zona.</p>
         </sc-if>
+        <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
+          <p class="card-body" style="margin:var(--space-2) 0 0;">Roll-Up a Roma: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
+        </sc-if>
         <p class="card-body" style="margin:var(--space-2) 0 0;">Nessuna consegna in Vaticano.</p>
       </div>
 
@@ -327,8 +330,18 @@ class Component extends DCLogic {
     return 'preventivo.dc.html?' + p.toString();
   }
 
+  rollupQty() {
+    if (this.state.productId !== '197') return 0;
+    const f = (this.state.orderBody && this.state.orderBody.formula) || {};
+    return Math.max(1, parseInt(f.qty, 10) || 1);
+  }
+
   computeShippingFee() {
     if (this.state.productCollection === 'strategici') return 0;
+    // Roll-Up 80/85 × 200 (Speedy Boys): 1° rollup a tariffa zona, ogni successivo € 15. Vale anche sopra € 100.
+    const rq = this.rollupQty();
+    const rollupFirst = { roma_centro: 20, roma_resto: 30 }[this.state.shipZone];
+    if (rq && rollupFirst) return rollupFirst + 15 * (rq - 1);
     const price = parseFloat(this.state.productPrice) || 0;
     if (price >= 100) return 8;
     const rates = { roma_centro: 20, roma_resto: 30, italia: 25 };
@@ -428,7 +441,8 @@ class Component extends DCLogic {
       orderTotal: eur(orderTotal),
       productPriceFmt: eur(parseFloat(s.productPrice) || 0),
       shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
-      isFlatShipping: (parseFloat(s.productPrice) || 0) >= 100 && s.productCollection !== 'strategici',
+      isFlatShipping: (parseFloat(s.productPrice) || 0) >= 100 && s.productCollection !== 'strategici' && !(this.rollupQty() && s.shipZone !== 'italia'),
+      isRollupShipping: !!this.rollupQty(),
       isZoneRomaCentro: s.shipZone === 'roma_centro',
       isZoneRomaResto: s.shipZone === 'roma_resto',
       isZoneItalia: s.shipZone === 'italia',
