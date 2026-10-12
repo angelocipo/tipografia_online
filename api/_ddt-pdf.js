@@ -38,8 +38,11 @@ function wrap(s, size, max, bold) {
   return lines.length ? lines : [''];
 }
 
-function buildDdtPdf(order, md, session) {
+function buildDdtPdf(order, md, session, lang) {
   md = md || {};
+  // Cliente inglese: etichette doppie IT / EN (il DDT resta un documento italiano).
+  const en = lang === 'en';
+  const L = (it, eng) => (en ? it + ' / ' + eng : it);
   const ops = [];
   const text = (x, y, s, size = 10, bold = false, color = INK) =>
     ops.push(`BT ${color} rg /${bold ? 'F2' : 'F1'} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${enc(s)}) Tj ET`);
@@ -66,12 +69,13 @@ function buildDdtPdf(order, md, session) {
     y -= 52;
   }
   text(M, y, 'DOCUMENTO DI TRASPORTO', 20, true);
+  if (en) { text(M, y - 15, 'Delivery note', 10, true, MUTED); y -= 13; }
   text(M, y - 15, 'D.d.t. — D.P.R. 472/1996', 8.5, false, MUTED);
   const nx = W - M - 170;
   box(nx, y - 22, 170, 40);
-  label(nx + 10, y + 6, 'Numero');
+  label(nx + 10, y + 6, L('Numero', 'No.'));
   text(nx + 10, y - 10, order.number, 13, true);
-  label(nx + 95, y + 6, 'Data');
+  label(nx + 95, y + 6, L('Data', 'Date'));
   text(nx + 95, y - 10, dateStr, 11, true);
 
   // Mittente / Destinatario
@@ -81,12 +85,12 @@ function buildDdtPdf(order, md, session) {
   const c = order.customer || {};
   const shipOther = md.ship_same === '0';
   const dest = shipOther
-    ? [md.ship_name || c.name, md.ship_address || '', [md.ship_cap, md.ship_city].filter(Boolean).join(' '), md.ship_phone ? 'Tel. ' + md.ship_phone : '']
-    : [c.name, c.address || '', [c.cap, c.city].filter(Boolean).join(' '), c.vatNumber ? 'P.IVA ' + c.vatNumber : (c.fiscalCode ? 'C.F. ' + c.fiscalCode : '')];
+    ? [md.ship_name || c.name, md.ship_address || '', [md.ship_cap, md.ship_city].filter(Boolean).join(' '), md.ship_phone ? 'Cell. ' + md.ship_phone : '']
+    : [c.name, c.address || '', [c.cap, c.city].filter(Boolean).join(' '), md.ship_phone ? 'Cell. ' + md.ship_phone : '', c.vatNumber ? 'P.IVA ' + c.vatNumber : (c.fiscalCode ? 'C.F. ' + c.fiscalCode : '')];
   const colW = (W - 2 * M - 14) / 2;
   y -= 52;
   const bh = 92;
-  [[M, customSender ? 'Mittente' : 'Mittente / Cedente', mitt], [M + colW + 14, 'Destinatario e luogo di destinazione', dest]].forEach(([x, lab, rows]) => {
+  [[M, customSender ? L('Mittente', 'Sender') : L('Mittente / Cedente', 'Sender'), mitt], [M + colW + 14, L('Destinatario e luogo di destinazione', 'Consignee'), dest]].forEach(([x, lab, rows]) => {
     box(x, y - bh, colW, bh);
     label(x + 10, y - 16, lab);
     rows.filter(Boolean).forEach((r, i) => text(x + 10, y - 34 - i * 14, r, i === 0 ? 11 : 9.5, i === 0));
@@ -95,10 +99,10 @@ function buildDdtPdf(order, md, session) {
   // Dati del trasporto
   y -= bh + 14;
   const facts = [
-    ['Causale del trasporto', 'Vendita'],
-    ['Trasporto a cura di', 'Vettore (corriere)'],
-    ['Porto', 'Franco'],
-    ['Rif. ordine', '#' + order.number],
+    [L('Causale del trasporto', 'Reason'), L('Vendita', 'Sale')],
+    [L('Trasporto a cura di', 'Carrier'), en ? 'Corriere / Courier' : 'Vettore (corriere)'],
+    [L('Porto', 'Freight'), L('Franco', 'Prepaid')],
+    [L('Rif. ordine', 'Order ref.'), '#' + order.number],
   ];
   const fw = (W - 2 * M) / facts.length;
   box(M, y - 40, W - 2 * M, 40);
@@ -113,9 +117,9 @@ function buildDdtPdf(order, md, session) {
   y -= 62;
   const goods = (order.lines || []).filter((l, i) => i === 0 || !/spedizion|consegna|shipping/i.test(l.description || ''));
   const cx = { code: M + 10, desc: M + 120, qty: W - M - 60 };
-  label(cx.code, y, 'Codice');
-  label(cx.desc, y, 'Descrizione dei beni');
-  label(cx.qty, y, 'Q.tà');
+  label(cx.code, y, L('Codice', 'Code'));
+  label(cx.desc, y, L('Descrizione dei beni', 'Description of goods'));
+  label(cx.qty, y, L('Q.tà', 'Qty'));
   y -= 8;
   line(M, y, W - M, y, INK, 1.4);
   goods.forEach((l) => {
@@ -131,7 +135,7 @@ function buildDdtPdf(order, md, session) {
 
   // Colli / peso / inizio trasporto — da compilare alla partenza
   y -= 18;
-  const pack = [['Aspetto esteriore dei beni', 'Scatola'], ['N. colli', ''], ['Peso kg', ''], ['Data e ora inizio trasporto', '']];
+  const pack = [[L('Aspetto esteriore dei beni', 'Packaging'), L('Scatola', 'Box')], [L('N. colli', 'Parcels'), ''], [L('Peso kg', 'Weight kg'), ''], [L('Data e ora inizio trasporto', 'Shipped on'), '']];
   box(M, y - 40, W - 2 * M, 40);
   pack.forEach(([k, v], i) => {
     const x = M + i * fw;
@@ -142,14 +146,14 @@ function buildDdtPdf(order, md, session) {
 
   if (md.ship_notes) {
     y -= 58;
-    label(M, y, 'Annotazioni');
+    label(M, y, L('Annotazioni', 'Notes'));
     wrap(md.ship_notes, 9.5, W - 2 * M).slice(0, 4).forEach((r, i) => text(M, y - 15 - i * 13, r, 9.5));
   }
 
   // Firme
   const sy = M + 60;
   const sw = (W - 2 * M - 28) / 3;
-  ['Firma mittente', 'Firma vettore', 'Firma destinatario'].forEach((k, i) => {
+  (en ? ['Firma mittente / Sender', 'Firma vettore / Carrier', 'Firma destinatario / Consignee'] : ['Firma mittente', 'Firma vettore', 'Firma destinatario']).forEach((k, i) => {
     const x = M + i * (sw + 14);
     line(x, sy, x + sw, sy, INK, 0.8);
     label(x, sy - 12, k);

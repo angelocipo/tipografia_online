@@ -341,6 +341,7 @@ module.exports = async (req, res) => {
     const metadata = {};
     metadata.product_id = String(productId);
     metadata.product_ean = productEan;
+    metadata.lang = req.body && req.body.lang === 'en' ? 'en' : 'it';
     const c = customer || {};
     metadata.inv_type = c.invType || 'privato';
     metadata.inv_name = c.name || '';
@@ -356,12 +357,17 @@ module.exports = async (req, res) => {
     metadata.inv_country = c.country || 'IT';
 
     const sh = shipping || {};
+    const shipPhoneDigits = String(sh.phone || '').replace(/[^\d]/g, '');
+    if (shipPhoneDigits.length < 9 || shipPhoneDigits.length > 13) {
+      res.status(400).json({ error: 'Inserisci un numero di cellulare valido per la consegna.' });
+      return;
+    }
+    metadata.ship_phone = String(sh.phone).trim().slice(0, 30);
     if (sh.sameAsBilling) {
       metadata.ship_same = '1';
     } else {
       metadata.ship_same = '0';
       metadata.ship_name = sh.name || '';
-      metadata.ship_phone = sh.phone || '';
       metadata.ship_address = sh.address || '';
       metadata.ship_city = sh.city || '';
       metadata.ship_cap = sh.cap || '';

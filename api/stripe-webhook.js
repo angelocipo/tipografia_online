@@ -178,16 +178,19 @@ module.exports = async (req, res) => {
       let attachments = [];
       try {
         const { buildDdtPdf } = require('./_ddt-pdf');
-        attachments = [{ filename: `DDT-${order.number}.pdf`, content: buildDdtPdf(order, md, session).toString('base64') }];
+        attachments = [{ filename: `DDT-${order.number}.pdf`, content: buildDdtPdf(order, md, session, md.lang).toString('base64') }];
       } catch (ddtErr) {
         console.error('DDT generation failed for session', session.id, ddtErr);
       }
-      const summaryHtml = orderEmailHtml(order, total, md, attachments.length > 0);
+      // Il cliente riceve l'email nella lingua scelta sul sito (md.lang, da checkout); il titolare sempre in italiano.
+      const buyerLang = md.lang === 'en' ? 'en' : 'it';
+      const buyerHtml = orderEmailHtml(order, total, md, attachments.length > 0, buyerLang);
+      const summaryHtml = buyerLang === 'it' ? buyerHtml : orderEmailHtml(order, total, md, attachments.length > 0, 'it');
       // Each send gets its OWN try. They used to share one: if the buyer send threw, the owner
       // notification was skipped entirely and the shop never learned about the order.
       if (buyerEmail) {
         try {
-          await sendEmail({ to: buyerEmail, subject: `Conferma ordine #${order.number} — Tipografia Online`, html: summaryHtml, attachments });
+          await sendEmail({ to: buyerEmail, subject: buyerLang === 'en' ? `Order confirmation #${order.number} — Tipografia Online` : `Conferma ordine #${order.number} — Tipografia Online`, html: buyerHtml, attachments });
           console.log('Buyer confirmation sent to', buyerEmail);
         } catch (mailErr) {
           console.error('Buyer confirmation FAILED for session', session.id, mailErr);
@@ -223,7 +226,7 @@ module.exports = async (req, res) => {
       // and courier label. Logged here for now; wire to your fulfillment email/sheet/CRM.
       console.log('Shipping for session', session.id, md.ship_same === '0'
         ? { name: md.ship_name, phone: md.ship_phone, address: md.ship_address, city: md.ship_city, cap: md.ship_cap, notes: md.ship_notes }
-        : { sameAsBilling: true, ...order.customer });
+        : { sameAsBilling: true, phone: md.ship_phone, ...order.customer });
       if (md.sender_use === '1') {
         console.log('Custom sender for session', session.id, { company: md.sender_company, phone: md.sender_phone, address: md.sender_address, city: md.sender_city, cap: md.sender_cap });
       }
@@ -262,8 +265,34 @@ function cornerRow() {
   </tr>`;
 }
 
-function orderEmailHtml(order, total, md, hasDdt) {
+const EMAIL_TEXT = {
+  it: {
+    company: 'Ragione sociale', address: 'Indirizzo', phone: 'Telefono', senderKicker: 'Dati del mittente', senderTitle: 'Il pacco parte a nome tuo',
+    senderNote: 'Nessun nostro riferimento comparirà sul pacco: mittente e documento di trasporto riportano questi dati.',
+    files: 'File caricati', ref: 'Riferimento materiale', link: 'Link file', material: 'Materiale da stampare',
+    orderRef: (n) => `Riferimento ordine <strong>#${n}</strong> — citalo in ogni comunicazione.`,
+    title: 'Ordine confermato', thanks: (name) => `Grazie per il tuo ordine, ${name}.`,
+    detail: 'Dettaglio', qty: 'Q.tà', amount: 'Importo', totalPaid: 'Totale pagato', vat: 'IVA inclusa',
+    ddt: (n) => `In allegato trovi il documento di trasporto (DDT-${n}.pdf). `,
+    next: "Riceverai a breve la fattura elettronica e le istruzioni per l'invio del materiale da stampare.",
+    place: 'Roma EUR',
+  },
+  en: {
+    company: 'Company name', address: 'Address', phone: 'Phone', senderKicker: 'Sender details', senderTitle: 'The parcel ships under your name',
+    senderNote: 'None of our details will appear on the parcel: the sender and the delivery note show these details.',
+    files: 'Uploaded files', ref: 'Material reference', link: 'File link', material: 'Print material',
+    orderRef: (n) => `Order reference <strong>#${n}</strong> — please quote it in every message.`,
+    title: 'Order confirmed', thanks: (name) => `Thank you for your order, ${name}.`,
+    detail: 'Item', qty: 'Qty', amount: 'Amount', totalPaid: 'Total paid', vat: 'VAT included',
+    ddt: (n) => `The delivery note (DDT-${n}.pdf) is attached. `,
+    next: 'You will shortly receive the electronic invoice and instructions for sending your print material.',
+    place: 'Rome EUR',
+  },
+};
+
+function orderEmailHtml(order, total, md, hasDdt, lang) {
   md = md || {};
+  const T = EMAIL_TEXT[lang === 'en' ? 'en' : 'it'];
   const rows = order.lines.map((l) => {
     const lineTotal = l.unitPrice * l.quantity;
     const eanLine = l.ean
@@ -279,16 +308,16 @@ function orderEmailHtml(order, total, md, hasDdt) {
   // "Dati del mittente" — the customer's own company on the parcel instead of ours.
   // Collected in checkout.dc.html; until now it only reached the server log, never the email.
   const senderRows = md.sender_use === '1' ? [
-    ['Ragione sociale', md.sender_company || '—'],
-    ['Indirizzo', [md.sender_address, md.sender_cap, md.sender_city].filter(Boolean).join(', ') || '—'],
-    ['Telefono', md.sender_phone || '—'],
+    [T.company, md.sender_company || '—'],
+    [T.address, [md.sender_address, md.sender_cap, md.sender_city].filter(Boolean).join(', ') || '—'],
+    [T.phone, md.sender_phone || '—'],
   ] : [];
   const senderBlock = senderRows.length
     ? `<tr><td style="padding:26px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid ${STEEL};border-collapse:separate;">
           <tr><td style="padding:14px 16px 4px;">
-            <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.16em;text-transform:uppercase;color:${STEEL};">Dati del mittente</div>
-            <div style="font:600 20px/1.2 ${HEAD_FONT};color:${INK};padding-top:6px;">Il pacco parte a nome tuo</div>
+            <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.16em;text-transform:uppercase;color:${STEEL};">${T.senderKicker}</div>
+            <div style="font:600 20px/1.2 ${HEAD_FONT};color:${INK};padding-top:6px;">${T.senderTitle}</div>
           </td></tr>
           <tr><td style="padding:8px 16px 16px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
@@ -297,7 +326,7 @@ function orderEmailHtml(order, total, md, hasDdt) {
                 <td style="padding:7px 0;border-bottom:1px solid ${RULE};font:400 14px/1.4 ${BODY_FONT};color:${INK};">${v}</td>
               </tr>`).join('')}
             </table>
-            <div style="padding-top:10px;font:400 13px/1.6 ${BODY_FONT};color:${MUTED};">Nessun nostro riferimento comparirà sul pacco: mittente e documento di trasporto riportano questi dati.</div>
+            <div style="padding-top:10px;font:400 13px/1.6 ${BODY_FONT};color:${MUTED};">${T.senderNote}</div>
           </td></tr>
         </table>
       </td></tr>`
@@ -306,21 +335,21 @@ function orderEmailHtml(order, total, md, hasDdt) {
   // Material to print — files uploaded at checkout (sent as attachments by
   // /api/send-design-files) and/or a link the customer pasted.
   const designRows = [];
-  if (md.design_files) designRows.push(`File caricati: <strong style="color:${INK};">${md.design_files}</strong>`);
-  if (md.design_ref) designRows.push(`Riferimento materiale: <strong style="color:${INK};">${md.design_ref}</strong>`);
-  if (md.design_link) designRows.push(`Link file: <a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`);
+  if (md.design_files) designRows.push(`${T.files}: <strong style="color:${INK};">${md.design_files}</strong>`);
+  if (md.design_ref) designRows.push(`${T.ref}: <strong style="color:${INK};">${md.design_ref}</strong>`);
+  if (md.design_link) designRows.push(`${T.link}: <a href="${md.design_link}" style="color:${STEEL};">${md.design_link}</a>`);
   const designBlock = designRows.length
     ? `<tr><td style="padding:22px 32px 0;">
         <div style="border:1px solid ${RULE};padding:14px 16px;font:400 13px/1.7 ${BODY_FONT};color:${MUTED};">
-          <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${STEEL};padding-bottom:8px;">Materiale da stampare</div>
+          <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${STEEL};padding-bottom:8px;">${T.material}</div>
           ${designRows.join('<br>')}
-          <div style="padding-top:8px;">Riferimento ordine <strong style="color:${INK};">#${order.number}</strong> — citalo in ogni comunicazione.</div>
+          <div style="padding-top:8px;color:${INK};">${T.orderRef(order.number)}</div>
         </div>
       </td></tr>`
     : '';
 
   return `<!DOCTYPE html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<html lang="${lang === 'en' ? 'en' : 'it'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${BG};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG};padding:32px 16px;">
   <tr><td align="center">
@@ -328,7 +357,7 @@ function orderEmailHtml(order, total, md, hasDdt) {
 
       <tr><td style="background:${STEEL_DARK};padding:26px 32px;">
         <div style="font:600 11px/1 ${BODY_FONT};letter-spacing:.18em;text-transform:uppercase;color:${STEEL};">Tipografia Online</div>
-        <div style="font:600 34px/1.05 ${HEAD_FONT};letter-spacing:.01em;color:#ffffff;padding-top:8px;">Ordine confermato</div>
+        <div style="font:600 34px/1.05 ${HEAD_FONT};letter-spacing:.01em;color:#ffffff;padding-top:8px;">${T.title}</div>
       </td></tr>
 
       <tr><td style="padding:0 32px;">
@@ -337,7 +366,7 @@ function orderEmailHtml(order, total, md, hasDdt) {
 
       <tr><td style="padding:8px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="font:400 16px/1.5 ${BODY_FONT};color:${INK};">Grazie per il tuo ordine, ${order.customer.name}.</td>
+          <td style="font:400 16px/1.5 ${BODY_FONT};color:${INK};">${T.thanks(order.customer.name)}</td>
           <td style="text-align:right;vertical-align:top;white-space:nowrap;">
             <span style="display:inline-block;border:1px solid ${RULE};padding:5px 10px;font:600 13px/1 ${BODY_FONT};letter-spacing:.08em;color:${STEEL};">#${order.number}</span>
           </td>
@@ -347,16 +376,16 @@ function orderEmailHtml(order, total, md, hasDdt) {
       <tr><td style="padding:26px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
           <tr>
-            <td style="padding-bottom:8px;border-bottom:2px solid ${INK};font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${MUTED};">Dettaglio</td>
-            <td style="padding-bottom:8px;border-bottom:2px solid ${INK};font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${MUTED};text-align:right;">Q.tà</td>
-            <td style="padding-bottom:8px;border-bottom:2px solid ${INK};font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${MUTED};text-align:right;">Importo</td>
+            <td style="padding-bottom:8px;border-bottom:2px solid ${INK};font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${MUTED};">${T.detail}</td>
+            <td style="padding-bottom:8px;border-bottom:2px solid ${INK};font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${MUTED};text-align:right;">${T.qty}</td>
+            <td style="padding-bottom:8px;border-bottom:2px solid ${INK};font:600 11px/1 ${BODY_FONT};letter-spacing:.14em;text-transform:uppercase;color:${MUTED};text-align:right;">${T.amount}</td>
           </tr>
           ${rows}
           <tr>
-            <td colspan="2" style="padding:18px 0 0;font:600 13px/1 ${BODY_FONT};letter-spacing:.1em;text-transform:uppercase;color:${MUTED};">Totale pagato</td>
+            <td colspan="2" style="padding:18px 0 0;font:600 13px/1 ${BODY_FONT};letter-spacing:.1em;text-transform:uppercase;color:${MUTED};">${T.totalPaid}</td>
             <td style="padding:18px 0 0;font:600 30px/1 ${HEAD_FONT};color:${INK};text-align:right;white-space:nowrap;">${eur(total)}</td>
           </tr>
-          <tr><td colspan="3" style="padding-top:4px;font:400 12px/1.4 ${BODY_FONT};color:${MUTED};text-align:right;">IVA inclusa</td></tr>
+          <tr><td colspan="3" style="padding-top:4px;font:400 12px/1.4 ${BODY_FONT};color:${MUTED};text-align:right;">${T.vat}</td></tr>
         </table>
       </td></tr>
 
@@ -364,7 +393,7 @@ function orderEmailHtml(order, total, md, hasDdt) {
       ${designBlock}
       <tr><td style="padding:28px 32px 0;">
         <div style="border-top:1px solid ${RULE};padding-top:18px;font:400 14px/1.6 ${BODY_FONT};color:${MUTED};">
-          ${hasDdt ? `In allegato trovi il documento di trasporto (DDT-${order.number}.pdf). ` : ''}Riceverai a breve la fattura elettronica e le istruzioni per l'invio del materiale da stampare.
+          ${hasDdt ? T.ddt(order.number) : ''}${T.next}
         </div>
       </td></tr>
 
@@ -374,7 +403,7 @@ function orderEmailHtml(order, total, md, hasDdt) {
 
       <tr><td style="padding:0 32px 28px;">
         <div style="font:400 12px/1.6 ${BODY_FONT};color:${MUTED};">
-          Tipografia Online · Roma EUR · <a href="https://tipografia.online" style="color:${STEEL};text-decoration:none;">tipografia.online</a>
+          Tipografia Online · ${T.place} · <a href="https://tipografia.online" style="color:${STEEL};text-decoration:none;">tipografia.online</a>
         </div>
       </td></tr>
 
@@ -395,6 +424,8 @@ function ownerBlockHtml(order, buyerEmail, session) {
     ['Spedizione', md.ship_same === '0'
       ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city].filter(Boolean).join(', ')
       : 'Come fatturazione'],
+    ['Cellulare consegna', md.ship_phone || '—'],
+    ['Lingua cliente', md.lang === 'en' ? 'Inglese' : 'Italiano'],
   ];
   if (md.product_ean || md.product_id) {
     rowsData.push(['EAN / Cod. prodotto', [md.product_ean, md.product_id].filter(Boolean).join(' · ')]);
