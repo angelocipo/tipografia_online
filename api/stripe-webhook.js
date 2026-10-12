@@ -30,11 +30,13 @@ function safeFrom() {
 }
 const RESEND_FROM = safeFrom();
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, attachments }) {
+  const payload = { from: RESEND_FROM, to, subject, html };
+  if (attachments && attachments.length) payload.attachments = attachments;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-    body: JSON.stringify({ from: RESEND_FROM, to, subject, html }),
+    body: JSON.stringify(payload),
   });
   const text = await r.text();
   if (!r.ok) {
@@ -171,12 +173,21 @@ module.exports = async (req, res) => {
       };
       const buyerEmail = md.inv_email || session.customer_details?.email || session.customer_email;
       console.log('Order', order.number, 'session', session.id, 'buyerEmail:', buyerEmail || 'NONE', '— owner:', OWNER_EMAIL);
-      const summaryHtml = orderEmailHtml(order, total, md);
+      // DDT in PDF allegato alle email. Caricato in modo lazy e dentro un try: se il file manca
+      // o la generazione fallisce, le email partono comunque senza allegato.
+      let attachments = [];
+      try {
+        const { buildDdtPdf } = require('./_ddt-pdf');
+        attachments = [{ filename: `DDT-${order.number}.pdf`, content: buildDdtPdf(order, md, session).toString('base64') }];
+      } catch (ddtErr) {
+        console.error('DDT generation failed for session', session.id, ddtErr);
+      }
+      const summaryHtml = orderEmailHtml(order, total, md, attachments.length > 0);
       // Each send gets its OWN try. They used to share one: if the buyer send threw, the owner
       // notification was skipped entirely and the shop never learned about the order.
       if (buyerEmail) {
         try {
-          await sendEmail({ to: buyerEmail, subject: `Conferma ordine #${order.number} — Tipografia Online`, html: summaryHtml });
+          await sendEmail({ to: buyerEmail, subject: `Conferma ordine #${order.number} — Tipografia Online`, html: summaryHtml, attachments });
           console.log('Buyer confirmation sent to', buyerEmail);
         } catch (mailErr) {
           console.error('Buyer confirmation FAILED for session', session.id, mailErr);
@@ -187,6 +198,7 @@ module.exports = async (req, res) => {
           to: OWNER_EMAIL,
           subject: `Nuovo ordine #${order.number} — € ${total.toFixed(2)}`,
           html: summaryHtml.replace('</body></html>', ownerBlockHtml(order, buyerEmail, session) + '</body></html>'),
+          attachments,
         });
         console.log('Owner notification sent to', OWNER_EMAIL);
       } catch (mailErr) {
@@ -250,7 +262,7 @@ function cornerRow() {
   </tr>`;
 }
 
-function orderEmailHtml(order, total, md) {
+function orderEmailHtml(order, total, md, hasDdt) {
   md = md || {};
   const rows = order.lines.map((l) => {
     const lineTotal = l.unitPrice * l.quantity;
@@ -352,7 +364,7 @@ function orderEmailHtml(order, total, md) {
       ${designBlock}
       <tr><td style="padding:28px 32px 0;">
         <div style="border-top:1px solid ${RULE};padding-top:18px;font:400 14px/1.6 ${BODY_FONT};color:${MUTED};">
-          Riceverai a breve la fattura elettronica e le istruzioni per l'invio del materiale da stampare.
+          ${hasDdt ? `In allegato trovi il documento di trasporto (DDT-${order.number}.pdf). ` : ''}Riceverai a breve la fattura elettronica e le istruzioni per l'invio del materiale da stampare.
         </div>
       </td></tr>
 
