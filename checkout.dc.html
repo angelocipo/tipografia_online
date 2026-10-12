@@ -33,6 +33,7 @@
 .co-section{padding:var(--space-6);margin-bottom:var(--space-6);}
 .co-h{font-size:20px;margin:0 0 var(--space-4);}
 </style>
+<script src="i18n.js"></script>
 </helmet>
 
 <nav class="nav" style="position:sticky; top:0; z-index:100; background:var(--color-bg);">
@@ -138,6 +139,13 @@
       <label class="radio" style="margin-bottom:var(--space-4);"><input type="radio" name="shipMode" checked="{{ shipSame }}" onChange="{{ setShipSameTrue }}"><span class="dot"></span>Spedisci allo stesso indirizzo di fatturazione</label>
       <label class="radio" style="margin-bottom:var(--space-4);"><input type="radio" name="shipMode" checked="{{ shipDifferent }}" onChange="{{ setShipSameFalse }}"><span class="dot"></span>Usa un indirizzo di spedizione diverso</label>
 
+      <div class="blueprint" style="position:relative;border:1px solid var(--color-accent);padding:var(--space-4);margin:var(--space-4) 0;display:flex;flex-direction:column;gap:var(--space-2);">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <label for="ship-phone" style="font-family:var(--font-heading);font-size:20px;font-weight:600;color:var(--color-text);display:flex;align-items:baseline;gap:var(--space-2);">Cellulare per la consegna <span style="font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-accent-700);">Obbligatorio</span></label>
+        <input class="input" id="ship-phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="es. 333 123 4567" value="{{ ship.phone }}" onChange="{{ setShipPhone }}" style="font-size:18px;max-width:320px;">
+        <p class="card-body" style="margin:0;color:var(--color-text);">Il corriere usa questo numero per avvisarti e concordare la consegna. Senza un cellulare valido non possiamo spedire.</p>
+      </div>
+
       <div class="field" style="margin:var(--space-4) 0;">
         <label id="ship-zone-label">Consegna</label>
         <div class="seg" role="radiogroup" aria-labelledby="ship-zone-label">
@@ -154,7 +162,6 @@
       <sc-if value="{{ shipDifferent }}" hint-placeholder-val="{{ false }}">
         <div class="co-grid">
           <div class="field"><label for="ship-name">Nome destinatario</label><input class="input" id="ship-name" value="{{ ship.name }}" onChange="{{ setShipName }}"></div>
-          <div class="field"><label for="ship-phone">Cellulare</label><input class="input" id="ship-phone" value="{{ ship.phone }}" onChange="{{ setShipPhone }}"></div>
           <div class="field"><label for="ship-address">Indirizzo</label><input class="input" id="ship-address" value="{{ ship.address }}" onChange="{{ setShipAddress }}"></div>
           <div class="field"><label for="ship-city">Città</label><input class="input" id="ship-city" value="{{ ship.city }}" onChange="{{ setShipCity }}"></div>
           <div class="field"><label for="ship-cap">CAP</label><input class="input" id="ship-cap" value="{{ ship.cap }}" onChange="{{ setShipCap }}"></div>
@@ -335,6 +342,8 @@ class Component extends DCLogic {
     if (invType === 'privato' && !inv.cf) return 'Inserisci il Codice Fiscale.';
     if (invType === 'azienda' && (!inv.company || !inv.vat)) return 'Inserisci Ragione Sociale e Partita IVA.';
     if (invType === 'azienda' && !inv.pec && !inv.sdi) return 'Inserisci PEC o Codice SDI.';
+    const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
+    if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
     if (!this.state.productId) return 'Nessun prodotto selezionato.';
     return null;
   }
@@ -380,8 +389,9 @@ class Component extends DCLogic {
           ...(orderBody || { productId }),
           shippingFee,
           shippingZone: shipZone,
+          lang: window.tpLang === 'en' ? 'en' : 'it',
           customer: { invType, ...inv },
-          shipping: shipSame ? { sameAsBilling: true } : { sameAsBilling: false, ...ship },
+          shipping: shipSame ? { sameAsBilling: true, phone: ship.phone } : { sameAsBilling: false, ...ship },
           sender: useSender ? { use: true, ...sender } : { use: false },
           designLink: (this.state.design && this.state.design.link) || '',
           designFiles: (this.state.design && this.state.design.names) || [],
