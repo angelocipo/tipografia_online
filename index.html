@@ -3605,6 +3605,30 @@ function renderDetail(){
     const dec = stepAttr > 0 && stepAttr < 1;
     const parseVal = (s) => dec ? Math.round(parseFloat(String(s).replace(',', '.')) * 10) / 10 : parseInt(s, 10);
     const done = after || renderDetail;
+    // Pulsanti − / + ai lati del campo (lo stesso campo resta digitabile).
+    const step = dec ? stepAttr : 1;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:stretch;gap:6px;width:100%;';
+    el.parentNode.insertBefore(wrap, el);
+    const mkBtn = (label, aria, delta) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label; b.setAttribute('aria-label', aria);
+      b.style.cssText = 'flex:0 0 44px;min-height:44px;border-radius:8px;border:1.5px solid oklch(0.88 0.005 90);background:#fff;color:oklch(0.25 0.01 90);font-family:inherit;font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+      b.addEventListener('click', () => {
+        let n = parseVal(el.value);
+        if (isNaN(n)) n = min != null ? min : 1;
+        n = dec ? Math.round((n + delta * step) * 10) / 10 : n + delta * step;
+        if (min != null && n < min) n = min;
+        if (max != null && n > max) n = max;
+        el.value = String(n);
+        apply(n); done();
+      });
+      return b;
+    };
+    wrap.appendChild(mkBtn('−', 'Diminuisci', -1));
+    wrap.appendChild(el);
+    wrap.appendChild(mkBtn('+', 'Aumenta', 1));
+    el.style.flex = '1 1 auto'; el.style.minWidth = '0'; el.style.textAlign = 'center';
     el.addEventListener('input', (e) => {
       const raw = e.target.value.trim();
       const caret = e.target.selectionStart;
