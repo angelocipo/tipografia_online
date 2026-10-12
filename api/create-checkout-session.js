@@ -322,13 +322,31 @@ module.exports = async (req, res) => {
       },
       quantity: 1,
     }];
-    const shipFee = Math.max(0, Number(shippingFee) || 0);
+    // Spedizione ricalcolata qui, stessa regola di checkout.dc.html: non ci si fida dell'importo
+    // inviato dal browser. Prodotti "Prezzi Strategici" = spedizione inclusa (0).
+    // Elenco = SU_MISURA_IDS in index.html (include decalcomanie e quadri): tenerli allineati.
+    const SHIPPING_IDS = ['197', '5833', '5850', '198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
+    const ZONE_RATES = { roma_centro: 20, roma_resto: 30, italia: 25 };
+    const zone = ZONE_RATES[shippingZone] !== undefined ? shippingZone : 'roma_centro';
+    let shipFee = 0;
+    if (SHIPPING_IDS.includes(String(productId))) {
+      if (String(productId) === '197' && zone !== 'italia') {
+        // Roll-Up 80/85 × 200 (Speedy Boys): 1° a tariffa zona, ogni successivo € 15, anche sopra € 100.
+        const rq = Math.max(1, parseInt(formula?.qty, 10) || 1);
+        shipFee = ZONE_RATES[zone] + 15 * (rq - 1);
+      } else {
+        shipFee = unitAmountCents / 100 >= 100 ? 8 : ZONE_RATES[zone];
+      }
+    }
+    if (Math.round(shipFee * 100) !== Math.round((Number(shippingFee) || 0) * 100)) {
+      console.warn('Spedizione diversa dal browser', { productId, zone, browser: shippingFee, server: shipFee });
+    }
     if (shipFee > 0) {
       const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)' };
       lineItems.push({
         price_data: {
           currency: 'eur',
-          product_data: { name: `Spedizione — ${zoneLabels[shippingZone] || shippingZone || ''}` },
+          product_data: { name: `Spedizione — ${zoneLabels[zone] || zone}` },
           unit_amount: Math.round(shipFee * 100),
         },
         quantity: 1,
@@ -384,7 +402,7 @@ module.exports = async (req, res) => {
       metadata.sender_cap = sn.cap || '';
     }
     metadata.shipping_fee = String(shipFee);
-    metadata.shipping_zone = shippingZone || '';
+    metadata.shipping_zone = zone;
     metadata.design_link = typeof designLink === 'string' ? designLink.slice(0, 490) : '';
     metadata.design_files = Array.isArray(designFiles) ? designFiles.join(', ').slice(0, 490) : '';
     metadata.design_ref = typeof designRef === 'string' ? designRef.slice(0, 40) : '';
