@@ -173,7 +173,8 @@ class Component extends DCLogic {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id');
     const token = params.get('token');
-    const orderRef = sessionId ? this.refFromSessionId(sessionId) : (token ? String(token).slice(-6).toUpperCase() : '');
+    // Stesso codice dell'email: per PayPal il token è l'ID dell'ordine incassato.
+    const orderRef = (sessionId || token) ? this.refFromSessionId(sessionId || token) : '';
     let recap = null;
     if (orderRef) { try { recap = JSON.parse(localStorage.getItem('tp_last_order') || 'null'); } catch (e) {} }
     this.setState({ orderRef, recap });

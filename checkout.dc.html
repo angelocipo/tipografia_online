@@ -287,6 +287,23 @@ class Component extends DCLogic {
     if (id) this.mountPaypalWhenReady();
   }
 
+  buildPaymentBody(extra) {
+    const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody, design } = this.state;
+    return {
+      ...(orderBody || { productId }),
+      shippingFee: this.computeShippingFee(),
+      shippingZone: shipZone,
+      lang: window.tpLang === 'en' ? 'en' : 'it',
+      customer: { invType, ...inv },
+      shipping: shipSame ? { sameAsBilling: true, phone: ship.phone } : { sameAsBilling: false, ...ship },
+      sender: useSender ? { use: true, ...sender } : { use: false },
+      designLink: (design && design.link) || '',
+      designFiles: (design && design.names) || [],
+      designRef: (design && design.ref) || '',
+      ...(extra || {}),
+    };
+  }
+
   mountPaypalWhenReady(attempts) {
     attempts = attempts || 0;
     if (typeof paypal === 'undefined') {
@@ -299,17 +316,30 @@ class Component extends DCLogic {
     el.innerHTML = '';
     paypal.Buttons({
       style: { layout: 'horizontal', color: 'gold', shape: 'rect', height: 45, tagline: false },
-      createOrder: (data, actions) => {
+      // L'ordine PayPal è creato e incassato dal server (importo ricalcolato lì), mai dal browser.
+      createOrder: async () => {
         const err = this.validate();
-        if (err) { this.setState({ errorMsg: err }); return Promise.reject(new Error(err)); }
-        const shippingFee = this.computeShippingFee();
-        const total = ((parseFloat(this.state.productPrice) || 0) + shippingFee).toFixed(2);
-        return actions.order.create({ purchase_units: [{ amount: { value: total, currency_code: 'EUR' }, description: this.state.productName }] });
+        if (err) { this.setState({ errorMsg: err }); throw new Error(err); }
+        this.setState({ errorMsg: null });
+        const res = await fetch('/api/create-checkout-session', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.buildPaymentBody({ provider: 'paypal' })),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok || !d.id) { const m = d.error || 'Pagamento PayPal non riuscito, riprova.'; this.setState({ errorMsg: m }); throw new Error(m); }
+        this.paypalTicket = d.ticket;
+        return d.id;
       },
-      onApprove: (data, actions) => actions.order.capture().then((details) => {
+      onApprove: async (data) => {
+        const res = await fetch('/api/paypal-capture', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderID: data.orderID, ticket: this.paypalTicket }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok || d.status !== 'COMPLETED') { this.setState({ errorMsg: d.error || 'Pagamento PayPal non riuscito, riprova.' }); return; }
         this.saveRecap();
-        window.location.href = '/grazie.dc.html?token=' + (details.id || '');
-      }),
+        window.location.href = '/grazie.dc.html?token=' + encodeURIComponent(d.id || data.orderID);
+      },
       onError: (err) => this.setState({ errorMsg: 'Pagamento PayPal non riuscito, riprova.' }),
     }).render('#paypal-checkout-slot');
   }
@@ -392,24 +422,11 @@ class Component extends DCLogic {
     } catch (ex) {}
     this.saveRecap();
     this.setState({ submitting: true, errorMsg: null });
-    const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody } = this.state;
-    const shippingFee = this.computeShippingFee();
     try {
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...(orderBody || { productId }),
-          shippingFee,
-          shippingZone: shipZone,
-          lang: window.tpLang === 'en' ? 'en' : 'it',
-          customer: { invType, ...inv },
-          shipping: shipSame ? { sameAsBilling: true, phone: ship.phone } : { sameAsBilling: false, ...ship },
-          sender: useSender ? { use: true, ...sender } : { use: false },
-          designLink: (this.state.design && this.state.design.link) || '',
-          designFiles: (this.state.design && this.state.design.names) || [],
-          designRef: (this.state.design && this.state.design.ref) || '',
-        }),
+        body: JSON.stringify(this.buildPaymentBody()),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Errore');

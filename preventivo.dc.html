@@ -149,7 +149,7 @@ class Component extends DCLogic {
     const productUrl = pid ? `index.html#${encodeURIComponent(pid)}` : 'index.html';
     const now = new Date();
     this.setState({
-      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean,
+      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean, rollupQ,
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
       dateStr: now.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
@@ -158,6 +158,8 @@ class Component extends DCLogic {
   renderVals() {
     const prezzo = this.state.prezzo || 0;
     const spedizione = this.state.spedizione || 0;
+    const rollupQ = this.state.rollupQ || 0;
+    const zona = this.state.zona;
     const totale = prezzo + spedizione;
     const imponibile = totale / 1.22;
     const iva = totale - imponibile;
