@@ -18,8 +18,8 @@ module.exports = async (req, res) => {
     }));
     const shippingFee = Number(m.shipping_fee) || 0;
     const ship = m.ship_same === '0'
-      ? [m.ship_name, m.ship_address, [m.ship_cap, m.ship_city].filter(Boolean).join(' ')].filter(Boolean).join(', ')
-      : [m.inv_address, [m.inv_cap, m.inv_city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+      ? [m.ship_name, m.ship_address, [m.ship_cap, m.ship_city].filter(Boolean).join(' '), m.shipping_zone === 'ue' ? m.ship_country : ''].filter(Boolean).join(', ')
+      : [m.inv_address, [m.inv_cap, m.inv_city].filter(Boolean).join(' '), m.shipping_zone === 'ue' ? m.ship_country : ''].filter(Boolean).join(', ');
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).json({
       items,

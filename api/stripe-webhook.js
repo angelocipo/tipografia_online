@@ -435,8 +435,8 @@ function ownerBlockHtml(order, buyerEmail, session) {
     ['P. IVA / CF', order.customer.vatNumber || order.customer.fiscalCode || '—'],
     ['Indirizzo', [order.customer.address, order.customer.cap, order.customer.city].filter(Boolean).join(', ') || '—'],
     ['Spedizione', md.ship_same === '0'
-      ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city].filter(Boolean).join(', ')
-      : 'Come fatturazione'],
+      ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city, md.shipping_zone === 'ue' ? md.ship_country : ''].filter(Boolean).join(', ')
+      : 'Come fatturazione' + (md.shipping_zone === 'ue' && md.ship_country ? ' — ' + md.ship_country : '')],
     ['Cellulare consegna', md.ship_phone || '—'],
     ['Lingua cliente', md.lang === 'en' ? 'Inglese' : 'Italiano'],
     ['Pagamento', md.payment_method === 'PayPal' ? `PayPal (ordine ${md.paypal_order || '—'})` : 'Carta (Stripe)'],

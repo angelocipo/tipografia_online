@@ -85,8 +85,8 @@ function buildDdtPdf(order, md, session, lang) {
   const c = order.customer || {};
   const shipOther = md.ship_same === '0';
   const dest = shipOther
-    ? [md.ship_name || c.name, md.ship_address || '', [md.ship_cap, md.ship_city].filter(Boolean).join(' '), md.ship_phone ? 'Cell. ' + md.ship_phone : '']
-    : [c.name, c.address || '', [c.cap, c.city].filter(Boolean).join(' '), md.ship_phone ? 'Cell. ' + md.ship_phone : '', c.vatNumber ? 'P.IVA ' + c.vatNumber : (c.fiscalCode ? 'C.F. ' + c.fiscalCode : '')];
+    ? [md.ship_name || c.name, md.ship_address || '', [md.ship_cap, md.ship_city, md.shipping_zone === 'ue' ? md.ship_country : ''].filter(Boolean).join(' '), md.ship_phone ? 'Cell. ' + md.ship_phone : '']
+    : [c.name, c.address || '', [c.cap, c.city, md.shipping_zone === 'ue' ? md.ship_country : ''].filter(Boolean).join(' '), md.ship_phone ? 'Cell. ' + md.ship_phone : '', c.vatNumber ? 'P.IVA ' + c.vatNumber : (c.fiscalCode ? 'C.F. ' + c.fiscalCode : '')];
   const colW = (W - 2 * M - 14) / 2;
   y -= 52;
   const bh = 92;
