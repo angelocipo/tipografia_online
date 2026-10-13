@@ -4,6 +4,7 @@
 // creates a Stripe Checkout Session, and returns { url } to redirect the browser to.
 
 const Stripe = require('stripe');
+const { paypalToken, paypalApi, signAmount, signTicket } = require('./_paypal');
 const { PRICING, angoliArrotondatiPrice, plastificataPrice } = require('./_pricing-data');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -406,6 +407,45 @@ module.exports = async (req, res) => {
     metadata.design_link = typeof designLink === 'string' ? designLink.slice(0, 490) : '';
     metadata.design_files = Array.isArray(designFiles) ? designFiles.join(', ').slice(0, 490) : '';
     metadata.design_ref = typeof designRef === 'string' ? designRef.slice(0, 40) : '';
+
+    // PayPal: stesso importo calcolato sopra; l'ordine nasce qui, il browser riceve solo l'ID.
+    if (req.body && req.body.provider === 'paypal') {
+      const totalCents = unitAmountCents + Math.round(shipFee * 100);
+      const eur = (cents) => (cents / 100).toFixed(2);
+      const desc = description.slice(0, 127);
+      const token = await paypalToken();
+      const r = await fetch(`${paypalApi()}/v2/checkout/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [{
+            description: desc,
+            custom_id: signAmount(totalCents),
+            amount: {
+              currency_code: 'EUR', value: eur(totalCents),
+              breakdown: { item_total: { currency_code: 'EUR', value: eur(unitAmountCents) }, shipping: { currency_code: 'EUR', value: eur(Math.round(shipFee * 100)) } },
+            },
+            items: [{ name: desc, quantity: '1', unit_amount: { currency_code: 'EUR', value: eur(unitAmountCents) }, ...(productEan ? { sku: productEan } : {}) }],
+          }],
+          application_context: { shipping_preference: 'NO_SHIPPING', locale: metadata.lang === 'en' ? 'en-IT' : 'it-IT' },
+        }),
+      });
+      const order = await r.json();
+      if (!r.ok || !order.id) {
+        console.error('PayPal create order', order);
+        res.status(502).json({ error: 'Pagamento PayPal non disponibile, riprova o paga con carta.' });
+        return;
+      }
+      // Dati dell'ordine (cliente, spedizione, mittente…) firmati e legati a questo ordine PayPal:
+      // paypal-capture.js li usa per email, DDT e fattura, come fa il webhook Stripe.
+      const ticket = signTicket({
+        orderId: order.id, totalCents, metadata,
+        lines: lineItems.map((li) => ({ description: li.price_data.product_data.name, quantity: 1, amount_total: li.price_data.unit_amount })),
+      });
+      res.status(200).json({ id: order.id, ticket });
+      return;
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',

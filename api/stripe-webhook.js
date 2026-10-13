@@ -139,6 +139,24 @@ module.exports = async (req, res) => {
     const session = event.data.object;
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      await processPaidOrder(session, lineItems.data);
+    } catch (err) {
+      // Don't fail the webhook response for Stripe's sake — log and handle/retry separately.
+      console.error('Order processing failed for session', session.id, err);
+    }
+  }
+
+  res.status(200).json({ received: true });
+};
+
+// Email al cliente e al titolare + DDT + (se attiva) fattura Aruba. Usata dal webhook Stripe e da
+// api/paypal-capture.js. `session` = { id, metadata, amount_total (centesimi), customer_email?,
+// customer_details? }; `lineItemsData` = [{ description, quantity, amount_total (centesimi) }],
+// prodotto per primo, spedizione dopo.
+async function processPaidOrder(session, lineItemsData) {
+  {
+    {
+      const lineItems = { data: lineItemsData };
       const total = session.amount_total / 100;
       const md = session.metadata || {};
       const isCompany = md.inv_type === 'azienda';
@@ -230,14 +248,9 @@ module.exports = async (req, res) => {
       if (md.sender_use === '1') {
         console.log('Custom sender for session', session.id, { company: md.sender_company, phone: md.sender_phone, address: md.sender_address, city: md.sender_city, cap: md.sender_cap });
       }
-    } catch (err) {
-      // Don't fail the webhook response for Stripe's sake — log and handle/retry separately.
-      console.error('Order processing failed for session', session.id, err);
     }
   }
-
-  res.status(200).json({ received: true });
-};
+}
 
 // ---------------------------------------------------------------------------
 // Order confirmation email. Table-based and fully inline-styled: email clients
@@ -426,6 +439,7 @@ function ownerBlockHtml(order, buyerEmail, session) {
       : 'Come fatturazione'],
     ['Cellulare consegna', md.ship_phone || '—'],
     ['Lingua cliente', md.lang === 'en' ? 'Inglese' : 'Italiano'],
+    ['Pagamento', md.payment_method === 'PayPal' ? `PayPal (ordine ${md.paypal_order || '—'})` : 'Carta (Stripe)'],
   ];
   if (md.product_ean || md.product_id) {
     rowsData.push(['EAN / Cod. prodotto', [md.product_ean, md.product_id].filter(Boolean).join(' · ')]);
@@ -461,3 +475,4 @@ function ownerBlockHtml(order, buyerEmail, session) {
 // Raw body is required for Stripe signature verification. Must be assigned AFTER the
 // handler above, otherwise `module.exports = handler` discards it.
 module.exports.config = { api: { bodyParser: false } };
+module.exports.processPaidOrder = processPaidOrder;
