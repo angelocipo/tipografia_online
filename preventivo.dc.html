@@ -105,17 +105,12 @@
     <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
       <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 70%, transparent);line-height:1.6;margin-bottom:20px;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:14px;">
         <div style="font-weight:600;color:var(--color-text);margin-bottom:4px;">Opzioni di spedizione</div>
-        <sc-if value="{{ isFlatSpedizione }}" hint-placeholder-val="{{ false }}">
-          <div>Ordine sopra € 100,00: tariffa fissa € 8,00 (applicata in questo preventivo).</div>
-        </sc-if>
-        <sc-if value="{{ isFlatSpedizione }}" hint-placeholder-val="{{ false }}">
-          <div style="opacity:.7;">Sotto € 100,00: Roma Sud/EUR/Centro € 20,00, Resto di Roma € 30,00, Italia (+1 giorno) € 25,00.</div>
-        </sc-if>
         <sc-if value="{{ isZonaRomaCentro }}" hint-placeholder-val="{{ false }}"><div>Roma Sud/EUR/Centro — € 20,00 (opzione applicata in questo preventivo)</div></sc-if>
         <sc-if value="{{ isZonaRomaResto }}" hint-placeholder-val="{{ false }}"><div>Resto di Roma — € 30,00 (opzione applicata in questo preventivo)</div></sc-if>
         <sc-if value="{{ isRollupRoma }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;"><span>{{ spedizioneZona }} — € {{ spedizioneFmt }}</span><span>Roll-Up: 1° a tariffa zona, ogni successivo € 15,00 (applicato in questo preventivo).</span></div></sc-if>
+        <sc-if value="{{ isZonaUe }}" hint-placeholder-val="{{ false }}"><div>Unione Europea (+2/3 giorni) — € 35,00 (opzione applicata in questo preventivo)</div></sc-if>
         <sc-if value="{{ isZonaItalia }}" hint-placeholder-val="{{ false }}"><div>Italia (+1 giorno) — € 25,00 (opzione applicata in questo preventivo)</div></sc-if>
-        <div>Spedizione € 8,00 oltre € 100,00. Nessuna consegna in Vaticano.</div>
+        <div>Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</div>
       </div>
     </sc-if>
 
@@ -139,13 +134,13 @@ class Component extends DCLogic {
     const pid = params.get('pid');
     const ean = params.get('ean') || '';
     const collection = params.get('collection') || 'strategici';
-    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, flat € 8,00 from € 100,00.
-    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25 };
+    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, zone rate (no reduced rate over € 100,00).
+    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
     const zona = params.get('zona') || 'roma_centro';
-    let spedizione = collection === 'misura' && prezzo > 0 ? (prezzo >= 100 ? 8 : (zoneRates[zona] ?? 20)) : 0;
+    let spedizione = collection === 'misura' && prezzo > 0 ? (zoneRates[zona] ?? 20) : 0;
     // Roll-Up 80/85 × 200: stessa regola del checkout (1° a tariffa zona, successivi € 15).
     const rollupQ = pid === '197' ? Math.max(1, parseInt(params.get('quantita'), 10) || 1) : 0;
-    if (rollupQ && (zona === 'roma_centro' || zona === 'roma_resto')) spedizione = (zona === 'roma_centro' ? 20 : 30) + 15 * (rollupQ - 1);
+    if (rollupQ && zona !== 'italia' && zoneRates[zona]) spedizione = zoneRates[zona] + 15 * (rollupQ - 1);
     const productUrl = pid ? `index.html#${encodeURIComponent(pid)}` : 'index.html';
     const now = new Date();
     this.setState({
@@ -163,14 +158,15 @@ class Component extends DCLogic {
     const totale = prezzo + spedizione;
     const imponibile = totale / 1.22;
     const iva = totale - imponibile;
-    const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)' };
+    const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)', ue: 'Unione Europea (+2/3 giorni)' };
     return {
       hasSpedizione: spedizione > 0,
-      isFlatSpedizione: prezzo >= 100 && !(rollupQ && (zona === 'roma_centro' || zona === 'roma_resto')),
-      isZonaRomaCentro: prezzo < 100 && !rollupQ && this.state.zona === 'roma_centro',
-      isZonaRomaResto: prezzo < 100 && !rollupQ && this.state.zona === 'roma_resto',
-      isRollupRoma: !!rollupQ && (zona === 'roma_centro' || zona === 'roma_resto'),
-      isZonaItalia: prezzo < 100 && this.state.zona === 'italia',
+      isFlatSpedizione: false,
+      isZonaRomaCentro: !rollupQ && this.state.zona === 'roma_centro',
+      isZonaRomaResto: !rollupQ && this.state.zona === 'roma_resto',
+      isRollupRoma: !!rollupQ && (zona === 'roma_centro' || zona === 'roma_resto' || zona === 'ue'),
+      isZonaUe: !rollupQ && zona === 'ue',
+      isZonaItalia: this.state.zona === 'italia',
       spedizioneFmt: eur(spedizione),
       spedizioneZona: zoneLabels[this.state.zona] || '',
       totaleFmt: eur(totale),

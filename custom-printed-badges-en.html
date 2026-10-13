@@ -66,12 +66,23 @@
 
 <footer style="border-top:1px solid var(--color-divider);margin-top:var(--space-8);">
   <div class="idx-wrap" style="padding:var(--space-6) var(--space-6);text-align:center;">
+    <div style="max-width:1180px;margin:0 auto;padding:var(--space-6) var(--space-6) 0;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--space-2);">Shipping</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--space-1) var(--space-4);">
+        <span>South Rome/EUR/Centre € 20.00</span>
+        <span>Rest of Rome € 30.00</span>
+        <span>Italy (+1 day) € 25.00</span>
+        <span>European Union (+2/3 days) € 35.00</span>
+        <span>Roll-Up 80/85 × 200 cm in Rome and the EU: 1st at the zone rate, each additional € 15.00</span>
+        <span>Strategic prices: shipping included</span>
+        <span>We do not ship to Vatican City or outside the European Union.</span>
+      </div>
+    </div>
     <div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);">© 2026 Tipografia Online by Printing Italy &mdash; <a href="mailto:info@tipografia.online">info@tipografia.online</a></div>
   </div>
 </footer>
 </footer>
 
-<script src="https://www.paypal.com/sdk/js?client-id=AcfKh7__fZxzxaPOuwNjQqF3dvY1bUeLjfv7IoVp907QW3GrH_-6Vw8IdJ6EfjZ2Brokd6HF7_mtbAPI&currency=EUR"></script>
 <script>
 // ---- Payment: Stripe checkout is created dynamically by /api/create-checkout-session (see DEPLOY.md). ----
 // ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
@@ -217,7 +228,6 @@ function paymentBlockHtml(p, price, selectionIdx, formula){
       <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price*100)/100}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
         Proceed to checkout
       </button>
-      <div id="paypal-btn-${p.id}" data-price="${(Math.round(price*100)/100).toFixed(2)}" class="paypal-slot" style="min-height:45px;"></div>
       <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
       <a id="quote-link-${p.id}" href="${quoteHrefStr}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
         Request an official quote
@@ -338,20 +348,9 @@ async function startStripeCheckout(btn){
   }
 }
 
-function mountPaypalButtons(){
-  if (typeof paypal === 'undefined') return;
-  document.querySelectorAll('.paypal-slot').forEach(el => {
-    el.innerHTML = '';
-    const price = el.dataset.price;
-    paypal.Buttons({
-      style: { layout: 'horizontal', color: 'gold', shape: 'rect', height: 45, tagline: false },
-      createOrder: (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: price, currency_code: 'EUR' } }] }),
-      onApprove: (data, actions) => actions.order.capture().then(details => {
-        window.location.href = '/grazie.dc.html?token=' + (details.id || '');
-      }),
-    }).render(el);
-  });
-}
+// PayPal non si paga più dalla scheda prodotto: lì l'importo veniva dal browser, senza
+// spedizione né dati cliente. Si paga solo dal checkout, dove l'ordine PayPal nasce sul server.
+function mountPaypalButtons(){}
 
 let state = {
   category: 'Tutti',

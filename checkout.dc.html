@@ -152,14 +152,45 @@
           <label class="seg-opt"><input type="radio" name="shipZone" value="roma_centro" checked="{{ isZoneRomaCentro }}" onChange="{{ setShipZone }}">Roma Sud/EUR/Centro — € 20,00</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30,00</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25,00</label>
+          <label class="seg-opt"><input type="radio" name="shipZone" value="ue" checked="{{ isZoneUe }}" onChange="{{ setShipZone }}">Unione Europea (+2/3 giorni) — € 35,00</label>
         </div>
-        <sc-if value="{{ isFlatShipping }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;">Ordine sopra € 100,00: consegna a tariffa fissa € 8,00, indipendente dalla zona.</p>
+        <sc-if value="{{ isZoneUe }}" hint-placeholder-val="{{ false }}">
+          <div class="field" style="margin-top:var(--space-3);max-width:360px;"><label for="ship-country">Paese di destinazione (UE)</label>
+            <select class="input" id="ship-country" value="{{ shipCountry }}" onChange="{{ setShipCountry }}">
+              <option value="">Seleziona il paese</option>
+              <option value="Austria">Austria</option>
+              <option value="Belgio">Belgio</option>
+              <option value="Bulgaria">Bulgaria</option>
+              <option value="Cipro">Cipro</option>
+              <option value="Croazia">Croazia</option>
+              <option value="Danimarca">Danimarca</option>
+              <option value="Estonia">Estonia</option>
+              <option value="Finlandia">Finlandia</option>
+              <option value="Francia">Francia</option>
+              <option value="Germania">Germania</option>
+              <option value="Grecia">Grecia</option>
+              <option value="Irlanda">Irlanda</option>
+              <option value="Lettonia">Lettonia</option>
+              <option value="Lituania">Lituania</option>
+              <option value="Lussemburgo">Lussemburgo</option>
+              <option value="Malta">Malta</option>
+              <option value="Paesi Bassi">Paesi Bassi</option>
+              <option value="Polonia">Polonia</option>
+              <option value="Portogallo">Portogallo</option>
+              <option value="Repubblica Ceca">Repubblica Ceca</option>
+              <option value="Romania">Romania</option>
+              <option value="Slovacchia">Slovacchia</option>
+              <option value="Slovenia">Slovenia</option>
+              <option value="Spagna">Spagna</option>
+              <option value="Svezia">Svezia</option>
+              <option value="Ungheria">Ungheria</option>
+            </select>
+          </div>
         </sc-if>
         <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;">Roll-Up a Roma: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
+          <p class="card-body" style="margin:var(--space-2) 0 0;">Roll-Up a Roma e in UE: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
         </sc-if>
-        <p class="card-body" style="margin:var(--space-2) 0 0;">Nessuna consegna in Vaticano.</p>
+        <p class="card-body" style="margin:var(--space-2) 0 0;">Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</p>
       </div>
 
       <sc-if value="{{ shipDifferent }}" hint-placeholder-val="{{ false }}">
@@ -220,7 +251,19 @@
 </main>
 
 <footer style="border-top:1px solid var(--color-divider);">
-  <div class="idx-wrap" style="padding:var(--space-6);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online by Printing Italy • Via Lorenzo Bonincontri, 26, 00147 Roma • Lun-Ven: 8-12/15-18, Sab: chiuso • P.IVA 02452700590</div>
+  <div style="max-width:1180px;margin:0 auto;padding:var(--space-6) var(--space-6) 0;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--space-2);">Spedizioni</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--space-1) var(--space-4);">
+        <span>Roma Sud/EUR/Centro € 20,00</span>
+        <span>Resto di Roma € 30,00</span>
+        <span>Italia (+1 giorno) € 25,00</span>
+        <span>Unione Europea (+2/3 giorni) € 35,00</span>
+        <span>Roll-Up 80/85 × 200 cm a Roma e in UE: il 1° a tariffa zona, ogni successivo € 15,00</span>
+        <span>Prezzi strategici: spedizione inclusa</span>
+        <span>Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</span>
+      </div>
+    </div>
+    <div class="idx-wrap" style="padding:var(--space-6);font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);text-align:center;">© 2026 Tipografia Online by Printing Italy • Via Lorenzo Bonincontri, 26, 00147 Roma • Lun-Ven: 8-12/15-18, Sab: chiuso • P.IVA 02452700590</div>
 </footer>
 
 </x-dc>
@@ -233,6 +276,7 @@ class Component extends DCLogic {
     inv: { name: '', email: '', company: '', vat: '', cf: '', pec: '', sdi: '', address: '', city: '', cap: '', country: '' },
     shipSame: true,
     shipZone: 'roma_centro',
+    shipCountry: '',
     ship: { name: '', phone: '', address: '', city: '', cap: '', notes: '' },
     useSender: false,
     sender: { company: '', phone: '', address: '', city: '', cap: '' },
@@ -293,6 +337,7 @@ class Component extends DCLogic {
       ...(orderBody || { productId }),
       shippingFee: this.computeShippingFee(),
       shippingZone: shipZone,
+      shippingCountry: shipZone === 'ue' ? this.state.shipCountry : 'Italia',
       lang: window.tpLang === 'en' ? 'en' : 'it',
       customer: { invType, ...inv },
       shipping: shipSame ? { sameAsBilling: true, phone: ship.phone } : { sameAsBilling: false, ...ship },
@@ -368,13 +413,12 @@ class Component extends DCLogic {
 
   computeShippingFee() {
     if (this.state.productCollection === 'strategici') return 0;
-    // Roll-Up 80/85 × 200 (Speedy Boys): 1° rollup a tariffa zona, ogni successivo € 15. Vale anche sopra € 100.
+    // Roll-Up 80/85 a Roma e UE: 1° a tariffa zona, successivi € 15. Altrimenti tariffa zona. Nessuna tariffa ridotta sopra € 100.
     const rq = this.rollupQty();
-    const rollupFirst = { roma_centro: 20, roma_resto: 30 }[this.state.shipZone];
-    if (rq && rollupFirst) return rollupFirst + 15 * (rq - 1);
+    const rollupFirst = { roma_centro: 20, roma_resto: 30, ue: 35 }[this.state.shipZone];
     const price = parseFloat(this.state.productPrice) || 0;
-    if (price >= 100) return 8;
-    const rates = { roma_centro: 20, roma_resto: 30, italia: 25 };
+    if (rq && rollupFirst) return rollupFirst + 15 * (rq - 1);
+    const rates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
     return rates[this.state.shipZone] ?? 20;
   }
 
@@ -387,6 +431,7 @@ class Component extends DCLogic {
     if (invType === 'azienda' && !inv.pec && !inv.sdi) return 'Inserisci PEC o Codice SDI.';
     const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
     if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
+    if (this.state.shipZone === 'ue' && !this.state.shipCountry) return 'Seleziona il paese UE di destinazione.';
     if (!this.state.productId) return 'Nessun prodotto selezionato.';
     return null;
   }
@@ -458,11 +503,14 @@ class Component extends DCLogic {
       orderTotal: eur(orderTotal),
       productPriceFmt: eur(parseFloat(s.productPrice) || 0),
       shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
-      isFlatShipping: (parseFloat(s.productPrice) || 0) >= 100 && s.productCollection !== 'strategici' && !(this.rollupQty() && s.shipZone !== 'italia'),
-      isRollupShipping: !!this.rollupQty(),
+      isFlatShipping: false,
+      isRollupShipping: !!this.rollupQty() && s.shipZone !== 'italia',
       isZoneRomaCentro: s.shipZone === 'roma_centro',
       isZoneRomaResto: s.shipZone === 'roma_resto',
       isZoneItalia: s.shipZone === 'italia',
+      isZoneUe: s.shipZone === 'ue',
+      shipCountry: s.shipCountry,
+      setShipCountry: (e) => this.setState({ shipCountry: e.target.value }),
       setShipZone: (e) => this.setState({ shipZone: e.target.value }),
       isPrivato: s.invType === 'privato',
       isAzienda: s.invType === 'azienda',
