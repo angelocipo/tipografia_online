@@ -39,6 +39,8 @@ const PRICING = {
     { label: '500 × 230 cm — Solo stampa', price: 712.8 },
     { label: '600 × 230 cm — Solo stampa', price: 825.6 },
   ] },
+  // Prodotto di TEST nascosto (index.html#test-1).
+  'test-1': { nome: 'Prodotto di test', ean: '', type: 'flat', price: 1 },
   '5392': { nome: 'Volantini A5 gr 130', ean: '0652026573237', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:100,price:33},{qty:250,price:36},{qty:500,price:41},{qty:1000,price:48},{qty:2500,price:74},{qty:5000,price:107},{qty:10000,price:166},{qty:20000,price:299},{qty:30000,price:440},{qty:40000,price:573},{qty:50000,price:712},{qty:60000,price:851},{qty:70000,price:990},{qty:80000,price:1119},{qty:90000,price:1257},{qty:100000,price:1395}],

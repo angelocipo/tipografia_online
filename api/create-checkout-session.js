@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
       const rate = consegnaIdx === 1
         ? product.rates2gg[idx]
         : (occhielliIdx === 1 ? product.ratesSettimanaCon[idx] : product.ratesSettimanaSenza[idx]);
-      const total = Math.round(rate * qty * 1.22 * 1.3);
+      const total = Math.round((rate * qty * 1.22 * 1.3) * 100) / 100;
       unitAmountCents = total * 100;
       const formats = ['200×100 cm', '300×100 cm', '400×100 cm'];
       const consegnaLabel = consegnaIdx === 1 ? '2 gg Lavorativi' : '1 Settimana';
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
       const bv = product.cartaMultiplier[cartaI];
       const soggetti = product.soggettiMultiplier[sogI];
       const lati = product.latiMultiplier[latI];
-      let total = Math.round(20 + bv * soggetti * lati * q * (l*10+20)*(a*10+40)/440/320);
+      let total = Math.round((20 + bv * soggetti * lati * q * (l*10+20)*(a*10+40)/440/320) * 100) / 100;
       let angoliSuffix = '';
       if (formula && formula.angoliArrotondati) { total += angoliArrotondatiPrice(q); angoliSuffix = ', Angoli arrotondati'; }
       unitAmountCents = total * 100;
@@ -88,7 +88,7 @@ module.exports = async (req, res) => {
       const cIdx = Math.min(Math.max(Number.isInteger(coloreIdx) ? coloreIdx : 0, 0), colOptions.length - 1);
       const colore = colOptions[cIdx] === 'Altro' ? (altroColore || 'Altro') : colOptions[cIdx];
       const mult = product.lavorazioni[lIdx].mult;
-      const total = Math.round(15 + mult * 5.5 * 1.22 * 5 * ((b+2.5)*(a+2.5)/6200) * c);
+      const total = Math.round((15 + mult * 5.5 * 1.22 * 5 * ((b+2.5)*(a+2.5)/6200) * c) * 100) / 100;
       unitAmountCents = total * 100;
       description = `${product.nome} — ${b}×${a} cm, ${colore}, ${product.lavorazioni[lIdx].label}, ${c}pz`;
     } else if (product.type === 'adesivoInterno') {
@@ -98,7 +98,7 @@ module.exports = async (req, res) => {
       const q = Math.max(product.qty.min, Math.min(product.qty.max, parseInt(qty, 10) || product.qty.default));
       const sIdx = sagomaIdx === 1 ? 1 : 0;
       const mult = product.sagomaMultiplier[sIdx];
-      const total = Math.round(10 + mult * ((l+2)*(a+2)/44/32) * q * 1.22 * 2);
+      const total = Math.round((10 + mult * ((l+2)*(a+2)/44/32) * q * 1.22 * 2) * 100) / 100;
       unitAmountCents = total * 100;
       description = `${product.nome} — ${l}×${a} cm, ${q}pz, sagoma: ${product.sagomaChoices[sIdx]}`;
     } else if (product.type === 'imageSwatchQty') {
@@ -254,7 +254,7 @@ module.exports = async (req, res) => {
       const fIdx = Number.isInteger(formula?.formatIdx) ? formula.formatIdx : 0;
       const baseRate = product.rates[spessoreIdx][stampaIdx][consegnaIdx][Math.min(Math.max(fIdx, 0), product.formats.length - 1)];
       const multiplier = qty > 1 ? 0.8 : 1;
-      const total = Math.round(baseRate * multiplier * qty);
+      const total = Math.round((baseRate * multiplier * qty) * 100) / 100;
       unitAmountCents = total * 100;
       description = `${product.nome} — ${product.formats[fIdx]}, ${product.spessoreChoices[spessoreIdx]}, ${product.stampaChoices[stampaIdx]}, ${product.consegnaChoices[consegnaIdx]}, ${qty}pz`;
     } else if (product.type === 'businessCardStrategici') {
