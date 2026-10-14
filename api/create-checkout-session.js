@@ -444,8 +444,9 @@ module.exports = async (req, res) => {
       });
       const order = await r.json();
       if (!r.ok || !order.id) {
-        console.error('PayPal create order', order);
-        res.status(502).json({ error: 'Pagamento PayPal non disponibile, riprova o paga con carta.' });
+        console.error('PayPal create order', JSON.stringify(order));
+        const det = (order.details && order.details[0] && order.details[0].issue) || order.name || order.error || '';
+        res.status(502).json({ error: 'Pagamento PayPal non disponibile, riprova o paga con carta.', detail: [det, order.debug_id].filter(Boolean).join(' · ') });
         return;
       }
       // Dati dell'ordine (cliente, spedizione, mittente…) firmati e legati a questo ordine PayPal:
@@ -471,6 +472,7 @@ module.exports = async (req, res) => {
     res.status(200).json({ url: session.url, sessionId: session.id });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Errore nella creazione del pagamento' });
+    const m = String((err && err.message) || '');
+    res.status(500).json({ error: 'Errore nella creazione del pagamento', detail: /PAYPAL_CLIENT|PayPal token/.test(m) ? m.slice(0, 160) : '' });
   }
 };

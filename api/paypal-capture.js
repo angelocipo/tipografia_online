@@ -17,15 +17,16 @@ module.exports = async (req, res) => {
     const pu = (order.purchase_units || [])[0] || {};
     if (!g.ok || !verifyAmount(pu.custom_id, pu.amount && pu.amount.value, pu.amount && pu.amount.currency_code)) {
       console.error('PayPal: importo non corrispondente, incasso rifiutato', orderID, pu.amount, pu.custom_id);
-      res.status(400).json({ error: 'Importo non valido. Pagamento non effettuato.' });
+      res.status(400).json({ error: 'Importo non valido. Pagamento non effettuato.', detail: g.ok ? 'AMOUNT_MISMATCH' : ((order.details && order.details[0] && order.details[0].issue) || order.name || 'ORDER_NOT_FOUND') });
       return;
     }
 
     const c = await fetch(`${paypalApi()}/v2/checkout/orders/${orderID}/capture`, { method: 'POST', headers });
     const cap = await c.json();
     if (!c.ok || cap.status !== 'COMPLETED') {
-      console.error('PayPal capture', cap);
-      res.status(402).json({ error: 'Pagamento PayPal non riuscito, riprova.' });
+      console.error('PayPal capture', JSON.stringify(cap));
+      const issue = (cap.details && cap.details[0] && cap.details[0].issue) || cap.name || '';
+      res.status(402).json({ error: 'Pagamento PayPal non riuscito, riprova.', issue, detail: [issue, cap.debug_id].filter(Boolean).join(' · ') });
       return;
     }
     // Email, DDT e fattura come per Stripe. Se fallisce, il pagamento resta valido: lo segnaliamo nei log.
@@ -46,6 +47,7 @@ module.exports = async (req, res) => {
     res.status(200).json({ id: cap.id, status: cap.status });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Errore nel pagamento PayPal' });
+    const m = String((err && err.message) || '');
+    res.status(500).json({ error: 'Errore nel pagamento PayPal', detail: /PAYPAL_CLIENT|PayPal token/.test(m) ? m.slice(0, 160) : '' });
   }
 };
