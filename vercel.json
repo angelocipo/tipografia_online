@@ -1,44 +1,661 @@
 {
   "redirects": [
-    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti", "destination": "/", "permanent": true },
-    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.html", "destination": "/", "permanent": true },
-    { "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.dc.html", "destination": "/", "permanent": true }
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/prezzi-strategici-qualita-professionale-risultati-concreti",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/prezzi-strategici-qualita-professionale-risultati-concreti.dc.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/abbigliamento-personalizzato-roma",
+      "destination": "/abbigliamento-personalizzato-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/abbigliamento-personalizzato-roma/",
+      "destination": "/abbigliamento-personalizzato-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/addio-al-celibato-magliette-personalizzate",
+      "destination": "/blog-addio-al-celibato-magliette-personalizzate.html",
+      "permanent": true
+    },
+    {
+      "source": "/addio-al-celibato-magliette-personalizzate/",
+      "destination": "/blog-addio-al-celibato-magliette-personalizzate.html",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-roma-eur-24h",
+      "destination": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-roma-eur-24h/",
+      "destination": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-canvas-effetto-pittura-ad-olio",
+      "destination": "/blog-canvas-effetto-pittura-ad-olio.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-canvas-effetto-pittura-ad-olio/",
+      "destination": "/blog-canvas-effetto-pittura-ad-olio.html",
+      "permanent": true
+    },
+    {
+      "source": "/maglietta-personalizzata-in-tempi-record",
+      "destination": "/blog-maglietta-personalizzata-in-tempi-record.html",
+      "permanent": true
+    },
+    {
+      "source": "/maglietta-personalizzata-in-tempi-record/",
+      "destination": "/blog-maglietta-personalizzata-in-tempi-record.html",
+      "permanent": true
+    },
+    {
+      "source": "/printing-services-in-italy",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/printing-services-in-italy/",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/rivoluzione-stampa-tshirt-24-ore",
+      "destination": "/blog-rivoluzione-stampa-tshirt-24-ore.html",
+      "permanent": true
+    },
+    {
+      "source": "/rivoluzione-stampa-tshirt-24-ore/",
+      "destination": "/blog-rivoluzione-stampa-tshirt-24-ore.html",
+      "permanent": true
+    },
+    {
+      "source": "/statua-della-liberta-warhol",
+      "destination": "/blog-statua-della-liberta-warhol.html",
+      "permanent": true
+    },
+    {
+      "source": "/statua-della-liberta-warhol/",
+      "destination": "/blog-statua-della-liberta-warhol.html",
+      "permanent": true
+    },
+    {
+      "source": "/tele-pop-art-warhol",
+      "destination": "/blog-tele-pop-art-warhol.html",
+      "permanent": true
+    },
+    {
+      "source": "/tele-pop-art-warhol/",
+      "destination": "/blog-tele-pop-art-warhol.html",
+      "permanent": true
+    },
+    {
+      "source": "/van-gogh-notte-stellata",
+      "destination": "/blog-van-gogh-notte-stellata.html",
+      "permanent": true
+    },
+    {
+      "source": "/van-gogh-notte-stellata/",
+      "destination": "/blog-van-gogh-notte-stellata.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog",
+      "destination": "/blog.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/",
+      "destination": "/blog.html",
+      "permanent": true
+    },
+    {
+      "source": "/canvas-con-foto-effetto-pittura-ad-olio",
+      "destination": "/canvas-con-foto-effetto-pittura-ad-olio.html",
+      "permanent": true
+    },
+    {
+      "source": "/canvas-con-foto-effetto-pittura-ad-olio/",
+      "destination": "/canvas-con-foto-effetto-pittura-ad-olio.html",
+      "permanent": true
+    },
+    {
+      "source": "/centro-stampa-tipografia-roma-eur",
+      "destination": "/centro-stampa-tipografia-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/centro-stampa-tipografia-roma-eur/",
+      "destination": "/centro-stampa-tipografia-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html",
+      "permanent": true
+    },
+    {
+      "source": "/checkout/",
+      "destination": "/checkout.html",
+      "permanent": true
+    },
+    {
+      "source": "/contattateci",
+      "destination": "/contattateci.html",
+      "permanent": true
+    },
+    {
+      "source": "/contattateci/",
+      "destination": "/contattateci.html",
+      "permanent": true
+    },
+    {
+      "source": "/felpe-personalizzate",
+      "destination": "/felpe-personalizzate.html",
+      "permanent": true
+    },
+    {
+      "source": "/felpe-personalizzate/",
+      "destination": "/felpe-personalizzate.html",
+      "permanent": true
+    },
+    {
+      "source": "/magliette-con-frasi-romani-roma-eur",
+      "destination": "/magliette-con-frasi-romani-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/magliette-con-frasi-romani-roma-eur/",
+      "destination": "/magliette-con-frasi-romani-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/noleggio-stand-fieristici-leggeri-roma",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/noleggio-stand-fieristici-leggeri-roma/",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/preparare-lesecutivo-per-la-stampa",
+      "destination": "/preparare-lesecutivo-per-la-stampa.html",
+      "permanent": true
+    },
+    {
+      "source": "/preparare-lesecutivo-per-la-stampa/",
+      "destination": "/preparare-lesecutivo-per-la-stampa.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-gdpr",
+      "destination": "/privacy-gdpr.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-gdpr/",
+      "destination": "/privacy-gdpr.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-policy/",
+      "destination": "/privacy-policy.html",
+      "permanent": true
+    },
+    {
+      "source": "/realizzazione-foto-quadri-roma-eur",
+      "destination": "/realizzazione-foto-quadri-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/realizzazione-foto-quadri-roma-eur/",
+      "destination": "/realizzazione-foto-quadri-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/roll-up-express-consegna-roma-eur",
+      "destination": "/roll-up-express-consegna-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/roll-up-express-consegna-roma-eur/",
+      "destination": "/roll-up-express-consegna-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/roll-up-in-24-ore-roma",
+      "destination": "/roll-up-in-24-ore-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/roll-up-in-24-ore-roma/",
+      "destination": "/roll-up-in-24-ore-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/rollup-economico",
+      "destination": "/rollup-economico.html",
+      "permanent": true
+    },
+    {
+      "source": "/rollup-economico/",
+      "destination": "/rollup-economico.html",
+      "permanent": true
+    },
+    {
+      "source": "/rollup-landing-2025",
+      "destination": "/rollup-landing-2025.html",
+      "permanent": true
+    },
+    {
+      "source": "/rollup-landing-2025/",
+      "destination": "/rollup-landing-2025.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-poster-a-roma-in-24-ore",
+      "destination": "/stampa-poster-a-roma-in-24-ore.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-poster-a-roma-in-24-ore/",
+      "destination": "/stampa-poster-a-roma-in-24-ore.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-rollup-banner-espositore-roma-eur",
+      "destination": "/stampa-rollup-banner-espositore-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-rollup-banner-espositore-roma-eur/",
+      "destination": "/stampa-rollup-banner-espositore-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-rollup-roma-eur-24h",
+      "destination": "/stampa-rollup-roma-eur-24h.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-rollup-roma-eur-24h/",
+      "destination": "/stampa-rollup-roma-eur-24h.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-su-magliette-centro-stampa-roma-eur",
+      "destination": "/stampa-su-magliette-centro-stampa-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-su-magliette-centro-stampa-roma-eur/",
+      "destination": "/stampa-su-magliette-centro-stampa-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/termini-di-servizio-terms-of-service",
+      "destination": "/termini-di-servizio-terms-of-service.html",
+      "permanent": true
+    },
+    {
+      "source": "/termini-di-servizio-terms-of-service/",
+      "destination": "/termini-di-servizio-terms-of-service.html",
+      "permanent": true
+    },
+    {
+      "source": "/tipografia-roma-eur",
+      "destination": "/tipografia-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/tipografia-roma-eur/",
+      "destination": "/tipografia-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/tipografia-roma-eur.dc.html",
+      "destination": "/tipografia-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/centro-stampa-tipografia-roma-eur.dc.html",
+      "destination": "/centro-stampa-tipografia-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/contattateci.dc.html",
+      "destination": "/contattateci.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-rollup-roma-eur-24h.dc.html",
+      "destination": "/stampa-rollup-roma-eur-24h.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-rollup-banner-espositore-roma-eur.dc.html",
+      "destination": "/stampa-rollup-banner-espositore-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/roll-up-in-24-ore-roma.dc.html",
+      "destination": "/roll-up-in-24-ore-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/roll-up-express-consegna-roma-eur.dc.html",
+      "destination": "/roll-up-express-consegna-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/rollup-landing-2025.dc.html",
+      "destination": "/rollup-landing-2025.html",
+      "permanent": true
+    },
+    {
+      "source": "/rollup-economico.dc.html",
+      "destination": "/rollup-economico.html",
+      "permanent": true
+    },
+    {
+      "source": "/abbigliamento-personalizzato-roma.dc.html",
+      "destination": "/abbigliamento-personalizzato-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-su-magliette-centro-stampa-roma-eur.dc.html",
+      "destination": "/stampa-su-magliette-centro-stampa-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/felpe-personalizzate.dc.html",
+      "destination": "/felpe-personalizzate.html",
+      "permanent": true
+    },
+    {
+      "source": "/magliette-con-frasi-romani-roma-eur.dc.html",
+      "destination": "/magliette-con-frasi-romani-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/realizzazione-foto-quadri-roma-eur.dc.html",
+      "destination": "/realizzazione-foto-quadri-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/canvas-con-foto-effetto-pittura-ad-olio.dc.html",
+      "destination": "/canvas-con-foto-effetto-pittura-ad-olio.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-poster-a-roma-in-24-ore.dc.html",
+      "destination": "/stampa-poster-a-roma-in-24-ore.html",
+      "permanent": true
+    },
+    {
+      "source": "/preparare-lesecutivo-per-la-stampa.dc.html",
+      "destination": "/preparare-lesecutivo-per-la-stampa.html",
+      "permanent": true
+    },
+    {
+      "source": "/noleggio-stand-fieristici-leggeri-roma.dc.html",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/termini-di-servizio-terms-of-service.dc.html",
+      "destination": "/termini-di-servizio-terms-of-service.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-gdpr.dc.html",
+      "destination": "/privacy-gdpr.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-policy.dc.html",
+      "destination": "/privacy-policy.html",
+      "permanent": true
+    },
+    {
+      "source": "/checkout.dc.html",
+      "destination": "/checkout.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog.dc.html",
+      "destination": "/blog.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-addio-al-celibato-magliette-personalizzate.dc.html",
+      "destination": "/blog-addio-al-celibato-magliette-personalizzate.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-biglietti-da-visita-roma-eur-24h.dc.html",
+      "destination": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-canvas-effetto-pittura-ad-olio.dc.html",
+      "destination": "/blog-canvas-effetto-pittura-ad-olio.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-maglietta-personalizzata-in-tempi-record.dc.html",
+      "destination": "/blog-maglietta-personalizzata-in-tempi-record.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-printing-services-in-italy.dc.html",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-rivoluzione-stampa-tshirt-24-ore.dc.html",
+      "destination": "/blog-rivoluzione-stampa-tshirt-24-ore.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-statua-della-liberta-warhol.dc.html",
+      "destination": "/blog-statua-della-liberta-warhol.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-tele-pop-art-warhol.dc.html",
+      "destination": "/blog-tele-pop-art-warhol.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-van-gogh-notte-stellata.dc.html",
+      "destination": "/blog-van-gogh-notte-stellata.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog-100000-biglietti-da-visita.dc.html",
+      "destination": "/blog-100000-biglietti-da-visita.html",
+      "permanent": true
+    },
+    {
+      "source": "/preventivo.dc.html",
+      "destination": "/preventivo.html",
+      "permanent": true
+    },
+    {
+      "source": "/quote.dc.html",
+      "destination": "/quote.html",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/tipografia-roma-eur.html", "destination": "/tipografia-roma-eur.dc.html" },
-    { "source": "/centro-stampa-tipografia-roma-eur.html", "destination": "/centro-stampa-tipografia-roma-eur.dc.html" },
-    { "source": "/contattateci.html", "destination": "/contattateci.dc.html" },
-    { "source": "/stampa-rollup-roma-eur-24h.html", "destination": "/stampa-rollup-roma-eur-24h.dc.html" },
-    { "source": "/stampa-rollup-banner-espositore-roma-eur.html", "destination": "/stampa-rollup-banner-espositore-roma-eur.dc.html" },
-    { "source": "/roll-up-in-24-ore-roma.html", "destination": "/roll-up-in-24-ore-roma.dc.html" },
-    { "source": "/roll-up-express-consegna-roma-eur.html", "destination": "/roll-up-express-consegna-roma-eur.dc.html" },
-    { "source": "/rollup-landing-2025.html", "destination": "/rollup-landing-2025.dc.html" },
-    { "source": "/rollup-economico.html", "destination": "/rollup-economico.dc.html" },
-    { "source": "/abbigliamento-personalizzato-roma.html", "destination": "/abbigliamento-personalizzato-roma.dc.html" },
-    { "source": "/stampa-su-magliette-centro-stampa-roma-eur.html", "destination": "/stampa-su-magliette-centro-stampa-roma-eur.dc.html" },
-    { "source": "/felpe-personalizzate.html", "destination": "/felpe-personalizzate.dc.html" },
-    { "source": "/magliette-con-frasi-romani-roma-eur.html", "destination": "/magliette-con-frasi-romani-roma-eur.dc.html" },
-    { "source": "/realizzazione-foto-quadri-roma-eur.html", "destination": "/realizzazione-foto-quadri-roma-eur.dc.html" },
-    { "source": "/canvas-con-foto-effetto-pittura-ad-olio.html", "destination": "/canvas-con-foto-effetto-pittura-ad-olio.dc.html" },
-    { "source": "/stampa-poster-a-roma-in-24-ore.html", "destination": "/stampa-poster-a-roma-in-24-ore.dc.html" },
-    { "source": "/preparare-lesecutivo-per-la-stampa.html", "destination": "/preparare-lesecutivo-per-la-stampa.dc.html" },
-    { "source": "/noleggio-stand-fieristici-leggeri-roma.html", "destination": "/noleggio-stand-fieristici-leggeri-roma.dc.html" },
-    { "source": "/termini-di-servizio-terms-of-service.html", "destination": "/termini-di-servizio-terms-of-service.dc.html" },
-    { "source": "/privacy-gdpr.html", "destination": "/privacy-gdpr.dc.html" },
-    { "source": "/privacy-policy.html", "destination": "/privacy-policy.dc.html" },
-    { "source": "/checkout.html", "destination": "/checkout.dc.html" },
-    { "source": "/blog.html", "destination": "/blog.dc.html" },
-    { "source": "/blog-addio-al-celibato-magliette-personalizzate.html", "destination": "/blog-addio-al-celibato-magliette-personalizzate.dc.html" },
-    { "source": "/blog-biglietti-da-visita-roma-eur-24h.html", "destination": "/blog-biglietti-da-visita-roma-eur-24h.dc.html" },
-    { "source": "/blog-canvas-effetto-pittura-ad-olio.html", "destination": "/blog-canvas-effetto-pittura-ad-olio.dc.html" },
-    { "source": "/blog-maglietta-personalizzata-in-tempi-record.html", "destination": "/blog-maglietta-personalizzata-in-tempi-record.dc.html" },
-    { "source": "/blog-printing-services-in-italy.html", "destination": "/blog-printing-services-in-italy.dc.html" },
-    { "source": "/blog-rivoluzione-stampa-tshirt-24-ore.html", "destination": "/blog-rivoluzione-stampa-tshirt-24-ore.dc.html" },
-    { "source": "/blog-statua-della-liberta-warhol.html", "destination": "/blog-statua-della-liberta-warhol.dc.html" },
-    { "source": "/blog-tele-pop-art-warhol.html", "destination": "/blog-tele-pop-art-warhol.dc.html" },
-    { "source": "/blog-van-gogh-notte-stellata.html", "destination": "/blog-van-gogh-notte-stellata.dc.html" },
-    { "source": "/blog-100000-biglietti-da-visita.html", "destination": "/blog-100000-biglietti-da-visita.dc.html" },
-    { "source": "/preventivo.html", "destination": "/preventivo.dc.html" },
-    { "source": "/quote.html", "destination": "/quote.dc.html" }
+    {
+      "source": "/tipografia-roma-eur.html",
+      "destination": "/tipografia-roma-eur.dc.html"
+    },
+    {
+      "source": "/centro-stampa-tipografia-roma-eur.html",
+      "destination": "/centro-stampa-tipografia-roma-eur.dc.html"
+    },
+    {
+      "source": "/contattateci.html",
+      "destination": "/contattateci.dc.html"
+    },
+    {
+      "source": "/stampa-rollup-roma-eur-24h.html",
+      "destination": "/stampa-rollup-roma-eur-24h.dc.html"
+    },
+    {
+      "source": "/stampa-rollup-banner-espositore-roma-eur.html",
+      "destination": "/stampa-rollup-banner-espositore-roma-eur.dc.html"
+    },
+    {
+      "source": "/roll-up-in-24-ore-roma.html",
+      "destination": "/roll-up-in-24-ore-roma.dc.html"
+    },
+    {
+      "source": "/roll-up-express-consegna-roma-eur.html",
+      "destination": "/roll-up-express-consegna-roma-eur.dc.html"
+    },
+    {
+      "source": "/rollup-landing-2025.html",
+      "destination": "/rollup-landing-2025.dc.html"
+    },
+    {
+      "source": "/rollup-economico.html",
+      "destination": "/rollup-economico.dc.html"
+    },
+    {
+      "source": "/abbigliamento-personalizzato-roma.html",
+      "destination": "/abbigliamento-personalizzato-roma.dc.html"
+    },
+    {
+      "source": "/stampa-su-magliette-centro-stampa-roma-eur.html",
+      "destination": "/stampa-su-magliette-centro-stampa-roma-eur.dc.html"
+    },
+    {
+      "source": "/felpe-personalizzate.html",
+      "destination": "/felpe-personalizzate.dc.html"
+    },
+    {
+      "source": "/magliette-con-frasi-romani-roma-eur.html",
+      "destination": "/magliette-con-frasi-romani-roma-eur.dc.html"
+    },
+    {
+      "source": "/realizzazione-foto-quadri-roma-eur.html",
+      "destination": "/realizzazione-foto-quadri-roma-eur.dc.html"
+    },
+    {
+      "source": "/canvas-con-foto-effetto-pittura-ad-olio.html",
+      "destination": "/canvas-con-foto-effetto-pittura-ad-olio.dc.html"
+    },
+    {
+      "source": "/stampa-poster-a-roma-in-24-ore.html",
+      "destination": "/stampa-poster-a-roma-in-24-ore.dc.html"
+    },
+    {
+      "source": "/preparare-lesecutivo-per-la-stampa.html",
+      "destination": "/preparare-lesecutivo-per-la-stampa.dc.html"
+    },
+    {
+      "source": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.dc.html"
+    },
+    {
+      "source": "/termini-di-servizio-terms-of-service.html",
+      "destination": "/termini-di-servizio-terms-of-service.dc.html"
+    },
+    {
+      "source": "/privacy-gdpr.html",
+      "destination": "/privacy-gdpr.dc.html"
+    },
+    {
+      "source": "/privacy-policy.html",
+      "destination": "/privacy-policy.dc.html"
+    },
+    {
+      "source": "/checkout.html",
+      "destination": "/checkout.dc.html"
+    },
+    {
+      "source": "/blog.html",
+      "destination": "/blog.dc.html"
+    },
+    {
+      "source": "/blog-addio-al-celibato-magliette-personalizzate.html",
+      "destination": "/blog-addio-al-celibato-magliette-personalizzate.dc.html"
+    },
+    {
+      "source": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "destination": "/blog-biglietti-da-visita-roma-eur-24h.dc.html"
+    },
+    {
+      "source": "/blog-canvas-effetto-pittura-ad-olio.html",
+      "destination": "/blog-canvas-effetto-pittura-ad-olio.dc.html"
+    },
+    {
+      "source": "/blog-maglietta-personalizzata-in-tempi-record.html",
+      "destination": "/blog-maglietta-personalizzata-in-tempi-record.dc.html"
+    },
+    {
+      "source": "/blog-printing-services-in-italy.html",
+      "destination": "/blog-printing-services-in-italy.dc.html"
+    },
+    {
+      "source": "/blog-rivoluzione-stampa-tshirt-24-ore.html",
+      "destination": "/blog-rivoluzione-stampa-tshirt-24-ore.dc.html"
+    },
+    {
+      "source": "/blog-statua-della-liberta-warhol.html",
+      "destination": "/blog-statua-della-liberta-warhol.dc.html"
+    },
+    {
+      "source": "/blog-tele-pop-art-warhol.html",
+      "destination": "/blog-tele-pop-art-warhol.dc.html"
+    },
+    {
+      "source": "/blog-van-gogh-notte-stellata.html",
+      "destination": "/blog-van-gogh-notte-stellata.dc.html"
+    },
+    {
+      "source": "/blog-100000-biglietti-da-visita.html",
+      "destination": "/blog-100000-biglietti-da-visita.dc.html"
+    },
+    {
+      "source": "/preventivo.html",
+      "destination": "/preventivo.dc.html"
+    },
+    {
+      "source": "/quote.html",
+      "destination": "/quote.dc.html"
+    }
   ]
 }

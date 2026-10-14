@@ -5,6 +5,7 @@
 <link rel="icon" type="image/png" href="img/favicon.png">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="canonical" href="https://www.tipografia.online/preventivo.html">
 <script src="./support.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -141,7 +142,7 @@ class Component extends DCLogic {
     // Roll-Up 80/85 × 200: stessa regola del checkout (1° a tariffa zona, successivi € 15).
     const rollupQ = pid === '197' ? Math.max(1, parseInt(params.get('quantita'), 10) || 1) : 0;
     if (rollupQ && zona !== 'italia' && zoneRates[zona]) spedizione = zoneRates[zona] + 15 * (rollupQ - 1);
-    const productUrl = pid ? `index.html#${encodeURIComponent(pid)}` : 'index.html';
+    const productUrl = pid ? `/#${encodeURIComponent(pid)}` : '/';
     const now = new Date();
     this.setState({
       prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean, rollupQ,
@@ -173,7 +174,7 @@ class Component extends DCLogic {
       prodotto: this.state.prodotto || '',
       ean: this.state.ean || '',
       hasEan: !!this.state.ean,
-      productUrl: this.state.productUrl || 'index.html',
+      productUrl: this.state.productUrl || '/',
       configurazione: this.state.configurazione || '',
       dettagli: (this.state.configurazione || '').split(' · ').map(s => s.trim()).filter(Boolean),
       quantita: this.state.quantita || '-',

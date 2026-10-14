@@ -5,6 +5,7 @@
 <link rel="icon" type="image/png" href="img/favicon.png">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="canonical" href="https://www.tipografia.online/custom-printed-badges-en.html">
 <meta name="robots" content="noindex, nofollow">
 <title>Custom Printed Badges — Tipografia Online</title>
 <link rel="stylesheet" href="_ds/industry-15ea58f5-d2ce-414a-ab96-fab41e713ada/styles.css">
@@ -57,7 +58,7 @@
 <body>
 
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="display:flex; align-items:center; text-decoration:none;"><img src="img/tipografia-online-logo.webp" alt="Tipografia Online by Printing Italy" width="591" height="190" style="height:44px; width:auto; display:block;"></a>
+  <a href="/" class="nav-brand" style="display:flex; align-items:center; text-decoration:none;"><img src="img/tipografia-online-logo.webp" alt="Tipografia Online by Printing Italy" width="591" height="190" style="height:44px; width:auto; display:block;"></a>
   <button id="backBtn" class="btn btn-secondary blueprint" style="display:none;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>← Back</button>
   <a href="mailto:info@tipografia.online" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Contact us</a>
 </nav>
@@ -193,7 +194,7 @@ function priceLabelFor(p){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// Testo della configurazione e link al preventivo ufficiale in inglese (quote.dc.html).
+// Testo della configurazione e link al preventivo ufficiale in inglese (quote.html).
 function quoteConfigText(p, f){
   const parts = [];
   if (f && typeof f === 'object'){
@@ -213,7 +214,7 @@ function quoteHref(p, price, selectionIdx, formula){
   const qtyOpt = (p.pricing.options || []).find(o => o.key === 'qty');
   const qtyVal = (formula && formula.qty) || (qtyOpt && qtyOpt.choices && qtyOpt.choices[0]) || '';
   const qty = qtyVal ? `${qtyVal} ${p.pricing.unit || 'pcs'}` : '';
-  return 'quote.dc.html?prodotto=' + encodeURIComponent(p.nome)
+  return 'quote.html?prodotto=' + encodeURIComponent(p.nome)
     + (cfg ? '&config=' + encodeURIComponent(cfg) : '')
     + (qty ? '&quantita=' + encodeURIComponent(qty) : '')
     + '&prezzo=' + (Math.round(price * 100) / 100).toFixed(2)
@@ -339,7 +340,7 @@ async function startStripeCheckout(btn){
     const cfg = btoa(encodeURIComponent(JSON.stringify(body)));
     const prod = PRODUCTS.find(x => x.id === productId);
     const col = (prod && prod.collection) || 'misura';
-    window.location.href = `checkout.dc.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${encodeURIComponent(col)}&cfg=${cfg}${prod && prod.ean ? '&ean=' + encodeURIComponent(prod.ean) : ''}`;
+    window.location.href = `checkout.html?id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&col=${encodeURIComponent(col)}&cfg=${cfg}${prod && prod.ean ? '&ean=' + encodeURIComponent(prod.ean) : ''}`;
   } catch (err) {
     errorEl.textContent = 'Checkout non disponibile — ' + err.message;
     errorEl.style.display = 'block';
@@ -1300,7 +1301,7 @@ function renderDetail(){
     <div style="max-width:1200px; margin:0 auto; padding:36px 28px 90px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
-        <span style="display:inline-flex; border:1px solid oklch(0.88 0.005 90); border-radius:7px; overflow:hidden; font-family:ui-monospace,monospace; font-size:11.5px; letter-spacing:.04em;"><span style="padding:4px 9px; background:oklch(0.42 0.12 155); color:#fff; font-weight:700;">EN</span><a href="index.html#5047" title="Versione italiana" style="padding:4px 9px; color:oklch(0.42 0.01 90); text-decoration:none; font-weight:600;">IT</a></span>
+        <span style="display:inline-flex; border:1px solid oklch(0.88 0.005 90); border-radius:7px; overflow:hidden; font-family:ui-monospace,monospace; font-size:11.5px; letter-spacing:.04em;"><span style="padding:4px 9px; background:oklch(0.42 0.12 155); color:#fff; font-weight:700;">EN</span><a href="/#5047" title="Versione italiana" style="padding:4px 9px; color:oklch(0.42 0.01 90); text-decoration:none; font-weight:600;">IT</a></span>
       </div>
       <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:start;">
         <div style="position:sticky; top:96px;">
