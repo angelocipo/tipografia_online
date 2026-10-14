@@ -326,6 +326,7 @@ module.exports = async (req, res) => {
     // Spedizione ricalcolata qui, stessa regola di checkout.dc.html: non ci si fida dell'importo
     // inviato dal browser. Prodotti "Prezzi Strategici" = spedizione inclusa (0).
     // Elenco = SU_MISURA_IDS in index.html (include decalcomanie e quadri): tenerli allineati.
+    // '5970' Backdrop escluso: trasporto incluso nel prezzo.
     const SHIPPING_IDS = ['197', '5833', '5850', '198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
     const ZONE_RATES = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
     const EU_COUNTRIES = ["Austria","Belgio","Bulgaria","Cipro","Croazia","Danimarca","Estonia","Finlandia","Francia","Germania","Grecia","Irlanda","Lettonia","Lituania","Lussemburgo","Malta","Paesi Bassi","Polonia","Portogallo","Repubblica Ceca","Romania","Slovacchia","Slovenia","Spagna","Svezia","Ungheria"];
@@ -336,7 +337,10 @@ module.exports = async (req, res) => {
       return;
     }
     let shipFee = 0;
-    if (SHIPPING_IDS.includes(String(productId))) {
+    if (String(productId) === '5970') {
+      // Backdrop: trasporto incluso in Italia, UE + € 55.
+      shipFee = zone === 'ue' ? 55 : 0;
+    } else if (SHIPPING_IDS.includes(String(productId))) {
       if (String(productId) === '197' && zone !== 'italia') {
         // Roll-Up 80/85 × 200 (Speedy Boys) a Roma e UE: 1° a tariffa zona, ogni successivo € 15.
         const rq = Math.max(1, parseInt(formula?.qty, 10) || 1);

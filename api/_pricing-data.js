@@ -22,6 +22,23 @@ const PRICING = {
     rollupRate: (qty) => (qty > 1 ? 90 : 95),
     strutturaRates: [255, 0], // index 0 = "Con struttura", 1 = "Solo stampa"
     rate24h: 0 },
+  // Backdrop: costo fornitore (display [+ struttura], IVA esclusa) × 1,6. 0–6 Completo, 7–13 Solo stampa. Ordine = index.html.
+  '5970': { nome: 'Backdrop in tessuto', ean: '', type: 'size', variants: [
+    { label: '100 × 230 cm — Completo (con struttura)', price: 364 },
+    { label: '150 × 230 cm — Completo (con struttura)', price: 444 },
+    { label: '230 × 230 cm — Completo (con struttura)', price: 585.6 },
+    { label: '300 × 230 cm — Completo (con struttura)', price: 672.8 },
+    { label: '400 × 230 cm — Completo (con struttura)', price: 838.4 },
+    { label: '500 × 230 cm — Completo (con struttura)', price: 1023.2 },
+    { label: '600 × 230 cm — Completo (con struttura)', price: 1152 },
+    { label: '100 × 230 cm — Solo stampa', price: 228 },
+    { label: '150 × 230 cm — Solo stampa', price: 300 },
+    { label: '230 × 230 cm — Solo stampa', price: 412.8 },
+    { label: '300 × 230 cm — Solo stampa', price: 482.4 },
+    { label: '400 × 230 cm — Solo stampa', price: 600 },
+    { label: '500 × 230 cm — Solo stampa', price: 712.8 },
+    { label: '600 × 230 cm — Solo stampa', price: 825.6 },
+  ] },
   '5392': { nome: 'Volantini A5 gr 130', ean: '0652026573237', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:100,price:33},{qty:250,price:36},{qty:500,price:41},{qty:1000,price:48},{qty:2500,price:74},{qty:5000,price:107},{qty:10000,price:166},{qty:20000,price:299},{qty:30000,price:440},{qty:40000,price:573},{qty:50000,price:712},{qty:60000,price:851},{qty:70000,price:990},{qty:80000,price:1119},{qty:90000,price:1257},{qty:100000,price:1395}],
