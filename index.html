@@ -396,6 +396,12 @@ const PRODUCTS = [
       { label:'500 × 230 cm — Solo stampa', size:'500 × 230 cm', price:712.8 },
       { label:'600 × 230 cm — Solo stampa', size:'600 × 230 cm', price:825.6 },
     ]} },
+  // Prodotto di TEST (€ 1) per verificare ogni settimana pagamenti ed email. Nascosto: non compare nel catalogo, raggiungibile solo da index.html#test-1.
+  { id:'test-1', ean:'', nome:'Prodotto di test', categoria:'Servizi', hidden:true,
+    img:'img/tipografia-online-logo.webp', gallery:['img/tipografia-online-logo.webp'],
+    intro:'Prodotto interno di prova da € 1, per verificare il funzionamento di pagamenti, email e ordini. Non spedire.',
+    features:['Solo per test interni'], specs:{'Uso':'Test pagamento'},
+    pricing:{ type:'flat', price:1, hideUpload:true } },
   { id:'5392', ean:'0652026573237', nome:'Volantini A5 gr 130 Opaca o Lucida', categoria:'Volantini',
     templatePdf:'template/formato-14-8x21.pdf',
     img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.webp',
@@ -2002,15 +2008,15 @@ function priceFrom(p){
   if (p.pricing.type === 'imageSwatchQty') return p.pricing.pricePerUnit;
   if (p.pricing.type === 'adesivoInterno') {
     const { larghezza, altezza, qty } = p.pricing;
-    return Math.round(10 + 1 * ((larghezza.default+2)*(altezza.default+2)/44/32) * qty.default * 1.22 * 2);
+    return Math.round((10 + 1 * ((larghezza.default+2)*(altezza.default+2)/44/32) * qty.default * 1.22 * 2) * 100) / 100;
   }
   if (p.pricing.type === 'adesiviPrespaziati') {
     const { base, altezza, copie } = p.pricing;
-    return Math.round(15 + 1 * 5.5 * 1.22 * 5 * ((base.default+2.5)*(altezza.default+2.5)/6200) * copie.default);
+    return Math.round((15 + 1 * 5.5 * 1.22 * 5 * ((base.default+2.5)*(altezza.default+2.5)/6200) * copie.default) * 100) / 100;
   }
   if (p.pricing.type === 'bv24h') {
     const { larghezza, altezza, qty } = p.pricing;
-    return Math.round(20 + 1 * 1 * 1 * qty.default * (larghezza.default*10+20)*(altezza.default*10+40)/440/320);
+    return Math.round((20 + 1 * 1 * 1 * qty.default * (larghezza.default*10+20)*(altezza.default*10+40)/440/320) * 100) / 100;
   }
   if (p.pricing.type === 'formula') {
     const minStruttura = Math.min(...p.pricing.strutturaChoices.map(c => c.rate));
@@ -2352,7 +2358,7 @@ function forexState(p){
 function computeForexPrice(p, f){
   const baseRate = p.pricing.rates[f.spessoreIdx][f.stampaIdx][f.consegnaIdx][f.formatIdx];
   const multiplier = f.qty > 1 ? 0.8 : 1;
-  return Math.round(baseRate * multiplier * f.qty);
+  return Math.round((baseRate * multiplier * f.qty) * 100) / 100;
 }
 
 function striscioniState(p){
@@ -2366,7 +2372,7 @@ function computeStriscioniPrice(p, f){
   const rate = f.consegnaIdx === 1
     ? p.pricing.rates2gg[f.formatIdx]
     : (f.occhielliIdx === 1 ? p.pricing.ratesSettimanaCon[f.formatIdx] : p.pricing.ratesSettimanaSenza[f.formatIdx]);
-  return Math.round(rate * f.qty * 1.22 * 1.3);
+  return Math.round((rate * f.qty * 1.22 * 1.3) * 100) / 100;
 }
 
 function adesivoState(p){
@@ -2378,7 +2384,7 @@ function adesivoState(p){
 }
 function computeAdesivoPrice(p, f){
   const mult = p.pricing.sagomaMultiplier[f.sagomaIdx];
-  return Math.round(10 + mult * ((f.larghezza+2)*(f.altezza+2)/44/32) * f.qty * 1.22 * 2);
+  return Math.round((10 + mult * ((f.larghezza+2)*(f.altezza+2)/44/32) * f.qty * 1.22 * 2) * 100) / 100;
 }
 
 function prespaziatiState(p){
@@ -2390,7 +2396,7 @@ function prespaziatiState(p){
 }
 function computePrespaziatiPrice(p, f){
   const mult = p.pricing.lavorazioni[f.lavorazioneIdx].mult;
-  return Math.round(15 + mult * 5.5 * 1.22 * 5 * ((f.base+2.5)*(f.altezza+2.5)/6200) * f.copie);
+  return Math.round((15 + mult * 5.5 * 1.22 * 5 * ((f.base+2.5)*(f.altezza+2.5)/6200) * f.copie) * 100) / 100;
 }
 
 function swatchQtyState(p){
@@ -2501,7 +2507,7 @@ function computeBv24hPrice(p, f){
   const soggetti = p.pricing.soggettiMultiplier[f.soggettiIdx];
   const lati = p.pricing.latiMultiplier[f.latiIdx];
   // I campi sono in cm, la formula Studio Wombat lavora in mm: ×10.
-  return Math.round(20 + bv * soggetti * lati * f.qty * (f.larghezza*10+20)*(f.altezza*10+40)/440/320);
+  return Math.round((20 + bv * soggetti * lati * f.qty * (f.larghezza*10+20)*(f.altezza*10+40)/440/320) * 100) / 100;
 }
 
 const app = document.getElementById('app');
@@ -2626,7 +2632,8 @@ function renderCategoryPage(){
     const m = /ø\s*([\d,.]+)/.exec(p.nome);
     return m ? num(m[1]) : -1;
   };
-  const items = PRODUCTS.filter(p => p.id === parentId || p.variantOf === parentId)
+  // Senza parentId (categoria non in CATEGORY_PAGES, es. #cat-Servizi) si mostrano i prodotti della categoria.
+  const items = PRODUCTS.filter(p => !p.hidden && (parentId ? (p.id === parentId || p.variantOf === parentId) : (p.categoria === cat && !p.variantOf)))
     .sort((a,b) => sizeOf(a) - sizeOf(b) || a.nome.localeCompare(b.nome, 'it'));
   app.innerHTML = `
     <div class="p-cat" style="max-width:none; margin:0 auto;">
@@ -2648,7 +2655,7 @@ function renderCategoryPage(){
 
 function renderGrid(){
   const chips = ['Tutti', ...[...CATEGORIES, GARMENT_CAT].sort((a, b) => a.localeCompare(b, 'it'))];
-  const visible = PRODUCTS.filter(p => !p.variantOf)
+  const visible = PRODUCTS.filter(p => !p.variantOf && !p.hidden)
     .filter(p => state.category === 'Tutti' || p.categoria === state.category)
     .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
   const strategici = visible.filter(p => p.collection === 'strategici');
