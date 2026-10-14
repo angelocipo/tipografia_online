@@ -375,21 +375,26 @@ class Component extends DCLogic {
           body: JSON.stringify(this.buildPaymentBody({ provider: 'paypal' })),
         });
         const d = await res.json().catch(() => ({}));
-        if (!res.ok || !d.id) { const m = d.error || 'Pagamento PayPal non riuscito, riprova.'; this.setState({ errorMsg: m }); throw new Error(m); }
+        if (!res.ok || !d.id) { const m = (d.error || 'Pagamento PayPal non riuscito, riprova.') + (d.detail ? ' (' + d.detail + ')' : ''); this.paypalErr = m; this.setState({ errorMsg: m }); throw new Error(m); }
         this.paypalTicket = d.ticket;
         return d.id;
       },
-      onApprove: async (data) => {
+      onApprove: async (data, actions) => {
+        this.paypalErr = null;
         const res = await fetch('/api/paypal-capture', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderID: data.orderID, ticket: this.paypalTicket }),
         });
         const d = await res.json().catch(() => ({}));
-        if (!res.ok || d.status !== 'COMPLETED') { this.setState({ errorMsg: d.error || 'Pagamento PayPal non riuscito, riprova.' }); return; }
+        // Carta/conto rifiutato da PayPal: si riapre la finestra per scegliere un altro metodo.
+        if (d.issue === 'INSTRUMENT_DECLINED' && actions && actions.restart) return actions.restart();
+        if (!res.ok || d.status !== 'COMPLETED') { this.setState({ errorMsg: (d.error || 'Pagamento PayPal non riuscito, riprova.') + (d.detail ? ' (' + d.detail + ')' : '') }); return; }
         this.saveRecap();
         window.location.href = '/grazie.dc.html?token=' + encodeURIComponent(d.id || data.orderID);
       },
-      onError: (err) => this.setState({ errorMsg: 'Pagamento PayPal non riuscito, riprova.' }),
+      // Non sovrascrive il messaggio reale già mostrato da createOrder.
+      onError: (err) => { console.error('PayPal', err); this.setState({ errorMsg: this.paypalErr || ('Pagamento PayPal non riuscito, riprova.' + (err && err.message ? ' (' + String(err.message).slice(0, 160) + ')' : '')) }); },
+      onCancel: () => this.setState({ errorMsg: 'Pagamento PayPal annullato.' }),
     }).render('#paypal-checkout-slot');
   }
 
