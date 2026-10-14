@@ -191,6 +191,9 @@
         <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
           <p class="card-body" style="margin:var(--space-2) 0 0;">Roll-Up a Roma e in UE: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
         </sc-if>
+        <sc-if value="{{ isBackdrop }}" hint-placeholder-val="{{ false }}">
+          <p class="card-body" style="margin:var(--space-2) 0 0;">Backdrop: trasporto incluso in tutta Italia. Unione Europea + € 55,00.</p>
+        </sc-if>
         <p class="card-body" style="margin:var(--space-2) 0 0;">Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</p>
       </div>
 
@@ -413,6 +416,8 @@ class Component extends DCLogic {
   }
 
   computeShippingFee() {
+    // Backdrop '5970': trasporto incluso in Italia, UE + € 55 (stessa regola in api/create-checkout-session.js e preventivo.dc.html).
+    if (String(this.state.productId) === '5970') return this.state.shipZone === 'ue' ? 55 : 0;
     if (this.state.productCollection === 'strategici') return 0;
     // Roll-Up 80/85 a Roma e UE: 1° a tariffa zona, successivi € 15. Altrimenti tariffa zona. Nessuna tariffa ridotta sopra € 100.
     const rq = this.rollupQty();
@@ -506,6 +511,7 @@ class Component extends DCLogic {
       shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: false,
       isRollupShipping: !!this.rollupQty() && s.shipZone !== 'italia',
+      isBackdrop: String(s.productId) === '5970',
       isZoneRomaCentro: s.shipZone === 'roma_centro',
       isZoneRomaResto: s.shipZone === 'roma_resto',
       isZoneItalia: s.shipZone === 'italia',

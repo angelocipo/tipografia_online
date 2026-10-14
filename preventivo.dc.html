@@ -110,6 +110,7 @@
         <sc-if value="{{ isZonaRomaResto }}" hint-placeholder-val="{{ false }}"><div>Resto di Roma — € 30,00 (opzione applicata in questo preventivo)</div></sc-if>
         <sc-if value="{{ isRollupRoma }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;"><span>{{ spedizioneZona }} — € {{ spedizioneFmt }}</span><span>Roll-Up: 1° a tariffa zona, ogni successivo € 15,00 (applicato in questo preventivo).</span></div></sc-if>
         <sc-if value="{{ isZonaUe }}" hint-placeholder-val="{{ false }}"><div>Unione Europea (+2/3 giorni) — € 35,00 (opzione applicata in questo preventivo)</div></sc-if>
+        <sc-if value="{{ isBackdropUe }}" hint-placeholder-val="{{ false }}"><div>Unione Europea (+2/3 giorni) — € 55,00 (Backdrop, opzione applicata in questo preventivo)</div></sc-if>
         <sc-if value="{{ isZonaItalia }}" hint-placeholder-val="{{ false }}"><div>Italia (+1 giorno) — € 25,00 (opzione applicata in questo preventivo)</div></sc-if>
         <div>Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</div>
       </div>
@@ -139,13 +140,15 @@ class Component extends DCLogic {
     const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
     const zona = params.get('zona') || 'roma_centro';
     let spedizione = collection === 'misura' && prezzo > 0 ? (zoneRates[zona] ?? 20) : 0;
+    // Backdrop '5970': trasporto incluso in Italia, UE + € 55 (stessa regola in checkout.dc.html).
+    if (String(pid) === '5970') spedizione = zona === 'ue' ? 55 : 0;
     // Roll-Up 80/85 × 200: stessa regola del checkout (1° a tariffa zona, successivi € 15).
     const rollupQ = pid === '197' ? Math.max(1, parseInt(params.get('quantita'), 10) || 1) : 0;
     if (rollupQ && zona !== 'italia' && zoneRates[zona]) spedizione = zoneRates[zona] + 15 * (rollupQ - 1);
     const productUrl = pid ? `/#${encodeURIComponent(pid)}` : '/';
     const now = new Date();
     this.setState({
-      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean, rollupQ,
+      prodotto, configurazione, quantita, prezzo, productUrl, collection, spedizione, zona, ean, rollupQ, pid,
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
       dateStr: now.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
@@ -166,7 +169,8 @@ class Component extends DCLogic {
       isZonaRomaCentro: !rollupQ && this.state.zona === 'roma_centro',
       isZonaRomaResto: !rollupQ && this.state.zona === 'roma_resto',
       isRollupRoma: !!rollupQ && (zona === 'roma_centro' || zona === 'roma_resto' || zona === 'ue'),
-      isZonaUe: !rollupQ && zona === 'ue',
+      isZonaUe: !rollupQ && zona === 'ue' && String(this.state.pid) !== '5970',
+      isBackdropUe: zona === 'ue' && String(this.state.pid) === '5970',
       isZonaItalia: this.state.zona === 'italia',
       spedizioneFmt: eur(spedizione),
       spedizioneZona: zoneLabels[this.state.zona] || '',

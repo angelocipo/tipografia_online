@@ -370,6 +370,32 @@ const PRODUCTS = [
       rollupRate: (qty) => (qty > 1 ? 90 : 95),
       rate24h: 0,
     } },
+  { id:'5970', ean:'', nome:'Backdrop in tessuto', categoria:'Eventi',
+    img:'img/backdrop-tube.webp',
+    gallery:['img/backdrop-tube.webp','img/backdrop-tessuto-pearl.webp'],
+    intro:'Backdrop fondale in tessuto Pearl 230 g/m², altezza 230 cm, completo di struttura o solo stampa. Ideale per fiere, eventi, photocall e allestimenti. Stampa in quadricromia a sublimazione, tessuto ignifugo classe B1.',
+    features:['Tessuto Pearl 230 g/m², indemagliabile, non lucido','Stampa quadricromia digitale a sublimazione','Inchiostri atossici, senza solventi chimici','Certificazione ignifuga classe B1','Completo di struttura o solo stampa','Trasporto incluso in Italia · UE + € 55'],
+    specs:{'Materiale':'Tessuto Pearl 230 g/m²','Altezza':'230 cm','Larghezza':'da 100 a 600 cm','Trasparenza':'20% (molto bassa)','Certificazione':'B1 Flame Retard','Tempi':'24/48 ore'},
+    // Prezzi = costo fornitore (display [+ struttura], IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa.
+    pricing:{type:'size', unit:'cadauno', defaultIndex:2,
+      // Indici 0–6 = Completo, 7–13 = Solo stampa (stesso ordine in api/_pricing-data.js).
+      groups:[{ label:'Completo (con struttura)', from:0, to:7 }, { label:'Solo stampa', from:7, to:14 }],
+      variants:[
+      { label:'100 × 230 cm — Completo (con struttura)', size:'100 × 230 cm', price:364 },
+      { label:'150 × 230 cm — Completo (con struttura)', size:'150 × 230 cm', price:444 },
+      { label:'230 × 230 cm — Completo (con struttura)', size:'230 × 230 cm', price:585.6 },
+      { label:'300 × 230 cm — Completo (con struttura)', size:'300 × 230 cm', price:672.8 },
+      { label:'400 × 230 cm — Completo (con struttura)', size:'400 × 230 cm', price:838.4 },
+      { label:'500 × 230 cm — Completo (con struttura)', size:'500 × 230 cm', price:1023.2 },
+      { label:'600 × 230 cm — Completo (con struttura)', size:'600 × 230 cm', price:1152 },
+      { label:'100 × 230 cm — Solo stampa', size:'100 × 230 cm', price:228 },
+      { label:'150 × 230 cm — Solo stampa', size:'150 × 230 cm', price:300 },
+      { label:'230 × 230 cm — Solo stampa', size:'230 × 230 cm', price:412.8 },
+      { label:'300 × 230 cm — Solo stampa', size:'300 × 230 cm', price:482.4 },
+      { label:'400 × 230 cm — Solo stampa', size:'400 × 230 cm', price:600 },
+      { label:'500 × 230 cm — Solo stampa', size:'500 × 230 cm', price:712.8 },
+      { label:'600 × 230 cm — Solo stampa', size:'600 × 230 cm', price:825.6 },
+    ]} },
   { id:'5392', ean:'0652026573237', nome:'Volantini A5 gr 130 Opaca o Lucida', categoria:'Volantini',
     templatePdf:'template/formato-14-8x21.pdf',
     img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.webp',
@@ -3212,11 +3238,16 @@ function renderDetail(){
   } else if (p.pricing.type === 'size'){
     const idx = state.sizeIdxById[p.id] ?? p.pricing.defaultIndex ?? 0;
     const variants = p.pricing.variants;
+    const groups = p.pricing.groups;
+    const grp = groups ? (groups.find(g => idx >= g.from && idx < g.to) || groups[0]) : null;
     pricingHtml = `
+      ${groups ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+        ${groups.map((g,gi) => `<button class="pill ${g===grp?'active':''}" data-size-group="${gi}">${esc(g.label)}</button>`).join('')}
+      </div>` : ''}
       <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
-        ${variants.map((v,i) => `
+        ${variants.map((v,i) => (grp && (i < grp.from || i >= grp.to)) ? '' : `
           <div class="size-row ${i===idx?'active':''}" data-size="${i}">
-            <span style="font-size:14px; font-weight:600;">${esc(v.label)}</span>
+            <span style="font-size:14px; font-weight:600;">${esc(v.size || v.label)}</span>
             <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">€ ${fmtEUR(v.price)}</span>
           </div>`).join('')}
       </div>
@@ -3679,6 +3710,12 @@ function renderDetail(){
     renderDetail();
   }));
   app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
+  app.querySelectorAll('[data-size-group]').forEach(el => el.addEventListener('click', () => {
+    const gs = p.pricing.groups; const g = gs[parseInt(el.dataset.sizeGroup,10)];
+    const cur = state.sizeIdxById[p.id] ?? p.pricing.defaultIndex ?? 0;
+    const cg = gs.find(x => cur >= x.from && cur < x.to) || gs[0];
+    state.sizeIdxById[p.id] = Math.min(g.from + (cur - cg.from), g.to - 1); renderDetail();
+  }));
   app.querySelectorAll('[data-swatch]').forEach(el => el.addEventListener('click', () => { state.swatchIdxById[p.id] = parseInt(el.dataset.swatch,10); state.mainImageOverride = null; renderDetail(); }));
   bindNum('swQtyInput', 1, null, (n) => { swatchQtyState(p).qty = n; });
   app.querySelectorAll('[data-swqty-swatch]').forEach(el => el.addEventListener('click', () => { swatchQtyState(p).swatchIdx = parseInt(el.dataset.swqtySwatch,10); renderDetail(); }));
