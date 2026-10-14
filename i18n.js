@@ -45,9 +45,20 @@
     });
   })();
 
+  function placeSwitch() {
+    var w = document.getElementById('tp-lang-switch');
+    if (!w) { mountSwitch(); return; }
+    var nav = document.querySelector('nav.nav, .nav');
+    if (!nav || nav.contains(w)) return;
+    w.style.position = ''; w.style.top = ''; w.style.right = ''; w.style.zIndex = ''; w.style.background = '';
+    var cta = nav.querySelector('.btn-primary');
+    if (cta && cta.parentNode === nav) nav.insertBefore(w, cta); else nav.appendChild(w);
+  }
+
   function mountSwitch() {
     if (document.getElementById('tp-lang-switch')) return;
     var nav = document.querySelector('nav.nav, .nav');
+    if (!nav) return; // aspetta l'header: mai posizione fissa sopra il pulsante
     if (!nav && !document.body) return;
     var w = document.createElement('div');
     w.id = 'tp-lang-switch';
@@ -57,18 +68,13 @@
     w.style.cssText = 'display:inline-flex;align-items:stretch;border:1px solid var(--color-accent,#5980a6);flex:0 0 auto;';
     w.appendChild(btn('it'));
     w.appendChild(btn('en'));
-    if (nav) {
-      var cta = nav.querySelector('.btn-primary');
-      if (cta && cta.parentNode === nav) nav.insertBefore(w, cta); else nav.appendChild(w);
-    } else {
-      w.style.cssText += 'position:fixed;top:12px;right:12px;z-index:1000;background:var(--color-bg,#f2f2f3);';
-      document.body.appendChild(w);
-    }
+    var cta = nav.querySelector('.btn-primary');
+    if (cta && cta.parentNode === nav) nav.insertBefore(w, cta); else nav.appendChild(w);
   }
 
   if (lang !== 'en') {
     document.addEventListener('DOMContentLoaded', mountSwitch);
-    new MutationObserver(function () { if (!document.getElementById('tp-lang-switch')) mountSwitch(); })
+    new MutationObserver(function () { if (placeSwitch._t) return; placeSwitch._t = setTimeout(function () { placeSwitch._t = 0; placeSwitch(); }, 50); })
       .observe(document.documentElement, { childList: true, subtree: true });
     return;
   }
@@ -201,7 +207,7 @@
         else if (r.type === 'attributes') doEl(r.target);
         else for (var j = 0; j < r.addedNodes.length; j++) walk(r.addedNodes[j]);
       }
-      if (!document.getElementById('tp-lang-switch')) mountSwitch();
+      placeSwitch();
     }
     var mo = new MutationObserver(function (list) {
       for (var i = 0; i < list.length; i++) pending.push(list[i]);
