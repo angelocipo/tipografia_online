@@ -32,6 +32,19 @@
     if (!on) b.onclick = function () { setLang(code); };
     return b;
   }
+  // Header mobile uguale su tutte le pagine: logo + WhatsApp + IT/EN, senza "Richiedi preventivo".
+  (function () {
+    var st = document.createElement('style');
+    st.id = 'tp-mobile-header';
+    st.textContent = '@media (max-width:600px){.nav a{display:none !important;}.nav a.nav-wa{display:inline-flex !important;}.nav-wa span{display:none;}}';
+    (document.head || document.documentElement).appendChild(st);
+    // Logo (copiato da index): fuori dalla homepage porta a /
+    var p = location.pathname;
+    if (p !== '/' && p !== '/index.html') document.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('#logoHome')) location.href = '/' + (lang === 'en' ? '?lang=en' : '');
+    });
+  })();
+
   function mountSwitch() {
     if (document.getElementById('tp-lang-switch')) return;
     var nav = document.querySelector('nav.nav, .nav');
