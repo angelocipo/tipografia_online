@@ -1990,7 +1990,7 @@ const PRODUCTS = [
         ] },
       ],
     } },
-  { id:'6003', ean:'', nome:'Buste a Sacco in Cartone', categoria:'Buste',
+  { id:'6003', ean:'', variantOf:'6001', nome:'Buste a Sacco in Cartone', categoria:'Buste',
     img:'img/buste-sacco-cartone-hero.webp',
     gallery:['img/buste-sacco-cartone-hero.webp'],
     intro:'Buste a sacco in cartone con chiusura a nastro a strappo. Stampa a 4 colori sul fronte. Cartoncino SBS opaco gr. 450 (formati A3 plus, B4, B5, B6) oppure offset bianca gr. 350 (DIN lungo). A partire da 10 pezzi.',
@@ -2031,7 +2031,7 @@ const PRODUCTS = [
         ] },
       ],
     } },
-  { id:'6002', ean:'', nome:'Buste da Lettera senza Finestra non Stampate', categoria:'Buste',
+  { id:'6002', ean:'', variantOf:'6001', nome:'Buste da Lettera senza Finestra non Stampate', categoria:'Buste',
     img:'img/buste-senza-finestra-hero.webp',
     gallery:['img/buste-senza-finestra-hero.webp'],
     intro:'Buste da lettera bianche senza finestra, non stampate. Carta offset bianca gr. 80 o 90. Formati DIN lungo, C6, C5 e C4 per fogli A4. A partire da 250 pezzi.',
@@ -2636,12 +2636,12 @@ function computeBv24hPrice(p, f){
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
 // Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
-const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner', '5940': 'Banner 500', '5960': 'Block Notes' };
+const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner', '5940': 'Banner 500', '5960': 'Block Notes', '6001': 'Buste' };
 // Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
-const CATALOG_NAMES = { '5960': 'Block Notes tutti i formati', '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr senza occhielli tutte le misure', '5940': 'Banner PVC 500gr con occhielli tutte le misure' };
+const CATALOG_NAMES = { '6001': 'Buste tutti i tipi', '5960': 'Block Notes tutti i formati', '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr senza occhielli tutte le misure', '5940': 'Banner PVC 500gr con occhielli tutte le misure' };
 // Titolo mostrato in cima alla pagina di categoria (solo visuale; il nome interno resta invariato).
 const CATEGORY_TITLES = { 'Block Notes': 'Block Notes 50 fogli', 'Adesivi': 'Adesivo PVC', 'Banner': 'Banner PVC 400gr senza occhielli', 'Banner 500': 'Banner PVC 500gr con occhielli' };
-const CATEGORY_INTROS = { 'Block Notes': 'Block notes da 50 fogli con incollaggio in alto, carta offset bianca 80 g, stampa 4/0 colori. Scegli il formato per configurare quantità e tempi di consegna.', 'Banner 500': 'Banner in PVC 500 g, stampa 4/0 colori, taglio e occhielli lungo tutto il perimetro. Scegli la misura per configurare quantità e tempi di consegna.', 'Banner': 'Banner in PVC 400 g, stampa 4/0 colori, taglio lungo tutto il perimetro, senza occhielli. Per la versione con occhielli scegli il Banner PVC 500gr con occhielli. Scegli la misura per configurare la quantità.', 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
+const CATEGORY_INTROS = { 'Buste': 'Buste da lettera con e senza finestra e buste a sacco in cartone. Scegli il prodotto per configurare formato, quantità e tempi di consegna.', 'Block Notes': 'Block notes da 50 fogli con incollaggio in alto, carta offset bianca 80 g, stampa 4/0 colori. Scegli il formato per configurare quantità e tempi di consegna.', 'Banner 500': 'Banner in PVC 500 g, stampa 4/0 colori, taglio e occhielli lungo tutto il perimetro. Scegli la misura per configurare quantità e tempi di consegna.', 'Banner': 'Banner in PVC 400 g, stampa 4/0 colori, taglio lungo tutto il perimetro, senza occhielli. Per la versione con occhielli scegli il Banner PVC 500gr con occhielli. Scegli la misura per configurare la quantità.', 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
 // URL indicizzabili: /prodotto/<slug> e /categoria/<slug> (vercel.json li riscrive su index.html).
 // I vecchi link con # (slug o id numerico) continuano a funzionare e vengono convertiti.
 function slugify(s){
