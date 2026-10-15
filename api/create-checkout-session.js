@@ -268,16 +268,17 @@ module.exports = async (req, res) => {
       const idx = Number.isInteger(tierIndex) ? tierIndex : 0;
       const i = Math.min(Math.max(idx, 0), delivery.prices.length - 1);
       let priceStrategici = delivery.prices[i];
+      const qtyLabelsS = format.qtyLabels || product.qtyLabels;
       let angoliSuffixStrategici = '';
-      if (formula && formula.angoliArrotondati) { priceStrategici += angoliArrotondatiPrice(product.qtyLabels[i]); angoliSuffixStrategici = ', Angoli arrotondati'; }
+      if (formula && formula.angoliArrotondati && !product.noFinish) { priceStrategici += angoliArrotondatiPrice(qtyLabelsS[i]); angoliSuffixStrategici = ', Angoli arrotondati'; }
       // Motivi: 1° a prezzo pieno, ogni motivo aggiuntivo al 90%. Quantità per ogni motivo.
       const motiviRaw = formula && Number(formula.motivi);
-      const motivi = Number.isFinite(motiviRaw) ? Math.min(Math.max(Math.round(motiviRaw), 1), 10) : 1;
+      const motivi = (!product.noPrint && Number.isFinite(motiviRaw)) ? Math.min(Math.max(Math.round(motiviRaw), 1), 10) : 1;
       priceStrategici = priceStrategici * (1 + 0.9 * (motivi - 1));
-      if (formula && formula.plastificata) { priceStrategici += plastificataPrice(product.qtyLabels[i]) * (1 + 0.9 * (motivi - 1)); }
-      if (formula && formula.grafica) { priceStrategici += 25 * motivi; }
+      if (formula && formula.plastificata && !product.noFinish) { priceStrategici += plastificataPrice(qtyLabelsS[i]) * (1 + 0.9 * (motivi - 1)); }
+      if (formula && formula.grafica && !product.noPrint) { priceStrategici += 25 * motivi; }
       unitAmountCents = Math.round(priceStrategici * 100);
-      description = `${product.nome} — ${format.label}, ${paper.label}, ${delivery.label}, ${product.qtyLabels[i]} copie${motivi > 1 ? ` × ${motivi} motivi` : ''}${angoliSuffixStrategici}${formula && formula.plastificata ? ', Plastificata' : ''}${formula && formula.grafica ? ', Creazione grafica' : ''}`;
+      description = `${product.nome} — ${format.label}, ${paper.label}, ${delivery.label}, ${qtyLabelsS[i]} copie${motivi > 1 ? ` × ${motivi} motivi` : ''}${angoliSuffixStrategici}${formula && formula.plastificata && !product.noFinish ? ', Plastificata' : ''}${formula && formula.grafica && !product.noPrint ? ', Creazione grafica' : ''}`;
     } else if (product.type === 'businessCardRilievo') {
       const { formatIndex, paperIndex, colorIndex } = formula || {};
       const fIdx = Number.isInteger(formatIndex) ? formatIndex : 0;
