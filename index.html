@@ -1908,6 +1908,8 @@ const PRODUCTS = [
       spessoreChoices: ['2 mm', '5 mm'],
       stampaChoices: ['1 lato'],
       consegnaChoices: ['Standard 4–6 gg', 'Express 2–3 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,3], [1,1]],
+      readyCutoffHours: [10, 10, 9],
       // Prezzo = (totale Flyeralarm per la quantità × 1,7) + 15 € gestione. Listino FA 22/10/2026, stampa 4/0.
       // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1] = totale fornitore; la lunghezza dell'array = quantità massima.
       markup: 1.7, handling: 15,
