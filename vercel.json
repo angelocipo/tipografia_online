@@ -514,6 +514,196 @@
       "source": "/quote.dc.html",
       "destination": "/quote.html",
       "permanent": true
+    },
+    {
+      "source": "/shop",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/shop/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/cart",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/cart/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/my-account",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/my-account/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/order-tracking",
+      "destination": "/contattateci.html",
+      "permanent": true
+    },
+    {
+      "source": "/order-tracking/",
+      "destination": "/contattateci.html",
+      "permanent": true
+    },
+    {
+      "source": "/foto-restauro-roma-sud",
+      "destination": "/realizzazione-foto-quadri-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/foto-restauro-roma-sud/",
+      "destination": "/realizzazione-foto-quadri-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/studio-grafico-roma-eur",
+      "destination": "/preparare-lesecutivo-per-la-stampa.html",
+      "permanent": true
+    },
+    {
+      "source": "/studio-grafico-roma-eur/",
+      "destination": "/preparare-lesecutivo-per-la-stampa.html",
+      "permanent": true
+    },
+    {
+      "source": "/adesivi-scritte-personalizzati",
+      "destination": "/categoria/adesivi-sagomati",
+      "permanent": true
+    },
+    {
+      "source": "/adesivi-scritte-personalizzati/",
+      "destination": "/categoria/adesivi-sagomati",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-24hstrong-quick-quality",
+      "destination": "/prodotto/biglietti-da-visita-24h",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-24hstrong-quick-quality/",
+      "destination": "/prodotto/biglietti-da-visita-24h",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-24h-roma-eur-strong-quick-quality",
+      "destination": "/prodotto/biglietti-da-visita-24h",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-24h-roma-eur-strong-quick-quality/",
+      "destination": "/prodotto/biglietti-da-visita-24h",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-rapidi-roma",
+      "destination": "/prodotto/biglietti-da-visita-24h",
+      "permanent": true
+    },
+    {
+      "source": "/biglietti-da-visita-rapidi-roma/",
+      "destination": "/prodotto/biglietti-da-visita-24h",
+      "permanent": true
+    },
+    {
+      "source": "/printing-italy-tipografia-online",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/printing-italy-tipografia-online/",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/lightweight-stand-preparation-solution-rome-fair",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/lightweight-stand-preparation-solution-rome-fair/",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/rome-conference-planning-tips",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/rome-conference-planning-tips/",
+      "destination": "/noleggio-stand-fieristici-leggeri-roma.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-volantini-subito-roma-eur",
+      "destination": "/categoria/volantini",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-volantini-subito-roma-eur/",
+      "destination": "/categoria/volantini",
+      "permanent": true
+    },
+    {
+      "source": "/esempi",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/esempi/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-internazionale",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-internazionale/",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-e-consegna-allestero",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-e-consegna-allestero/",
+      "destination": "/blog-printing-services-in-italy.html",
+      "permanent": true
+    },
+    {
+      "source": "/consegna-merci",
+      "destination": "/roll-up-express-consegna-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/consegna-merci/",
+      "destination": "/roll-up-express-consegna-roma-eur.html",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-digitale-tessuti-professionale-in-italia",
+      "destination": "/prodotto/backdrop-in-tessuto",
+      "permanent": true
+    },
+    {
+      "source": "/stampa-digitale-tessuti-professionale-in-italia/",
+      "destination": "/prodotto/backdrop-in-tessuto",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -656,6 +846,14 @@
     {
       "source": "/quote.html",
       "destination": "/quote.dc.html"
+    },
+    {
+      "source": "/prodotto/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/categoria/:slug",
+      "destination": "/index.html"
     }
   ]
 }
