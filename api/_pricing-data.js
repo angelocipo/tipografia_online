@@ -311,19 +311,207 @@ const PRICING = {
       ] },
     ] },
   '217': { nome: 'Forex PVC Stampato', ean: '0652026573596', type: 'forexPvc',
-    formats: ['30×40 cm', '40×60 cm', '50×70 cm', '70×100 cm'],
+    formats: ['A4 (21×29,7 cm)', 'A3 (29,7×42 cm)', '30×40 cm', '40×60 cm', 'A2 (42×59,4 cm)', '50×70 cm', '50×100 cm', 'A1 (59,4×84 cm)', '60×90 cm', '70×100 cm', 'A0 (84×118,8 cm)', '200×100 cm'],
     spessoreChoices: ['2 mm', '5 mm'],
-    stampaChoices: ['1 lato', '2 lati'],
-    consegnaChoices: ['Budget 1 Settimana', 'Express 2 gg'],
-    // rates[spessoreIdx][stampaIdx][consegnaIdx] -> [30x40,40x60,50x70,70x100]
-    // Listino +20% applicato il 14/09/2026 (base storica: 31,35,43,58 / 65,69,76,93 ecc.)
-    rates: [
-      [ [ [37.2,42,51.6,69.6], [78,82.8,91.2,111.6] ],   // 2mm, 1 lato: [1 sett, 2gg]
-        [ [38.4,43.2,52.8,80.4], [79.2,84,92.4,122.4] ] ], // 2mm, 2 lati: [1 sett, 2gg]
-      [ [ [39.6,45.6,57.6,80.4], [80.4,86.4,97.2,122.4] ],  // 5mm, 1 lato: [1 sett, 2gg]
-        [ [40.8,46.8,58.8,84], [80.4,87.6,99.6,126] ] ], // 5mm, 2 lati: [1 sett, 2gg]
+    stampaChoices: ['1 lato'],
+    consegnaChoices: ['Standard 4–6 gg', 'Express 2–3 gg', 'Overnight 1 gg'],
+    // Prezzo = (totale Flyeralarm per la quantità × 1,7) + 15 € gestione. Listino FA 22/10/2026, stampa 4/0.
+    // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1]; lunghezza array = quantità massima.
+    markup: 1.7, handling: 15,
+    fa: [
+      [ // 2 mm
+        [ // Standard
+          [11.98,13.32,14.21,15.45,16.75,17.92,19.03,20.15,21.27,22.38,23.5,24.62,25.73,26.84,27.98,29.09,30.2,31.31], // A4 (21×29,7 cm)
+          [13.17,14.93,17.07,18.97,20.84,22.7,24.6,26.47,28.33,30.21,32.09,33.96,35.84,37.69,39.58,41.46,43.33,45.21], // A3 (29,7×42 cm)
+          [13.08,14.76,16.84,18.69,20.5,22.32,24.13,25.92,27.73,29.53,31.35,33.14,34.95,36.77,38.56,40.36,42.17,43.99], // 30×40 cm
+          [15.49,18.98,22.25,25.54,28.8,32.08,35.36,38.62,41.9,45.18,48.45,51.91,55.18,58.45,61.74,65,68.28,71.56], // 40×60 cm
+          [15.42,18.9,22.13,25.36,28.59,31.81,35.04,38.28,41.51,44.74,48.15,51.38,54.6,57.83,61.08,64.3,67.54,70.76], // A2 (42×59,4 cm)
+          [20.5,27.14,33.77,40.41,47.06,53.71,60.34,67.16,85.23,91.88,98.51,104.48,111.41,118,124.6,131.19,151.93,158.52], // 50×70 cm
+          [27.87,38.01,48.21,58.36,68.52,78.68,88.84,99,118.87,129.01,138.82,148.61,158.42,168.22,178.51,188.33,216.42,226.24], // 50×100 cm
+          [21.15,28.47,35.77,43.06,50.36,57.84,65.15,72.46,91.19,98.83,105.45,112.7,119.95,127.2,134.94,142.18,163.83,171.07], // A1 (59,4×84 cm)
+          [22.76,31.69,40.6,49.51,58.43,67.51,76.43,85.35,105.36,114.21,123.06,131.91,140.76,150.09,158.93,167.8,191.04,199.89], // 60×90 cm
+          [30.3,42.88,55.42,68.01,80.57,93.16,104.55,116.98,140.15,152.29,164.9,177.03,189.16,201.28,213.43,226.28,257.08], // 70×100 cm
+          [32,46.31,60.62,74.91,89.21,102.37,116.49,130.58,155.59,169.4,183.93,197.7,211.5,225.29,239.08,252.88,285.69,299.87], // A0 (84×118,8 cm)
+          [118.34,150.33,180.97,212.55,330.34,361.93,393.52,425.09,542.9,574.48,606.05,637.63,755.44,787.02,818.6,812.43,927.28], // 200×100 cm
+        ],
+        [ // Express
+          [33.35,34.47,35.59,36.69,37.81,38.93,40.04,41.16,42.28,43.39,44.51,45.64,46.74,47.85,48.99,50.1,51.21,52.32], // A4 (21×29,7 cm)
+          [34.36,36.23,38.09,39.98,41.84,43.71,45.6,47.47,49.34,51.22,53.1,55.02,56.95,58.85,60.81,62.74,64.67,66.59], // A3 (29,7×42 cm)
+          [34.28,36.09,37.89,39.7,41.51,43.32,45.14,46.94,48.74,50.54,52.36,54.19,56.04,57.91,59.75,61.61,63.47,65.34], // 30×40 cm
+          [36.71,39.99,43.26,46.54,49.81,53.09,56.47,59.82,63.21,66.56,69.94,73.32,76.68,80.05,83.44,86.79,90.17,93.55], // 40×60 cm
+          [36.67,39.9,43.14,46.37,49.6,52.83,56.13,59.47,62.78,66.12,69.45,72.77,76.08,79.41,82.76,86.07,89.4,92.71], // A2 (42×59,4 cm)
+          [41.51,48.14,54.84,61.67,68.5,75.35,82.16,89.01,121.71,128.37,134.99,140.96,147.95,154.54,161.13,167.72,203.96,210.55], // 50×70 cm
+          [50.26,60.4,70.58,80.75,90.91,101.08,111.22,121.38,155.36,165.55,175.36,185.14,194.96,204.76,215.09,224.89,268.5,278.31], // 50×100 cm
+          [42.15,49.48,56.89,64.37,71.9,79.42,86.95,94.47,127.68,135.36,141.98,149.24,156.49,163.73,171.5,178.75,215.91,223.14], // A1 (59,4×84 cm)
+          [43.77,52.69,61.86,71.04,80.2,89.38,98.54,107.72,141.9,150.75,159.6,168.44,177.3,186.65,195.5,204.36,243.11,251.96], // 60×90 cm
+          [52.68,65.26,77.82,90.4,102.96,115.54,126.94,139.37,176.68,188.83,201.46,213.59,225.72,237.85,250.26,262.86,309.19], // 70×100 cm
+          [54.39,68.69,83.01,97.3,111.6,124.75,138.88,152.98,192.16,205.97,220.52,234.3,248.09,261.88,275.78,289.89,337.84,352.01], // A0 (84×118,8 cm)
+          [140.74,172.72,203.36,234.93,367.8,399.39,430.97,462.55,595.44,627.03,658.59,690.17,823.06,854.64,886.21,880.04,1009.98], // 200×100 cm
+        ],
+        [ // Overnight
+          [47.4,48.56,49.71,50.83,52,53.14,54.29,55.43,56.57,57.73], // A4 (21×29,7 cm)
+          [48.43,50.37,52.28,54.23,56.14,58.07,60.02,61.93,63.85,65.8], // A3 (29,7×42 cm)
+          [48.36,50.22,52.07,53.93,55.8,57.67,59.54,61.39,63.23,65.1], // 30×40 cm
+          [50.86,54.24,57.59,60.97,64.34,67.71,71.1,74.44,77.82,81.19], // 40×60 cm
+          [50.81,54.14,57.47,60.79,64.11,67.44,70.75,74.09,77.4,80.74], // A2 (42×59,4 cm)
+          [55.8,62.63,69.46,76.29,83.12,89.97,96.78,103.63,138.35,145.01], // 50×70 cm
+          [64.88,75.02,85.2,95.37,105.53,115.69,125.85,136,172,182.18], // 50×100 cm
+          [56.45,64,71.51,79,86.52,94.04,101.57,109.09,144.32,152], // A1 (59,4×84 cm)
+          [58.13,67.3,76.49,85.66,94.82,104,113.16,122.34,158.53,167.39], // 60×90 cm
+          [67.29,79.89,92.44,105.02,117.58,130.16,141.56,153.99,193.32,205.47], // 70×100 cm
+          [69.01,83.32,97.63,111.91,126.22,139.38,153.5,167.6,208.8,222.61], // A0 (84×118,8 cm)
+          [155.36,187.34,217.97,249.54,383.34,414.93,446.51,478.09,611.88,643.48], // 200×100 cm
+        ],
+      ],
+      [ // 5 mm
+        [ // Standard
+          [12.4,14.5,16.26,18.15,20.19,22.19,24.03,25.89,27.74,29.61,38.66,40.8,42.88,45,47.11,48.88,50.44,52.01], // A4 (21×29,7 cm)
+          [14.04,16.97,20.33,23.52,26.58,29.63,32.7,35.75,38.82,42.06,52.6,55.95,59.32,62.65,66.03,69.27,72.67,75.75], // A3 (29,7×42 cm)
+          [13.92,16.75,19.99,23.08,26.06,29.01,31.96,34.92,37.88,41.01,51.63,54.55,57.78,61.04,64.3,67.54], // 30×40 cm
+          [17,22.69,27.96,33.19,38.63,43.89,49.15,54.4,59.65,65.09,80.27,85.53,90.8,96.54,101.12,106.32,111.54,116.74], // 40×60 cm
+          [17.21,23.05,28.51,33.96,39.59,45.02,50.47,55.92,61.37,66.98,82.36,87.8,93.74,98.52,103.93,109.33,114.73,120.13], // A2 (42×59,4 cm)
+          [23.52,33.52,43.55,53.73,63.75,73.77,95.2,104.5,114.43,124.85,134.79,144.73,169.81,179.75,189.68,199.62,209.55,219.49], // 50×70 cm
+          [32.2,47.06,62.1,76.97,91.99,106.1,133.81,148.55,163.3,178.78,193.52,208.26,241.25,256.34,271.08,286.21,301.3,316.03], // 50×100 cm
+          [26.3,39.11,52.08,64.9,77.85,90.01,114.42,127.11,139.82,153.25,165.94,178.64,205.76,218.81,231.51,244.6,257.64,270.35], // A1 (59,4×84 cm)
+          [27.1,40.72,54.49,68.09,81.87,94.78,119.99,133.48,147.7,161.21,174.69,188.19,216.45,229.94,243.82,257.68,271.17,285.01], // 60×90 cm
+          [36.05,52.22,68.22,84.38,100.39,137.26,153.99,170,186,201.99,239.72,256.06,272.07,288.42,304.78,342.87,358.85,374.86], // 70×100 cm
+          [41.45,65.74,90.02,113.56,137.48,161.78,198.8,222.95,247.35,271.51,295.66,319.83,362.7,386.63,410.55,434.47,458.39], // A0 (84×118,8 cm)
+          [125.49,164.61,289.37,329.17,453.95,493.77,618.54,658.34,783.12,822.91,909.44,946.18,1067.15,1103.91,1224.86,1261.61,1382.55,1385.53], // 200×100 cm
+        ],
+        [ // Express
+          [33.9,35.76,37.62,39.47,41.33,43.2,45.04,46.9,48.76,50.62,76.37,78.24,80.46,82.33,84.18,86.05,87.89,89.76], // A4 (21×29,7 cm)
+          [35.35,38.4,41.46,44.53,47.59,50.64,53.71,56.77,59.82,63.08,90.46,93.52,96.59,99.64,102.7,105.76,109.21,112.29], // A3 (29,7×42 cm)
+          [35.24,38.2,41.15,44.09,47.06,50.02,52.97,55.94,58.89,62.03,89.3,92.25,95.21,98.17,101.12,104.07], // 30×40 cm
+          [38.44,43.7,48.97,54.19,59.64,64.9,70.16,75.42,80.67,86.14,116.8,122.07,127.33,133.11,137.68,142.88,148.1,153.31], // 40×60 cm
+          [38.63,44.06,49.52,54.97,60.6,66.04,71.49,76.95,82.39,88.03,118.9,124.34,130.31,135.09,140.49,145.89,151.3,156.69], // A2 (42×59,4 cm)
+          [44.53,54.54,64.56,74.75,84.77,94.79,131.75,141.04,150.97,161.42,171.36,181.3,221.91,231.86,241.78,251.72,261.65,271.6], // 50×70 cm
+          [53.98,68.59,83.21,97.99,113.04,127.14,170.38,185.12,199.87,215.37,230.11,244.85,293.36,308.49,323.22,338.35,353.45,368.18], // 50×100 cm
+          [47.31,60.12,73.1,85.92,98.9,111.06,150.99,163.68,176.38,189.84,202.53,215.22,257.87,270.96,283.66,296.74,309.8,322.5], // A1 (59,4×84 cm)
+          [48.11,61.73,75.5,89.11,102.91,115.82,156.56,170.05,184.29,197.79,211.28,224.78,268.59,282.09,295.95,309.82,323.32,337.2], // 60×90 cm
+          [58.42,73.24,89.24,105.42,121.43,173.83,190.58,206.58,222.59,238.57,291.86,308.23,324.22,340.62,356.99,410.69,426.67,442.69], // 70×100 cm
+          [63.07,86.79,111.07,134.62,158.54,182.85,235.38,259.56,283.97,308.15,332.32,356.51,414.96,438.89,462.81,486.73,510.65], // A0 (84×118,8 cm)
+          [147.87,187,326.84,366.63,506.49,546.3,686.16,725.96,865.82,905.61,1007.21,1043.96,1180,1216.76,1352.79,1389.53,1525.56,1528.53], // 200×100 cm
+        ],
+        [ // Overnight
+          [47.76,49.59,51.41,53.24,55.07,56.91,58.72,60.53,62.37,64.22], // A4 (21×29,7 cm)
+          [49.19,52.18,55.2,58.21,61.24,64.24,67.3,70.37,73.43,76.68], // A3 (29,7×42 cm)
+          [49.08,52,54.89,57.78,60.71,63.62,66.57,69.53,72.48,75.62], // 30×40 cm
+          [52.22,57.41,62.6,67.79,73.25,78.51,83.77,89.03,94.27,99.74], // 40×60 cm
+          [52.41,57.75,63.13,68.57,74.2,79.64,85.09,90.55,95.99,101.62], // A2 (42×59,4 cm)
+          [58.21,68.13,78.16,88.35,98.37,108.39,148.38,157.68,167.61,178.06], // 50×70 cm
+          [68.6,83.21,97.83,112.47,127.08,143.23,187.02,201.75,216.5,232.01], // 50×100 cm
+          [60.95,73.73,86.7,99.52,112.5,124.66,167.62,180.32,193.02,206.47], // A1 (59,4×84 cm)
+          [61.74,75.33,89.1,102.71,116.51,129.42,173.2,186.68,200.93,214.43], // 60×90 cm
+          [73.05,87.74,102.84,119.02,137.53,190.47,207.22,223.22,239.22,255.22], // 70×100 cm
+          [77.7,101.41,125.14,150.72,174.64,198.95,252.02,276.2,300.61,324.79], // A0 (84×118,8 cm)
+          [162.5,201.62,342.37,382.17,522.93,562.75,703.51,743.31,884.09,923.88], // 200×100 cm
+        ],
+      ],
     ],
   },
+  '5960': { nome: 'Block Notes A4 50 fogli', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:76.29},{qty:25,price:101.14},{qty:50,price:138.51},{qty:75,price:176.26},{qty:100,price:226.54},{qty:150,price:298.85},{qty:200,price:390.48},{qty:250,price:464.1},{qty:300,price:556.32},{qty:400,price:720.18},{qty:500,price:882.06},{qty:600,price:1055.07},{qty:700,price:1215.82},{qty:750,price:1307.79},{qty:800,price:1381.12},{qty:900,price:1546.43}],
+      [{qty:10,price:110.27},{qty:25,price:135.23},{qty:50,price:172.21},{qty:75,price:209.98},{qty:100,price:285.2},{qty:150,price:357.55},{qty:200,price:474.1},{qty:250,price:547.71},{qty:300,price:664.83},{qty:400,price:853.6},{qty:500,price:1040.4},{qty:600,price:1238.32},{qty:700,price:1423.98},{qty:750,price:1540.85},{qty:800,price:1614.19},{qty:900,price:1804.42}],
+      [{qty:10,price:133.7},{qty:25,price:158.62},{qty:50,price:193.97},{qty:75,price:235.74},{qty:100,price:311.82},{qty:150,price:384.18},{qty:200,price:501.58}],
+    ] },
+  '5961': { nome: 'Block Notes A5 50 fogli', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:57.09},{qty:25,price:71.3},{qty:50,price:94.5},{qty:75,price:114.64},{qty:100,price:136.72},{qty:150,price:174.32},{qty:200,price:231.68},{qty:250,price:272.32},{qty:300,price:312.38},{qty:400,price:412.4},{qty:500,price:498.42},{qty:600,price:598.18},{qty:700,price:680.72},{qty:750,price:740.58},{qty:800,price:781.84},{qty:900,price:864.37},{qty:1000,price:946.42}],
+      [{qty:10,price:91.15},{qty:25,price:105.65},{qty:50,price:129.31},{qty:75,price:148.34},{qty:100,price:170.42},{qty:150,price:208.05},{qty:200,price:290.34},{qty:250,price:331.02},{qty:300,price:371.09},{qty:400,price:496.02},{qty:500,price:582.03},{qty:600,price:706.7},{qty:700,price:789.23},{qty:750,price:874},{qty:800,price:915.26},{qty:900,price:997.81},{qty:1000,price:1104.75}],
+      [{qty:10,price:114.54},{qty:25,price:129.04},{qty:50,price:152.7},{qty:75,price:171.01},{qty:100,price:192.26},{qty:150,price:233.81},{qty:200,price:316.94}],
+    ] },
+  '5962': { nome: 'Block Notes A6 50 fogli', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:10,price:46.5},{qty:25,price:53.81},{qty:50,price:67.22},{qty:75,price:79.82},{qty:100,price:92.18},{qty:150,price:115.71},{qty:200,price:136.83},{qty:250,price:160.32},{qty:300,price:182.21},{qty:400,price:242.85},{qty:500,price:285.63},{qty:600,price:334.75},{qty:700,price:379.74},{qty:750,price:421.18},{qty:800,price:444.02},{qty:900,price:487.74}],
+    ] },
+  '5720': { nome: 'Adesivo PVC 42×10 cm', ean: '0652026573305', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],
+      [{qty:50,price:156},{qty:100,price:191},{qty:250,price:210},{qty:500,price:255},{qty:1000,price:292},{qty:2500,price:533},{qty:5000,price:1004},{qty:7500,price:1472},{qty:10000,price:1943}],
+    ] },
+  '5722': { nome: 'Adesivo PVC ø2 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164},{qty:30000,price:186}],
+    ] },
+  '5724': { nome: 'Adesivo PVC ø3 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164}],
+    ] },
+  '5725': { nome: 'Adesivo PVC ø4 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258},{qty:25000,price:316},{qty:30000,price:367}],
+    ] },
+  '5721': { nome: 'Adesivo PVC ø5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258}],
+    ] },
+  '5726': { nome: 'Adesivo PVC ø6 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:21},{qty:75,price:22},{qty:100,price:23},{qty:250,price:30},{qty:500,price:35},{qty:1000,price:44},{qty:2500,price:70},{qty:5000,price:114},{qty:7500,price:150},{qty:10000,price:192},{qty:15000,price:272},{qty:20000,price:354},{qty:25000,price:436}],
+    ] },
+  '5728': { nome: 'Adesivo PVC ø14 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:44},{qty:75,price:47},{qty:100,price:51},{qty:250,price:79},{qty:500,price:100},{qty:1000,price:141},{qty:2500,price:259},{qty:5000,price:472},{qty:7500,price:697},{qty:10000,price:922},{qty:15000,price:1358},{qty:20000,price:1799},{qty:25000,price:2222},{qty:30000,price:2606}],
+    ] },
+  '5727': { nome: 'Adesivo PVC ø9,5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:29},{qty:75,price:31},{qty:100,price:33},{qty:250,price:48},{qty:500,price:59},{qty:1000,price:81},{qty:2500,price:138},{qty:5000,price:236},{qty:7500,price:336},{qty:10000,price:446},{qty:15000,price:665},{qty:20000,price:866},{qty:25000,price:1089},{qty:30000,price:1260}],
+    ] },
+  '5729': { nome: 'Adesivo PVC 5×5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:18.22},{qty:75,price:19.7},{qty:100,price:20.69},{qty:250,price:24.14},{qty:500,price:27.41},{qty:1000,price:32.77},{qty:2500,price:49.66},{qty:5000,price:77.68},{qty:7500,price:103.09},{qty:10000,price:128.32},{qty:15000,price:179.73},{qty:20000,price:228.27},{qty:25000,price:279.73},{qty:30000,price:330.77},{qty:40000,price:432.51},{qty:50000,price:542.58}],
+      [{qty:50,price:53.07},{qty:75,price:53.92},{qty:100,price:54.56},{qty:250,price:58.16},{qty:500,price:61.02},{qty:1000,price:66.38},{qty:2500,price:83.71},{qty:5000,price:111.73},{qty:7500,price:137.15},{qty:10000,price:162.43},{qty:15000,price:213.86},{qty:20000,price:262.42},{qty:25000,price:313.87},{qty:30000,price:364.93},{qty:40000,price:466.7},{qty:50000,price:602.13}],
+      [{qty:50,price:75.02},{qty:75,price:76.27},{qty:100,price:77.15},{qty:250,price:80.82},{qty:500,price:83.73},{qty:1000,price:92.66},{qty:2500,price:114.27}],
+    ] },
+  '5735': { nome: 'Adesivo PVC A8 5,2×7,4 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:20.61},{qty:75,price:21.36},{qty:100,price:23.04},{qty:250,price:27.52},{qty:500,price:31.46},{qty:1000,price:39.6},{qty:2500,price:65.52},{qty:5000,price:105.49},{qty:7500,price:141.23},{qty:10000,price:179.36},{qty:15000,price:258.08},{qty:20000,price:335.74},{qty:25000,price:414.59},{qty:30000,price:510.7},{qty:40000,price:663.89},{qty:50000,price:799.81}],
+      [{qty:50,price:54.99},{qty:75,price:55.55},{qty:100,price:56.94},{qty:250,price:61.14},{qty:500,price:65.07},{qty:1000,price:73.22},{qty:2500,price:99.6},{qty:5000,price:139.55},{qty:7500,price:175.34},{qty:10000,price:213.47},{qty:15000,price:292.22},{qty:20000,price:369.92},{qty:25000,price:448.8},{qty:30000,price:570.27},{qty:40000,price:723.44},{qty:50000,price:859.36}],
+      [{qty:50,price:77.07},{qty:75,price:77.73},{qty:100,price:79.84},{qty:250,price:83.84},{qty:500,price:87.6},{qty:1000,price:99.3},{qty:2500,price:130.3}],
+    ] },
+  '5730': { nome: 'Adesivo PVC 5,5×8,5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:21.82},{qty:75,price:23.01},{qty:100,price:24.82},{qty:250,price:29.46},{qty:500,price:34.27},{qty:1000,price:44.14},{qty:2500,price:75.34},{qty:5000,price:121.66},{qty:7500,price:165.5},{qty:10000,price:209.06},{qty:15000,price:307.7},{qty:20000,price:402.11},{qty:25000,price:514.75},{qty:30000,price:606.7},{qty:40000,price:793.57},{qty:50000,price:978.43}],
+      [{qty:50,price:56.05},{qty:75,price:57.2},{qty:100,price:58.42},{qty:250,price:63.07},{qty:500,price:67.87},{qty:1000,price:77.74},{qty:2500,price:109.41},{qty:5000,price:155.78},{qty:7500,price:199.62},{qty:10000,price:243.17},{qty:15000,price:341.82},{qty:20000,price:436.26},{qty:25000,price:574.3},{qty:30000,price:666.26},{qty:40000,price:853.14},{qty:50000,price:1063.33}],
+      [{qty:50,price:78.14},{qty:75,price:79.76},{qty:100,price:81.47},{qty:250,price:85.94},{qty:500,price:90.59},{qty:1000,price:103.97},{qty:2500,price:139.89}],
+    ] },
+  '5731': { nome: 'Adesivo PVC A7 7,4×10,5 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:26.08},{qty:75,price:28.67},{qty:100,price:29.63},{qty:250,price:35.79},{qty:500,price:44.35},{qty:1000,price:60.86},{qty:2500,price:108.82},{qty:5000,price:179.94},{qty:7500,price:254.42},{qty:10000,price:329.68},{qty:15000,price:510.22},{qty:20000,price:661.98},{qty:25000,price:815.2},{qty:30000,price:989.12},{qty:40000,price:1289.5},{qty:50000,price:1578.18}],
+      [{qty:50,price:60.22},{qty:75,price:62.29},{qty:100,price:63.25},{qty:250,price:69.42},{qty:500,price:77.97},{qty:1000,price:94.48},{qty:2500,price:142.9},{qty:5000,price:214.06},{qty:7500,price:288.56},{qty:10000,price:363.82},{qty:15000,price:569.79},{qty:20000,price:721.54},{qty:25000,price:874.77},{qty:30000,price:1074},{qty:40000,price:1374.4},{qty:50000,price:1688.42}],
+      [{qty:50,price:82.54},{qty:75,price:85.42},{qty:100,price:86.51},{qty:250,price:92.19},{qty:500,price:100.96},{qty:1000,price:121.14},{qty:2500,price:172.02}],
+    ] },
+  '5732': { nome: 'Adesivo PVC 9,8×9,8 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:28.96},{qty:75,price:32.24},{qty:100,price:33.46},{qty:250,price:39.62},{qty:500,price:50.05},{qty:1000,price:70.13},{qty:2500,price:127.5},{qty:5000,price:215.31},{qty:7500,price:308.3},{qty:10000,price:401.52},{qty:15000,price:616.1},{qty:20000,price:804.53},{qty:25000,price:1013.65},{qty:30000,price:1196.46},{qty:40000,price:1592.13},{qty:50000,price:1942.37}],
+      [{qty:50,price:62.7},{qty:75,price:66.38},{qty:100,price:67.73},{qty:250,price:73.22},{qty:500,price:83.66},{qty:1000,price:103.74},{qty:2500,price:161.62},{qty:5000,price:249.44},{qty:7500,price:342.43},{qty:10000,price:435.68},{qty:15000,price:675.66},{qty:20000,price:864.1},{qty:25000,price:1098.54},{qty:30000,price:1281.36},{qty:40000,price:1702.37},{qty:50000,price:2077.95}],
+      [{qty:50,price:85.14},{qty:75,price:89.78},{qty:100,price:91.12},{qty:250,price:95.98},{qty:500,price:106.64},{qty:1000,price:130.24},{qty:2500,price:188.74}],
+    ] },
+  '5737': { nome: 'Adesivo PVC 9,8×21 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:44.14},{qty:75,price:46.48},{qty:100,price:48.42},{qty:250,price:63.81},{qty:500,price:85.06},{qty:1000,price:125.63},{qty:2500,price:241.86},{qty:5000,price:441.94},{qty:7500,price:660.62},{qty:10000,price:860.35},{qty:15000,price:1274.53},{qty:20000,price:1692.69},{qty:25000,price:2110.88},{qty:30000,price:2507.47},{qty:40000,price:3312.27},{qty:50000,price:3979.46}],
+      [{qty:50,price:77.76},{qty:75,price:80.21},{qty:100,price:82.05},{qty:250,price:97.79},{qty:500,price:118.86},{qty:1000,price:159.26},{qty:2500,price:275.98},{qty:5000,price:476.11},{qty:7500,price:720.19},{qty:10000,price:919.92},{qty:15000,price:1359.42},{qty:20000,price:1802.93},{qty:25000,price:2246.46},{qty:30000,price:2668.4},{qty:40000,price:3523.86},{qty:50000,price:4241.74}],
+      [{qty:50,price:101.14},{qty:75,price:103.6},{qty:100,price:105.42},{qty:250,price:121.18},{qty:500,price:142.26},{qty:1000,price:184.27},{qty:2500,price:306.05}],
+    ] },
+  '5733': { nome: 'Adesivo PVC A6 10,5×14,8 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:36.82},{qty:75,price:38.54},{qty:100,price:40.29},{qty:250,price:52.34},{qty:500,price:68.42},{qty:1000,price:100.58},{qty:2500,price:185.42},{qty:5000,price:333.09},{qty:7500,price:501.1},{qty:10000,price:647.5},{qty:15000,price:984.5},{qty:20000,price:1280.93},{qty:25000,price:1602.53},{qty:30000,price:1924.14},{qty:40000,price:2524.96}],
+      [{qty:50,price:70.43},{qty:75,price:72.16},{qty:100,price:73.9},{qty:250,price:85.95},{qty:500,price:102.02},{qty:1000,price:134.21},{qty:2500,price:219.54},{qty:5000,price:367.25},{qty:7500,price:560.67},{qty:10000,price:707.07},{qty:15000,price:1069.41},{qty:20000,price:1365.82},{qty:25000,price:1712.75},{qty:30000,price:2059.73},{qty:40000,price:2685.89}],
+      [{qty:50,price:93.1},{qty:75,price:94.88},{qty:100,price:96.72},{qty:250,price:109.01},{qty:500,price:124.94},{qty:1000,price:160.02},{qty:2500,price:249.6}],
+    ] },
+  '5734': { nome: 'Adesivo PVC A5 14,8×21 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:56.91},{qty:75,price:60.69},{qty:100,price:63.52},{qty:250,price:83.7},{qty:500,price:114.13},{qty:1000,price:170.27},{qty:2500,price:344.99},{qty:5000,price:656.54},{qty:7500,price:970.13},{qty:10000,price:1257.06},{qty:15000,price:1922.11},{qty:20000,price:2517.38},{qty:25000,price:3128.98},{qty:30000,price:3677.01},{qty:40000,price:4893.01},{qty:50000,price:5948.78}],
+      [{qty:50,price:90.53},{qty:75,price:94.53},{qty:100,price:97.14},{qty:250,price:117.33},{qty:500,price:147.76},{qty:1000,price:203.94},{qty:2500,price:379.15},{qty:5000,price:716.11},{qty:7500,price:1055.02},{qty:10000,price:1341.95},{qty:15000,price:2057.7},{qty:20000,price:2678.29},{qty:25000,price:3315.23},{qty:30000,price:3913.94},{qty:40000,price:5205.97},{qty:50000,price:6312.43}],
+      [{qty:50,price:113.78},{qty:75,price:117.92},{qty:100,price:120.48},{qty:250,price:139.89},{qty:500,price:169.5},{qty:1000,price:231.84},{qty:2500,price:409.22}],
+    ] },
+  '5736': { nome: 'Adesivo PVC A4 21×29,7 cm', ean: '', type: 'tiersDelivery',
+    tiersByDelivery: [
+      [{qty:50,price:94.1},{qty:75,price:104.19},{qty:100,price:107.68},{qty:250,price:140.9},{qty:500,price:196.72},{qty:1000,price:315.52},{qty:2500,price:683.86},{qty:5000,price:1282.29},{qty:7500,price:1904.51},{qty:10000,price:2484.3},{qty:15000,price:3694.27},{qty:20000,price:4906.4},{qty:25000,price:6098.06},{qty:30000,price:7310.21},{qty:40000,price:9734.51},{qty:50000,price:11859.82}],
+      [{qty:50,price:127.71},{qty:75,price:139.15},{qty:100,price:141.3},{qty:250,price:174.53},{qty:500,price:230.4},{qty:1000,price:349.23},{qty:2500,price:743.41},{qty:5000,price:1367.18},{qty:7500,price:2040.08},{qty:10000,price:2645.22},{qty:15000,price:3931.22},{qty:20000,price:5219.38},{qty:25000,price:6461.71},{qty:30000,price:7749.87},{qty:40000,price:10326.22},{qty:50000,price:12578.22}],
+      [{qty:50,price:149.9},{qty:75,price:162.54},{qty:100,price:163.97},{qty:250,price:196.27},{qty:500,price:256.16},{qty:1000,price:377.12},{qty:2500,price:774.34}],
+    ] },
   '5920': { nome: 'Banner PVC 400gr 100×50 cm', ean: '', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:1,price:22.78},{qty:2,price:29.55},{qty:3,price:36.06},{qty:4,price:42.54},{qty:5,price:49.01},{qty:6,price:55.47},{qty:7,price:61.95},{qty:8,price:68.42},{qty:9,price:74.88},{qty:10,price:81.36},{qty:11,price:105.04},{qty:12,price:111.52},{qty:13,price:117.97},{qty:14,price:124.45},{qty:15,price:130.93}],
@@ -482,109 +670,6 @@ const PRICING = {
       [{qty:1,price:268.45},{qty:2,price:389.76},{qty:3,price:645.94},{qty:4,price:767.46},{qty:5,price:975.14},{qty:6,price:1087.54},{qty:7,price:1333.6},{qty:8,price:1446.03},{qty:9,price:1644.7},{qty:10,price:1752.13},{qty:11,price:1992.75},{qty:12,price:2100.18},{qty:13,price:2340.78},{qty:14,price:2448.21},{qty:15,price:2688.78}],
       [{qty:1,price:299.17},{qty:2,price:420.46},{qty:3,price:678.1},{qty:4,price:799.62},{qty:5,price:1008.77},{qty:6,price:1121.17},{qty:7,price:1368.69},{qty:8,price:1481.12},{qty:9,price:1681.28},{qty:10,price:1788.69},{qty:11,price:2030.75},{qty:12,price:2138.18},{qty:13,price:2380.26},{qty:14,price:2487.68},{qty:15,price:2729.71}],
     ] },
-  '5960': { nome: 'Block Notes A4 50 fogli', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:10,price:76.29},{qty:25,price:101.14},{qty:50,price:138.51},{qty:75,price:176.26},{qty:100,price:226.54},{qty:150,price:298.85},{qty:200,price:390.48},{qty:250,price:464.1},{qty:300,price:556.32},{qty:400,price:720.18},{qty:500,price:882.06},{qty:600,price:1055.07},{qty:700,price:1215.82},{qty:750,price:1307.79},{qty:800,price:1381.12},{qty:900,price:1546.43}],
-      [{qty:10,price:110.27},{qty:25,price:135.23},{qty:50,price:172.21},{qty:75,price:209.98},{qty:100,price:285.2},{qty:150,price:357.55},{qty:200,price:474.1},{qty:250,price:547.71},{qty:300,price:664.83},{qty:400,price:853.6},{qty:500,price:1040.4},{qty:600,price:1238.32},{qty:700,price:1423.98},{qty:750,price:1540.85},{qty:800,price:1614.19},{qty:900,price:1804.42}],
-      [{qty:10,price:133.7},{qty:25,price:158.62},{qty:50,price:193.97},{qty:75,price:235.74},{qty:100,price:311.82},{qty:150,price:384.18},{qty:200,price:501.58}],
-    ] },
-  '5961': { nome: 'Block Notes A5 50 fogli', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:10,price:57.09},{qty:25,price:71.3},{qty:50,price:94.5},{qty:75,price:114.64},{qty:100,price:136.72},{qty:150,price:174.32},{qty:200,price:231.68},{qty:250,price:272.32},{qty:300,price:312.38},{qty:400,price:412.4},{qty:500,price:498.42},{qty:600,price:598.18},{qty:700,price:680.72},{qty:750,price:740.58},{qty:800,price:781.84},{qty:900,price:864.37},{qty:1000,price:946.42}],
-      [{qty:10,price:91.15},{qty:25,price:105.65},{qty:50,price:129.31},{qty:75,price:148.34},{qty:100,price:170.42},{qty:150,price:208.05},{qty:200,price:290.34},{qty:250,price:331.02},{qty:300,price:371.09},{qty:400,price:496.02},{qty:500,price:582.03},{qty:600,price:706.7},{qty:700,price:789.23},{qty:750,price:874},{qty:800,price:915.26},{qty:900,price:997.81},{qty:1000,price:1104.75}],
-      [{qty:10,price:114.54},{qty:25,price:129.04},{qty:50,price:152.7},{qty:75,price:171.01},{qty:100,price:192.26},{qty:150,price:233.81},{qty:200,price:316.94}],
-    ] },
-  '5962': { nome: 'Block Notes A6 50 fogli', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:10,price:46.5},{qty:25,price:53.81},{qty:50,price:67.22},{qty:75,price:79.82},{qty:100,price:92.18},{qty:150,price:115.71},{qty:200,price:136.83},{qty:250,price:160.32},{qty:300,price:182.21},{qty:400,price:242.85},{qty:500,price:285.63},{qty:600,price:334.75},{qty:700,price:379.74},{qty:750,price:421.18},{qty:800,price:444.02},{qty:900,price:487.74}],
-    ] },
-  '5720': { nome: 'Adesivo PVC 42×10 cm', ean: '0652026573305', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],
-      [{qty:50,price:156},{qty:100,price:191},{qty:250,price:210},{qty:500,price:255},{qty:1000,price:292},{qty:2500,price:533},{qty:5000,price:1004},{qty:7500,price:1472},{qty:10000,price:1943}],
-    ] },
-  '5722': { nome: 'Adesivo PVC ø2 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164},{qty:30000,price:186}],
-    ] },
-  '5724': { nome: 'Adesivo PVC ø3 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164}],
-    ] },
-  '5725': { nome: 'Adesivo PVC ø4 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258},{qty:25000,price:316},{qty:30000,price:367}],
-    ] },
-  '5721': { nome: 'Adesivo PVC ø5 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258}],
-    ] },
-  '5726': { nome: 'Adesivo PVC ø6 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:21},{qty:75,price:22},{qty:100,price:23},{qty:250,price:30},{qty:500,price:35},{qty:1000,price:44},{qty:2500,price:70},{qty:5000,price:114},{qty:7500,price:150},{qty:10000,price:192},{qty:15000,price:272},{qty:20000,price:354},{qty:25000,price:436}],
-    ] },
-  '5728': { nome: 'Adesivo PVC ø14 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:44},{qty:75,price:47},{qty:100,price:51},{qty:250,price:79},{qty:500,price:100},{qty:1000,price:141},{qty:2500,price:259},{qty:5000,price:472},{qty:7500,price:697},{qty:10000,price:922},{qty:15000,price:1358},{qty:20000,price:1799},{qty:25000,price:2222},{qty:30000,price:2606}],
-    ] },
-  '5727': { nome: 'Adesivo PVC ø9,5 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:29},{qty:75,price:31},{qty:100,price:33},{qty:250,price:48},{qty:500,price:59},{qty:1000,price:81},{qty:2500,price:138},{qty:5000,price:236},{qty:7500,price:336},{qty:10000,price:446},{qty:15000,price:665},{qty:20000,price:866},{qty:25000,price:1089},{qty:30000,price:1260}],
-    ] },
-  '5729': { nome: 'Adesivo PVC 5×5 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:18.22},{qty:75,price:19.7},{qty:100,price:20.69},{qty:250,price:24.14},{qty:500,price:27.41},{qty:1000,price:32.77},{qty:2500,price:49.66},{qty:5000,price:77.68},{qty:7500,price:103.09},{qty:10000,price:128.32},{qty:15000,price:179.73},{qty:20000,price:228.27},{qty:25000,price:279.73},{qty:30000,price:330.77},{qty:40000,price:432.51},{qty:50000,price:542.58}],
-      [{qty:50,price:53.07},{qty:75,price:53.92},{qty:100,price:54.56},{qty:250,price:58.16},{qty:500,price:61.02},{qty:1000,price:66.38},{qty:2500,price:83.71},{qty:5000,price:111.73},{qty:7500,price:137.15},{qty:10000,price:162.43},{qty:15000,price:213.86},{qty:20000,price:262.42},{qty:25000,price:313.87},{qty:30000,price:364.93},{qty:40000,price:466.7},{qty:50000,price:602.13}],
-      [{qty:50,price:75.02},{qty:75,price:76.27},{qty:100,price:77.15},{qty:250,price:80.82},{qty:500,price:83.73},{qty:1000,price:92.66},{qty:2500,price:114.27}],
-    ] },
-  '5735': { nome: 'Adesivo PVC A8 5,2×7,4 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:20.61},{qty:75,price:21.36},{qty:100,price:23.04},{qty:250,price:27.52},{qty:500,price:31.46},{qty:1000,price:39.6},{qty:2500,price:65.52},{qty:5000,price:105.49},{qty:7500,price:141.23},{qty:10000,price:179.36},{qty:15000,price:258.08},{qty:20000,price:335.74},{qty:25000,price:414.59},{qty:30000,price:510.7},{qty:40000,price:663.89},{qty:50000,price:799.81}],
-      [{qty:50,price:54.99},{qty:75,price:55.55},{qty:100,price:56.94},{qty:250,price:61.14},{qty:500,price:65.07},{qty:1000,price:73.22},{qty:2500,price:99.6},{qty:5000,price:139.55},{qty:7500,price:175.34},{qty:10000,price:213.47},{qty:15000,price:292.22},{qty:20000,price:369.92},{qty:25000,price:448.8},{qty:30000,price:570.27},{qty:40000,price:723.44},{qty:50000,price:859.36}],
-      [{qty:50,price:77.07},{qty:75,price:77.73},{qty:100,price:79.84},{qty:250,price:83.84},{qty:500,price:87.6},{qty:1000,price:99.3},{qty:2500,price:130.3}],
-    ] },
-  '5730': { nome: 'Adesivo PVC 5,5×8,5 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:21.82},{qty:75,price:23.01},{qty:100,price:24.82},{qty:250,price:29.46},{qty:500,price:34.27},{qty:1000,price:44.14},{qty:2500,price:75.34},{qty:5000,price:121.66},{qty:7500,price:165.5},{qty:10000,price:209.06},{qty:15000,price:307.7},{qty:20000,price:402.11},{qty:25000,price:514.75},{qty:30000,price:606.7},{qty:40000,price:793.57},{qty:50000,price:978.43}],
-      [{qty:50,price:56.05},{qty:75,price:57.2},{qty:100,price:58.42},{qty:250,price:63.07},{qty:500,price:67.87},{qty:1000,price:77.74},{qty:2500,price:109.41},{qty:5000,price:155.78},{qty:7500,price:199.62},{qty:10000,price:243.17},{qty:15000,price:341.82},{qty:20000,price:436.26},{qty:25000,price:574.3},{qty:30000,price:666.26},{qty:40000,price:853.14},{qty:50000,price:1063.33}],
-      [{qty:50,price:78.14},{qty:75,price:79.76},{qty:100,price:81.47},{qty:250,price:85.94},{qty:500,price:90.59},{qty:1000,price:103.97},{qty:2500,price:139.89}],
-    ] },
-  '5731': { nome: 'Adesivo PVC A7 7,4×10,5 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:26.08},{qty:75,price:28.67},{qty:100,price:29.63},{qty:250,price:35.79},{qty:500,price:44.35},{qty:1000,price:60.86},{qty:2500,price:108.82},{qty:5000,price:179.94},{qty:7500,price:254.42},{qty:10000,price:329.68},{qty:15000,price:510.22},{qty:20000,price:661.98},{qty:25000,price:815.2},{qty:30000,price:989.12},{qty:40000,price:1289.5},{qty:50000,price:1578.18}],
-      [{qty:50,price:60.22},{qty:75,price:62.29},{qty:100,price:63.25},{qty:250,price:69.42},{qty:500,price:77.97},{qty:1000,price:94.48},{qty:2500,price:142.9},{qty:5000,price:214.06},{qty:7500,price:288.56},{qty:10000,price:363.82},{qty:15000,price:569.79},{qty:20000,price:721.54},{qty:25000,price:874.77},{qty:30000,price:1074},{qty:40000,price:1374.4},{qty:50000,price:1688.42}],
-      [{qty:50,price:82.54},{qty:75,price:85.42},{qty:100,price:86.51},{qty:250,price:92.19},{qty:500,price:100.96},{qty:1000,price:121.14},{qty:2500,price:172.02}],
-    ] },
-  '5732': { nome: 'Adesivo PVC 9,8×9,8 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:28.96},{qty:75,price:32.24},{qty:100,price:33.46},{qty:250,price:39.62},{qty:500,price:50.05},{qty:1000,price:70.13},{qty:2500,price:127.5},{qty:5000,price:215.31},{qty:7500,price:308.3},{qty:10000,price:401.52},{qty:15000,price:616.1},{qty:20000,price:804.53},{qty:25000,price:1013.65},{qty:30000,price:1196.46},{qty:40000,price:1592.13},{qty:50000,price:1942.37}],
-      [{qty:50,price:62.7},{qty:75,price:66.38},{qty:100,price:67.73},{qty:250,price:73.22},{qty:500,price:83.66},{qty:1000,price:103.74},{qty:2500,price:161.62},{qty:5000,price:249.44},{qty:7500,price:342.43},{qty:10000,price:435.68},{qty:15000,price:675.66},{qty:20000,price:864.1},{qty:25000,price:1098.54},{qty:30000,price:1281.36},{qty:40000,price:1702.37},{qty:50000,price:2077.95}],
-      [{qty:50,price:85.14},{qty:75,price:89.78},{qty:100,price:91.12},{qty:250,price:95.98},{qty:500,price:106.64},{qty:1000,price:130.24},{qty:2500,price:188.74}],
-    ] },
-  '5737': { nome: 'Adesivo PVC 9,8×21 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:44.14},{qty:75,price:46.48},{qty:100,price:48.42},{qty:250,price:63.81},{qty:500,price:85.06},{qty:1000,price:125.63},{qty:2500,price:241.86},{qty:5000,price:441.94},{qty:7500,price:660.62},{qty:10000,price:860.35},{qty:15000,price:1274.53},{qty:20000,price:1692.69},{qty:25000,price:2110.88},{qty:30000,price:2507.47},{qty:40000,price:3312.27},{qty:50000,price:3979.46}],
-      [{qty:50,price:77.76},{qty:75,price:80.21},{qty:100,price:82.05},{qty:250,price:97.79},{qty:500,price:118.86},{qty:1000,price:159.26},{qty:2500,price:275.98},{qty:5000,price:476.11},{qty:7500,price:720.19},{qty:10000,price:919.92},{qty:15000,price:1359.42},{qty:20000,price:1802.93},{qty:25000,price:2246.46},{qty:30000,price:2668.4},{qty:40000,price:3523.86},{qty:50000,price:4241.74}],
-      [{qty:50,price:101.14},{qty:75,price:103.6},{qty:100,price:105.42},{qty:250,price:121.18},{qty:500,price:142.26},{qty:1000,price:184.27},{qty:2500,price:306.05}],
-    ] },
-  '5733': { nome: 'Adesivo PVC A6 10,5×14,8 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:36.82},{qty:75,price:38.54},{qty:100,price:40.29},{qty:250,price:52.34},{qty:500,price:68.42},{qty:1000,price:100.58},{qty:2500,price:185.42},{qty:5000,price:333.09},{qty:7500,price:501.1},{qty:10000,price:647.5},{qty:15000,price:984.5},{qty:20000,price:1280.93},{qty:25000,price:1602.53},{qty:30000,price:1924.14},{qty:40000,price:2524.96}],
-      [{qty:50,price:70.43},{qty:75,price:72.16},{qty:100,price:73.9},{qty:250,price:85.95},{qty:500,price:102.02},{qty:1000,price:134.21},{qty:2500,price:219.54},{qty:5000,price:367.25},{qty:7500,price:560.67},{qty:10000,price:707.07},{qty:15000,price:1069.41},{qty:20000,price:1365.82},{qty:25000,price:1712.75},{qty:30000,price:2059.73},{qty:40000,price:2685.89}],
-      [{qty:50,price:93.1},{qty:75,price:94.88},{qty:100,price:96.72},{qty:250,price:109.01},{qty:500,price:124.94},{qty:1000,price:160.02},{qty:2500,price:249.6}],
-    ] },
-  '5734': { nome: 'Adesivo PVC A5 14,8×21 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:56.91},{qty:75,price:60.69},{qty:100,price:63.52},{qty:250,price:83.7},{qty:500,price:114.13},{qty:1000,price:170.27},{qty:2500,price:344.99},{qty:5000,price:656.54},{qty:7500,price:970.13},{qty:10000,price:1257.06},{qty:15000,price:1922.11},{qty:20000,price:2517.38},{qty:25000,price:3128.98},{qty:30000,price:3677.01},{qty:40000,price:4893.01},{qty:50000,price:5948.78}],
-      [{qty:50,price:90.53},{qty:75,price:94.53},{qty:100,price:97.14},{qty:250,price:117.33},{qty:500,price:147.76},{qty:1000,price:203.94},{qty:2500,price:379.15},{qty:5000,price:716.11},{qty:7500,price:1055.02},{qty:10000,price:1341.95},{qty:15000,price:2057.7},{qty:20000,price:2678.29},{qty:25000,price:3315.23},{qty:30000,price:3913.94},{qty:40000,price:5205.97},{qty:50000,price:6312.43}],
-      [{qty:50,price:113.78},{qty:75,price:117.92},{qty:100,price:120.48},{qty:250,price:139.89},{qty:500,price:169.5},{qty:1000,price:231.84},{qty:2500,price:409.22}],
-    ] },
-  '5736': { nome: 'Adesivo PVC A4 21×29,7 cm', ean: '', type: 'tiersDelivery',
-    tiersByDelivery: [
-      [{qty:50,price:94.1},{qty:75,price:104.19},{qty:100,price:107.68},{qty:250,price:140.9},{qty:500,price:196.72},{qty:1000,price:315.52},{qty:2500,price:683.86},{qty:5000,price:1282.29},{qty:7500,price:1904.51},{qty:10000,price:2484.3},{qty:15000,price:3694.27},{qty:20000,price:4906.4},{qty:25000,price:6098.06},{qty:30000,price:7310.21},{qty:40000,price:9734.51},{qty:50000,price:11859.82}],
-      [{qty:50,price:127.71},{qty:75,price:139.15},{qty:100,price:141.3},{qty:250,price:174.53},{qty:500,price:230.4},{qty:1000,price:349.23},{qty:2500,price:743.41},{qty:5000,price:1367.18},{qty:7500,price:2040.08},{qty:10000,price:2645.22},{qty:15000,price:3931.22},{qty:20000,price:5219.38},{qty:25000,price:6461.71},{qty:30000,price:7749.87},{qty:40000,price:10326.22},{qty:50000,price:12578.22}],
-      [{qty:50,price:149.9},{qty:75,price:162.54},{qty:100,price:163.97},{qty:250,price:196.27},{qty:500,price:256.16},{qty:1000,price:377.12},{qty:2500,price:774.34}],
-    ] },
   '5910': { nome: 'Spille ø2,5 cm', ean: '', type: 'tiersDelivery',
     tiersByDelivery: [
       [{qty:50,price:38.45},{qty:100,price:59.66},{qty:150,price:80.9},{qty:200,price:102.11},{qty:250,price:123.3},{qty:500,price:225.76},{qty:1000,price:427.5},{qty:1500,price:646.3},{qty:2000,price:854.05},{qty:2500,price:1005.63}],
@@ -604,21 +689,11 @@ const PRICING = {
       [{qty:50,price:91.25},{qty:100,price:123.6}],
     ] },
   '211': { nome: 'Adesivi per uso interno 24H', ean: '0652026573510', type: 'adesivoInterno',
-    larghezza: { min:5, max:31, default:21 },
-    altezza: { min:5, max:44, default:15 },
-    qty: { min:50, max:2000, default:50 },
-    sagomaChoices: ['No', 'Si'],
-    sagomaMultiplier: [1, 1.4],
-  },
-  '203': { nome: 'Adesivi Prespaziati Personalizzati', ean: '0652026573350', type: 'adesiviPrespaziati',
-    base: { min:5, max:300, default:14 },
-    altezza: { min:5, max:52, default:6 },
-    copie: { min:1, default:1 },
-    lavorazioni: [
-      { label: 'Sagomatura semplice', mult: 1 },
-      { label: 'Prespaziato semplice', mult: 1.2 },
-      { label: 'Prespaziato complesso', mult: 1.3 },
-    ],
+    larghezza: {min:5,max:31,default:21},
+    altezza: {min:5,max:44,default:15},
+    qty: {min:50,max:2000,default:50},
+    sagomaChoices: ['No','Si'],
+    sagomaMultiplier: [1,1.4],
   },
   '218': { nome: 'Biglietti da visita 24H', ean: '0652026573534', type: 'bv24h',
     larghezza: { min:5.5, max:10.5, default:5.5 },

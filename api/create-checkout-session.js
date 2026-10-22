@@ -247,15 +247,14 @@ module.exports = async (req, res) => {
       unitAmountCents = Math.round(product.price * 100);
       description = product.nome;
     } else if (product.type === 'forexPvc') {
-      const qty = Math.max(1, Math.min(100, parseInt(formula?.qty, 10) || 1));
       const spessoreIdx = formula?.spessoreIdx === 1 ? 1 : 0;
-      const stampaIdx = formula?.stampaIdx === 1 ? 1 : 0;
-      const consegnaIdx = formula?.consegnaIdx === 1 ? 1 : 0;
-      const fIdx = Number.isInteger(formula?.formatIdx) ? formula.formatIdx : 0;
-      const baseRate = product.rates[spessoreIdx][stampaIdx][consegnaIdx][Math.min(Math.max(fIdx, 0), product.formats.length - 1)];
-      const multiplier = qty > 1 ? 0.8 : 1;
-      const total = Math.round((baseRate * multiplier * qty) * 100) / 100;
-      unitAmountCents = total * 100;
+      const stampaIdx = 0;
+      const consegnaIdx = [0, 1, 2].includes(formula?.consegnaIdx) ? formula.consegnaIdx : 0;
+      const fIdx = Math.min(Math.max(Number.isInteger(formula?.formatIdx) ? formula.formatIdx : 0, 0), product.formats.length - 1);
+      const tiers = product.fa[spessoreIdx][consegnaIdx][fIdx];
+      const qty = Math.max(1, Math.min(tiers.length, parseInt(formula?.qty, 10) || 1));
+      const total = Math.round((tiers[qty - 1] * product.markup + product.handling) * 100) / 100;
+      unitAmountCents = Math.round(total * 100);
       description = `${product.nome} — ${product.formats[fIdx]}, ${product.spessoreChoices[spessoreIdx]}, ${product.stampaChoices[stampaIdx]}, ${product.consegnaChoices[consegnaIdx]}, ${qty}pz`;
     } else if (product.type === 'businessCardStrategici') {
       const { formatIndex, paperIndex, deliveryIndex } = formula || {};
