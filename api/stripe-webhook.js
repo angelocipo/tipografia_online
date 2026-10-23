@@ -183,10 +183,10 @@ async function processPaidOrder(session, lineItemsData) {
           quantity: li.quantity,
           unitPrice: li.amount_total / 100 / li.quantity,
           vatRate: 22, // adjust if any product carries a different aliquota
-          // The product is always the FIRST line item; any further line is shipping,
-          // which has no EAN of its own.
-          ean: i === 0 ? (md.product_ean || '') : '',
-          sku: i === 0 ? (md.product_id || '') : '',
+          // Le righe prodotto vengono prima, nello stesso ordine delle liste in metadata
+          // (separate da virgola); l'eventuale riga spedizione è l'ultima e non ha EAN.
+          ean: (String(md.product_ean || '').split(',')[i] || ''),
+          sku: (String(md.product_id || '').split(',')[i] || ''),
         })),
       };
       const buyerEmail = md.inv_email || session.customer_details?.email || session.customer_email;
