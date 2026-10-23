@@ -244,7 +244,7 @@ function priceItem(product, it) {
     const consegnaIdx = [0, 1, 2].includes(formula?.consegnaIdx) ? formula.consegnaIdx : 0;
     const qty = Math.max(1, Math.min(cu.maxQty, parseInt(formula?.qty, 10) || 1));
     const sIdx = formula?.spessoreIdx === 1 ? 1 : 0;
-    const cost = (w * h / 10000) * qty * cu.rates[sIdx][consegnaIdx];
+    const cost = Math.max(cu.minAreaPerPiece || 0, w * h / 10000) * qty * cu.rates[sIdx][consegnaIdx];
     const total = Math.round((cost * product.markup + cu.shipping + product.handling) * 100) / 100;
     unitAmountCents = Math.round(total * 100);
     description = `${product.nome} — ${cu.label} ${w}×${h} cm, ${cu.spessoreChoices[sIdx]}, ${product.stampaChoices[0]}, ${cu.consegnaChoices[consegnaIdx]}, ${qty}pz`;
