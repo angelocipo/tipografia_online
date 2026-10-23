@@ -1900,7 +1900,7 @@ const PRODUCTS = [
     img:'img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp',
     gallery:['img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp'],
     intro:'Pannello Forex PVC rigido, stampa diretta ad alta definizione, ideale per insegne, espositori e pannelli decorativi.',
-    features:['Spessore 2 mm o 5 mm','Stampa 4/0 colori (solo fronte)','Consegna Standard 4–6 gg, Express 2–3 gg o Overnight 1 gg','12 formati da A4 a 200×100 cm','Da 1 a 18 pezzi (Overnight fino a 10)'],
+    features:['Spessore 2 mm o 5 mm','Stampa 4/0 colori (solo fronte)','Consegna Standard 4–6 gg, Express 2–3 gg o Overnight 1 gg','12 formati da A4 a 200×100 cm','Formato personalizzato su misura (da 21×30 cm, spessore 2 o 5 mm)','Da 1 a 18 pezzi (Overnight fino a 10)'],
     specs:{'Materiale':'PVC espanso (Forex)','Spessori':'2 mm · 5 mm','Uso':'Interni ed esterni'},
     // Reconstructed 1:1 from the real APF config for this product (Spessore × Stampa × Consegna → Formato, quantità con sconto a scaglioni).
     pricing:{ type:'forexPvc',
@@ -1913,6 +1913,9 @@ const PRODUCTS = [
       // Prezzo = (totale Flyeralarm per la quantità × 1,7) + 15 € gestione. Listino FA 22/10/2026, stampa 4/0.
       // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1] = totale fornitore; la lunghezza dell'array = quantità massima.
       markup: 1.7, handling: 15,
+      // Formato personalizzato (Pixart 3 mm venduto come '2 mm', 4/0): prezzo = (m² × quantità × tariffa) × 1,7 + spedizione Pixart 15 € (senza ricarico) + 15 € gestione.
+      custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 21, minLong: 30, maxShort: 190, maxLong: 290, maxQty: 100, cutoffHour: 9,
+        consegnaChoices: ['Standard 9 gg', 'Express 2–3 gg', 'Overnight 1 gg'], rates: [[18, 26, 30], [21, 30.2, 35]], readyDays: [[9,9], [2,3], [1,1]], shipping: 15 },
       fa: [
         [ // 2 mm
           [ // Standard
@@ -2484,8 +2487,9 @@ async function startStripeCheckout(btn){
     if (pricingType === 'forexPvc') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = forexState(p);
-      body.formula = { spessoreIdx: f.spessoreIdx, stampaIdx: f.stampaIdx, consegnaIdx: f.consegnaIdx, formatIdx: f.formatIdx, qty: f.qty };
-      human = { 'Formato': p.pricing.formats[f.formatIdx], 'Spessore': p.pricing.spessoreChoices[f.spessoreIdx], 'Stampa': p.pricing.stampaChoices[f.stampaIdx], 'Consegna': p.pricing.consegnaChoices[f.consegnaIdx], 'Quantità': f.qty };
+      body.formula = { spessoreIdx: f.spessoreIdx, stampaIdx: f.stampaIdx, consegnaIdx: f.consegnaIdx, formatIdx: f.formatIdx, qty: f.qty, ...(f.custom ? { custom: true, w: f.w, h: f.h } : {}) };
+      if (f.custom) { const cu = p.pricing.custom; human = { 'Formato': `${cu.label} ${f.w}×${f.h} cm`, 'Spessore': cu.spessoreChoices[f.spessoreIdx], 'Stampa': p.pricing.stampaChoices[0], 'Consegna': cu.consegnaChoices[f.consegnaIdx], 'Quantità': f.qty }; }
+      else human = { 'Formato': p.pricing.formats[f.formatIdx], 'Spessore': p.pricing.spessoreChoices[f.spessoreIdx], 'Stampa': p.pricing.stampaChoices[f.stampaIdx], 'Consegna': p.pricing.consegnaChoices[f.consegnaIdx], 'Quantità': f.qty };
     }
     if (pricingType === 'striscioniPvc') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -2563,14 +2567,31 @@ function computeFormulaPrice(p, f){
 function forexState(p){
   const cur = state.forexById[p.id];
   if (cur) return cur;
-  const fresh = { spessoreIdx: 0, stampaIdx: 0, consegnaIdx: 0, formatIdx: 0, qty: 1, canva: '' };
+  const fresh = { spessoreIdx: 0, stampaIdx: 0, consegnaIdx: 0, formatIdx: 0, qty: 1, canva: '', custom: false, w: 50, h: 70 };
   state.forexById[p.id] = fresh;
   return fresh;
 }
 function forexMaxQty(p, f){
+  if (f.custom) return p.pricing.custom.maxQty;
   return p.pricing.fa[f.spessoreIdx][f.consegnaIdx][f.formatIdx].length;
 }
+function forexClampCustom(cu, f){
+  f.w = Math.max(cu.minShort, Math.min(cu.maxLong, Math.round(Number(f.w) || cu.minShort)));
+  f.h = Math.max(cu.minShort, Math.min(cu.maxLong, Math.round(Number(f.h) || cu.minShort)));
+  if (Math.max(f.w, f.h) < cu.minLong) { if (f.w >= f.h) f.w = cu.minLong; else f.h = cu.minLong; }
+  if (Math.min(f.w, f.h) > cu.maxShort) { if (f.w <= f.h) f.w = cu.maxShort; else f.h = cu.maxShort; }
+}
 function computeForexPrice(p, f){
+  if (f.custom) {
+    const cu = p.pricing.custom;
+    forexClampCustom(cu, f);
+    f.stampaIdx = 0;
+    f.spessoreIdx = f.spessoreIdx === 1 ? 1 : 0;
+    f.consegnaIdx = Math.max(0, Math.min(cu.consegnaChoices.length - 1, f.consegnaIdx));
+    f.qty = Math.max(1, Math.min(cu.maxQty, f.qty));
+    const cost = (f.w * f.h / 10000) * f.qty * cu.rates[f.spessoreIdx][f.consegnaIdx];
+    return Math.round((cost * p.pricing.markup + cu.shipping + p.pricing.handling) * 100) / 100;
+  }
   const tiers = p.pricing.fa[f.spessoreIdx][f.consegnaIdx][f.formatIdx];
   f.stampaIdx = 0;
   f.qty = Math.max(1, Math.min(tiers.length, f.qty));
@@ -2664,12 +2685,12 @@ function readyRange(minDays, maxDays, cutoffHour){
 function fmtReadyDate(d){ return d.toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' }); }
 // "Pronto previsto" per i Prezzi Strategici: consegne "2 g…" = 2 gg lavorativi, tutte le altre (1 Settimana / Budget) = 4–6 gg.
 // p.pricing.readyDays[deliveryIdx] ha la precedenza se presente.
-function readyInfoHtml(p, deliveryLabel, deliveryIdx, rdOverride){
+function readyInfoHtml(p, deliveryLabel, deliveryIdx, rdOverride, cutoffOverride){
   if (p.collection !== 'strategici') return '';
   let rd = rdOverride ?? p.pricing.readyDays?.[deliveryIdx];
   if (rd === undefined) rd = /\b2\s*g/i.test(deliveryLabel || '') ? [2,2] : [4,6];
   if (!rd) return '';
-  const cutoff = p.pricing.readyCutoffHours?.[deliveryIdx] ?? p.pricing.readyCutoffHour ?? 9;
+  const cutoff = cutoffOverride ?? p.pricing.readyCutoffHours?.[deliveryIdx] ?? p.pricing.readyCutoffHour ?? 9;
   const [a, b] = readyRange(rd[0], rd[1], cutoff);
   return `<div style="margin-top:10px; font-size:13.5px;">Pronto previsto: <strong>${a.getTime() === b.getTime() ? fmtReadyDate(a) : 'tra ' + fmtReadyDate(a) + ' e ' + fmtReadyDate(b)}</strong> <span style="color:oklch(0.5 0.01 90);">· ordinando entro le ${cutoff}:00</span><div style="margin-top:2px; font-size:12px; color:oklch(0.5 0.01 90);">Data indicativa: può variare per motivi legati al trasporto.</div></div>`;
 }
@@ -3667,18 +3688,33 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
   } else if (p.pricing.type === 'forexPvc'){
     const f = forexState(p);
     const total = computeForexPrice(p, f);
+    const cu = p.pricing.custom;
+    const fxConsegna = f.custom ? cu.consegnaChoices : p.pricing.consegnaChoices;
     pricingHtml = `
       <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            ${p.pricing.formats.map((c,i) => `<button class="pill ${i===f.formatIdx?'active':''}" data-forex-formato="${i}">${esc(c)}</button>`).join('')}
+            ${p.pricing.formats.map((c,i) => `<button class="pill ${!f.custom && i===f.formatIdx?'active':''}" data-forex-formato="${i}">${esc(c)}</button>`).join('')}
+            <button class="pill ${f.custom?'active':''}" data-forex-custom="1">${esc(cu.label)}</button>
           </div>
+          ${f.custom ? `
+          <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; margin-top:12px;">
+            <div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Base (cm)</div>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" id="forexW" value="${f.w}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza (cm)</div>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" id="forexH" value="${f.h}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            </div>
+          </div>
+          <div style="margin-top:6px; font-size:12px; color:oklch(0.5 0.01 90);">Minimo ${cu.minShort}×${cu.minLong} cm · massimo ${cu.maxShort}×${cu.maxLong} cm · ${fmtEUR(f.w * f.h / 10000)} m² per pezzo</div>` : ''}
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Spessore</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            ${p.pricing.spessoreChoices.map((c,i) => `<button class="pill ${i===f.spessoreIdx?'active':''}" data-forex-spessore="${i}">${esc(c)}</button>`).join('')}
+            ${(f.custom ? cu.spessoreChoices : p.pricing.spessoreChoices).map((c,i) => `<button class="pill ${i===f.spessoreIdx?'active':''}" data-forex-spessore="${i}">${esc(c)}</button>`).join('')}
           </div>
         </div>
         <div>
@@ -3690,9 +3726,9 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            ${p.pricing.consegnaChoices.map((c,i) => `<button class="pill ${i===f.consegnaIdx?'active':''}" data-forex-consegna="${i}">${esc(c)}</button>`).join('')}
+            ${fxConsegna.map((c,i) => `<button class="pill ${i===f.consegnaIdx?'active':''}" data-forex-consegna="${i}">${esc(c)}</button>`).join('')}
           </div>
-          ${readyInfoHtml(p, p.pricing.consegnaChoices[f.consegnaIdx], f.consegnaIdx)}
+          ${readyInfoHtml(p, fxConsegna[f.consegnaIdx], f.consegnaIdx, f.custom ? cu.readyDays[f.consegnaIdx] : undefined, f.custom ? cu.cutoffHour : undefined)}
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità <span style="opacity:.6;">(max ${forexMaxQty(p, f)} pz)</span></div>
@@ -3929,12 +3965,12 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
     // Pulsanti − / + ai lati del campo (lo stesso campo resta digitabile).
     const step = dec ? stepAttr : 1;
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;align-items:stretch;gap:6px;width:100%;';
+    wrap.style.cssText = 'position:relative;display:flex;align-items:stretch;width:100%;';
     el.parentNode.insertBefore(wrap, el);
     const mkBtn = (label, aria, delta) => {
       const b = document.createElement('button');
-      b.type = 'button'; b.textContent = label; b.setAttribute('aria-label', aria);
-      b.style.cssText = 'flex:0 0 44px;min-height:44px;border-radius:8px;border:1.5px solid oklch(0.88 0.005 90);background:#fff;color:oklch(0.25 0.01 90);font-family:inherit;font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+      b.type = 'button'; b.tabIndex = -1; b.textContent = label; b.setAttribute('aria-label', aria);
+      b.style.cssText = 'position:absolute;top:5px;bottom:5px;' + (delta < 0 ? 'left:5px;' : 'right:5px;') + 'width:32px;padding:0;border-radius:6px;border:none;background:oklch(0.95 0.005 90);color:oklch(0.25 0.01 90);font-family:inherit;font-size:16px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;';
       b.addEventListener('click', () => {
         let n = parseVal(el.value);
         if (isNaN(n)) n = min != null ? min : 1;
@@ -3949,7 +3985,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
     wrap.appendChild(mkBtn('−', 'Diminuisci', -1));
     wrap.appendChild(el);
     wrap.appendChild(mkBtn('+', 'Aumenta', 1));
-    el.style.flex = '1 1 auto'; el.style.minWidth = '0'; el.style.textAlign = 'center';
+    el.style.flex = '1 1 auto'; el.style.minWidth = '0'; el.style.textAlign = 'center'; el.style.paddingLeft = '44px'; el.style.paddingRight = '44px';
     el.addEventListener('input', (e) => {
       const raw = e.target.value.trim();
       const caret = e.target.selectionStart;
@@ -4106,7 +4142,13 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
   app.querySelectorAll('[data-forex-spessore]').forEach(el => el.addEventListener('click', () => { forexState(p).spessoreIdx = parseInt(el.dataset.forexSpessore,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-stampa]').forEach(el => el.addEventListener('click', () => { forexState(p).stampaIdx = parseInt(el.dataset.forexStampa,10); renderDetail(); }));
   app.querySelectorAll('[data-forex-consegna]').forEach(el => el.addEventListener('click', () => { forexState(p).consegnaIdx = parseInt(el.dataset.forexConsegna,10); renderDetail(); }));
-  app.querySelectorAll('[data-forex-formato]').forEach(el => el.addEventListener('click', () => { forexState(p).formatIdx = parseInt(el.dataset.forexFormato,10); renderDetail(); }));
+  app.querySelectorAll('[data-forex-formato]').forEach(el => el.addEventListener('click', () => { const s = forexState(p); s.custom = false; s.formatIdx = parseInt(el.dataset.forexFormato,10); renderDetail(); }));
+  app.querySelectorAll('[data-forex-custom]').forEach(el => el.addEventListener('click', () => { forexState(p).custom = true; renderDetail(); }));
+  if (p.pricing.type === 'forexPvc' && forexState(p).custom) {
+    const cu = p.pricing.custom;
+    bindNum('forexW', cu.minShort, cu.maxLong, (n) => { forexState(p).w = n; });
+    bindNum('forexH', cu.minShort, cu.maxLong, (n) => { forexState(p).h = n; });
+  }
   bindNum('strQty', 1, 100, (n) => { striscioniState(p).qty = n; });
   app.querySelectorAll('[data-str-consegna]').forEach(el => el.addEventListener('click', () => { striscioniState(p).consegnaIdx = parseInt(el.dataset.strConsegna,10); renderDetail(); }));
   app.querySelectorAll('[data-str-occhielli]').forEach(el => el.addEventListener('click', () => { striscioniState(p).occhielliIdx = parseInt(el.dataset.strOcchielli,10); renderDetail(); }));
