@@ -246,6 +246,19 @@ module.exports = async (req, res) => {
     } else if (product.type === 'flat') {
       unitAmountCents = Math.round(product.price * 100);
       description = product.nome;
+    } else if (product.type === 'forexPvc' && formula?.custom && product.custom) {
+      const cu = product.custom;
+      let w = Math.max(cu.minShort, Math.min(cu.maxLong, Math.round(Number(formula.w) || cu.minShort)));
+      let h = Math.max(cu.minShort, Math.min(cu.maxLong, Math.round(Number(formula.h) || cu.minShort)));
+      if (Math.max(w, h) < cu.minLong) { if (w >= h) w = cu.minLong; else h = cu.minLong; }
+      if (Math.min(w, h) > cu.maxShort) { if (w <= h) w = cu.maxShort; else h = cu.maxShort; }
+      const consegnaIdx = [0, 1, 2].includes(formula?.consegnaIdx) ? formula.consegnaIdx : 0;
+      const qty = Math.max(1, Math.min(cu.maxQty, parseInt(formula?.qty, 10) || 1));
+      const sIdx = formula?.spessoreIdx === 1 ? 1 : 0;
+      const cost = (w * h / 10000) * qty * cu.rates[sIdx][consegnaIdx];
+      const total = Math.round((cost * product.markup + cu.shipping + product.handling) * 100) / 100;
+      unitAmountCents = Math.round(total * 100);
+      description = `${product.nome} — ${cu.label} ${w}×${h} cm, ${cu.spessoreChoices[sIdx]}, ${product.stampaChoices[0]}, ${cu.consegnaChoices[consegnaIdx]}, ${qty}pz`;
     } else if (product.type === 'forexPvc') {
       const spessoreIdx = formula?.spessoreIdx === 1 ? 1 : 0;
       const stampaIdx = 0;
