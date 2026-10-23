@@ -1,6 +1,11 @@
 {
   "redirects": [
     {
+      "source": "/whatsapp",
+      "destination": "https://wa.me/393396021366",
+      "permanent": false
+    },
+    {
       "source": "/index.html",
       "destination": "/",
       "permanent": true
