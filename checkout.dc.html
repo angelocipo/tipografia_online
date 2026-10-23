@@ -263,7 +263,7 @@
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ submitLabel }}
     </button>
     <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin-top:var(--space-4);">Pagamento sicuro tramite Stripe. Riceverai fattura elettronica via SDI o email secondo i dati inseriti.</p>
-    <sc-if value="{{ hasPreventivo }}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
       <a href="{{ preventivoHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block blueprint" style="margin-top:var(--space-3);display:flex;max-width:750px;margin-left:auto;margin-right:auto;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi un preventivo ufficiale
       </a>
@@ -681,7 +681,7 @@ class Component extends DCLogic {
       submitting: s.submitting,
       submitLabel: s.submitting ? 'Attendere…' : 'Procedi al pagamento',
       handleSubmit: (e) => this.submit(e),
-      preventivoHref: this.buildPreventivoHref(orderDetails),
+      preventivoHref: 'preventivo.html?cart=1&zona=' + encodeURIComponent(s.shipZone || 'roma_centro') + '&sped=' + shippingFee.toFixed(2),
     };
   }
 }
