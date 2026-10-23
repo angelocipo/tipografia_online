@@ -23,6 +23,16 @@
     clear: function () { write([]); },
     onChange: function (fn) { listeners.push(fn); },
     eur: eur,
+    // Spedizione stimata per il preventivo dal carrello: zona Roma Sud/EUR/Centro (stessa regola del checkout).
+    quoteHref: function () {
+      var a = read();
+      var fee = Math.max.apply(null, [0].concat(a.map(function (it) {
+        if (String(it.productId) === '5970' || it.col === 'strategici') return 0;
+        if (String(it.productId) === '197') { var q = Math.max(1, parseInt(((it.body || {}).formula || {}).qty, 10) || 1); return 20 + 15 * (q - 1); }
+        return 20;
+      })));
+      return 'preventivo.html?cart=1&zona=roma_centro&sped=' + fee.toFixed(2);
+    },
 
     // Pannello laterale (scheda prodotto). Creato al primo uso.
     open: function (msg) { ensurePanel(); renderPanel(msg); panel.style.transform = 'translateX(0)'; backdrop.style.display = 'block'; panel.setAttribute('aria-hidden', 'false'); },
@@ -70,11 +80,12 @@
       + '<div style="flex:1;overflow:auto;padding:0 20px;">'
       + (a.length ? rows : '<p style="margin:24px 0;font-size:14px;color:var(--color-neutral-700);">Il carrello è vuoto.</p>')
       + '</div>'
-      + (a.length ? '<div style="padding:16px 20px 20px;border-top:1px solid var(--color-divider, #d6d8db);display:flex;flex-direction:column;gap:10px;">'
+      + (a.length ? '<div style="padding:16px 20px calc(40px + env(safe-area-inset-bottom));border-top:1px solid var(--color-divider, #d6d8db);display:flex;flex-direction:column;gap:10px;">'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:14px;">Subtotale</span><span style="font-family:var(--font-heading);font-size:24px;">€ ' + eur(TPCart.subtotal()) + '</span></div>'
         + '<div style="font-size:12px;color:var(--color-neutral-700);">Spedizione calcolata nel checkout (una sola spedizione per ordine; Prezzi Strategici: inclusa). I file da stampare li carichi nel checkout.</div>'
         + '<a href="checkout.html" class="btn btn-primary btn-block blueprint" style="display:flex;justify-content:center;">' + corners + 'Vai al checkout</a>'
-        + '<button type="button" data-cart-close class="btn btn-secondary btn-block blueprint">' + corners + 'Continua gli acquisti</button>'
+        + '<a href="' + TPCart.quoteHref() + '" target="_blank" rel="noopener" class="btn btn-secondary btn-block blueprint" style="display:flex;justify-content:center;">' + corners + 'Richiedi un preventivo ufficiale</a>'
+        + '<button type="button" data-cart-close class="btn btn-ghost btn-block">Continua gli acquisti</button>'
         + '</div>' : '');
   }
   TPCart.onChange(function () { renderPanel(); });
