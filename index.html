@@ -1905,7 +1905,7 @@ const PRODUCTS = [
     img:'img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp',
     gallery:['img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp'],
     intro:'Pannello Forex PVC rigido, stampa diretta ad alta definizione, ideale per insegne, espositori e pannelli decorativi.',
-    features:['Spessore 2 mm o 5 mm','Stampa 4/0 colori (solo fronte)','Consegna Standard 4–6 gg, Express 2–3 gg o Overnight 1 gg','12 formati da A4 a 200×100 cm','Formato personalizzato su misura (da 21×30 cm, spessore 2 o 5 mm)','Da 1 a 18 pezzi (Overnight fino a 10)'],
+    features:['Spessore 2 mm o 5 mm','Stampa 4/0 colori (solo fronte)','Consegna Standard 4–6 gg, Express 2–3 gg o Overnight 1 gg','12 formati da A4 a 200×100 cm','Formato personalizzato su misura (da 20×20 cm, spessore 2 o 5 mm)','Da 1 a 18 pezzi (Overnight fino a 10)'],
     specs:{'Materiale':'PVC espanso (Forex)','Spessori':'2 mm · 5 mm','Uso':'Interni ed esterni'},
     // Reconstructed 1:1 from the real APF config for this product (Spessore × Stampa × Consegna → Formato, quantità con sconto a scaglioni).
     pricing:{ type:'forexPvc',
@@ -1919,7 +1919,7 @@ const PRODUCTS = [
       // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1] = totale fornitore; la lunghezza dell'array = quantità massima.
       markup: 1.7, handling: 15,
       // Formato personalizzato (Pixart 3 mm venduto come '2 mm', 4/0): prezzo = (m² × quantità × tariffa) × 1,7 + spedizione Pixart 15 € (senza ricarico) + 15 € gestione.
-      custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 21, minLong: 30, maxShort: 190, maxLong: 290, maxQty: 100, cutoffHour: 9, minAreaPerPiece: 0.25,
+      custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 20, minLong: 20, maxShort: 190, maxLong: 290, maxQty: 100, cutoffHour: 9, minAreaPerPiece: 0.25,
         consegnaChoices: ['Standard 9 gg', 'Express 2–3 gg', 'Overnight 1 gg'], rates: [[18, 26, 30], [21, 30.2, 35]], readyDays: [[9,9], [2,3], [1,1]], shipping: 15 },
       fa: [
         [ // 2 mm
