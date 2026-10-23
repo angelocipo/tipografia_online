@@ -1919,7 +1919,7 @@ const PRODUCTS = [
       // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1] = totale fornitore; la lunghezza dell'array = quantità massima.
       markup: 1.7, handling: 15,
       // Formato personalizzato (Pixart 3 mm venduto come '2 mm', 4/0): prezzo = (m² × quantità × tariffa) × 1,7 + spedizione Pixart 15 € (senza ricarico) + 15 € gestione.
-      custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 21, minLong: 30, maxShort: 190, maxLong: 290, maxQty: 100, cutoffHour: 9,
+      custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 21, minLong: 30, maxShort: 190, maxLong: 290, maxQty: 100, cutoffHour: 9, minAreaPerPiece: 0.25,
         consegnaChoices: ['Standard 9 gg', 'Express 2–3 gg', 'Overnight 1 gg'], rates: [[18, 26, 30], [21, 30.2, 35]], readyDays: [[9,9], [2,3], [1,1]], shipping: 15 },
       fa: [
         [ // 2 mm
@@ -2601,7 +2601,8 @@ function computeForexPrice(p, f){
     f.spessoreIdx = f.spessoreIdx === 1 ? 1 : 0;
     f.consegnaIdx = Math.max(0, Math.min(cu.consegnaChoices.length - 1, f.consegnaIdx));
     f.qty = Math.max(1, Math.min(cu.maxQty, f.qty));
-    const cost = (f.w * f.h / 10000) * f.qty * cu.rates[f.spessoreIdx][f.consegnaIdx];
+    // Area fatturata per pezzo: almeno minAreaPerPiece m².
+    const cost = Math.max(cu.minAreaPerPiece || 0, f.w * f.h / 10000) * f.qty * cu.rates[f.spessoreIdx][f.consegnaIdx];
     return Math.round((cost * p.pricing.markup + cu.shipping + p.pricing.handling) * 100) / 100;
   }
   const tiers = p.pricing.fa[f.spessoreIdx][f.consegnaIdx][f.formatIdx];
@@ -3725,7 +3726,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
               <input type="text" inputmode="numeric" pattern="[0-9]*" id="forexH" value="${f.h}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
             </div>
           </div>
-          <div style="margin-top:6px; font-size:12px; color:oklch(0.5 0.01 90);">Minimo ${cu.minShort}×${cu.minLong} cm · massimo ${cu.maxShort}×${cu.maxLong} cm · ${fmtEUR(f.w * f.h / 10000)} m² per pezzo</div>` : ''}
+          <div style="margin-top:6px; font-size:12px; color:oklch(0.5 0.01 90);">Minimo ${cu.minShort}×${cu.minLong} cm · massimo ${cu.maxShort}×${cu.maxLong} cm · ${fmtEUR(f.w * f.h / 10000)} m² per pezzo${(f.w * f.h / 10000) < cu.minAreaPerPiece ? ` (fatturato minimo ${fmtEUR(cu.minAreaPerPiece)} m²)` : ''}</div>` : ''}
         </div>
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Spessore</div>
