@@ -319,7 +319,7 @@ const PRICING = {
     // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1]; lunghezza array = quantità massima.
     markup: 1.7, handling: 15,
     // Formato personalizzato (Pixart 3 mm venduto come '2 mm', 4/0): prezzo = (m² × quantità × tariffa) × 1,7 + spedizione Pixart 15 € (senza ricarico) + 15 € gestione.
-    custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 21, minLong: 30, maxShort: 190, maxLong: 290, maxQty: 100, minAreaPerPiece: 0.25,
+    custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 20, minLong: 20, maxShort: 190, maxLong: 290, maxQty: 100, minAreaPerPiece: 0.25,
       consegnaChoices: ['Standard 9 gg', 'Express 2–3 gg', 'Overnight 1 gg'], rates: [[18, 26, 30], [21, 30.2, 35]], shipping: 15 },
     fa: [
       [ // 2 mm
