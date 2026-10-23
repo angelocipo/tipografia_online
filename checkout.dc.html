@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="img/favicon.png">
@@ -34,6 +34,9 @@
 .co-h{font-size:20px;margin:0 0 var(--space-4);}
 </style>
 <script src="i18n.js"></script>
+<script src="tp-files.js"></script>
+<script src="tp-cart.js"></script>
+<style>a{color:var(--color-accent-700);}a:hover{color:var(--color-accent-900);}</style>
 </helmet>
 
 <nav class="nav" style="position:sticky; top:0; z-index:100; background:var(--color-bg);">
@@ -49,35 +52,58 @@
   <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
     <div class="card blueprint co-section">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-bottom:{{ detailsMarginBottom }};">
-        <div>
-          <div class="card-kicker">Il tuo ordine</div>
-          <div class="card-title">{{ productName }}</div>
-          <sc-if value="{{ hasEan }}" hint-placeholder-val="{{ false }}">
-            <div style="font-size:12px;letter-spacing:0.04em;font-family:ui-monospace,monospace;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-top:4px;">EAN {{ productEan }}</div>
-          </sc-if>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-family:var(--font-heading);font-size:28px;">€{{ orderTotal }}</div>
-          <div style="font-size:12px;font-weight:700;color:#c0392b;">Prodotto € {{ productPriceFmt }} + spedizione {{ shippingLabel }}</div>
-        </div>
-      </div>
-      <sc-if value="{{ hasDetails }}" hint-placeholder-val="{{ false }}">
-        <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-4);display:grid;grid-template-columns:repeat(auto-fit, minmax(160px,1fr));gap:var(--space-3);">
-          <sc-for list="{{ orderDetails }}" as="d" hint-placeholder-count="4">
-            <div>
-              <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:2px;">{{ d.label }}</div>
-              <div style="font-size:13.5px;font-weight:600;">{{ d.value }}</div>
+      <div class="card-kicker">Il tuo ordine · {{ itemsCountLabel }}</div>
+      <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="1">
+        <div style="padding:var(--space-4) 0;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:var(--space-3);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-4);">
+            <div style="min-width:0;">
+              <div class="card-title">{{ it.name }}</div>
+              <div style="font-size:12px;letter-spacing:0.04em;font-family:ui-monospace,monospace;color:var(--color-neutral-700);margin-top:4px;">Rif. articolo {{ it.code }}<sc-if value="{{ it.hasEan }}" hint-placeholder-val="{{ false }}"> · EAN {{ it.ean }}</sc-if></div>
             </div>
-          </sc-for>
+            <div style="font-family:var(--font-heading);font-size:24px;white-space:nowrap;">€ {{ it.priceFmt }}</div>
+          </div>
+          <sc-if value="{{ it.hasDetails }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px,1fr));gap:var(--space-3);">
+              <sc-for list="{{ it.details }}" as="d" hint-placeholder-count="3">
+                <div>
+                  <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-neutral-700);margin-bottom:2px;">{{ d.label }}</div>
+                  <div style="font-size:13.5px;font-weight:600;">{{ d.value }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div class="field" style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <label>File da stampare</label>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3);">
+              <label class="btn btn-secondary blueprint" style="cursor:pointer;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ it.uploadLabel }}<input type="file" multiple style="display:none;" onChange="{{ it.onFiles }}"></label>
+              <span style="font-size:12px;color:var(--color-neutral-700);">JPG, PNG, PDF, AI, EPS, ZIP — max 3 MB in totale per l'ordine</span>
+            </div>
+            <sc-if value="{{ it.hasFiles }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12.5px;font-weight:600;color:var(--color-accent-700);">Allegato: {{ it.filesText }}. Verrà inviato alla conferma dell'ordine.</div>
+            </sc-if>
+            <sc-if value="{{ it.hasError }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12.5px;color:#b23b3b;">{{ it.error }}</div>
+            </sc-if>
+            <input class="input" placeholder="Oppure incolla un link al file (Canva, WeTransfer, Drive…)" value="{{ it.link }}" onChange="{{ it.onLink }}">
+          </div>
+          <button type="button" class="btn btn-ghost" onClick="{{ it.onRemove }}" style="align-self:flex-start;padding-left:0;">Rimuovi dal carrello</button>
         </div>
-      </sc-if>
+      </sc-for>
+      <div style="display:flex;flex-direction:column;gap:6px;padding-top:var(--space-4);font-size:14px;">
+        <div style="display:flex;justify-content:space-between;"><span>Prodotti</span><span>€ {{ productPriceFmt }}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Spedizione</span><span>{{ shippingLabel }}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;">Totale</span><span style="font-family:var(--font-heading);font-size:28px;">€ {{ orderTotal }}</span></div>
+        <sc-if value="{{ isMultiItem }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px;color:var(--color-neutral-700);">Una sola spedizione per l'ordine: si applica la tariffa più alta tra gli articoli.</div>
+        </sc-if>
+      </div>
+      <a href="index.html" class="btn btn-ghost" style="margin-top:var(--space-3);padding-left:0;">+ Aggiungi altri prodotti</a>
     </div>
   </sc-if>
   <sc-if value="{{ noProduct }}" hint-placeholder-val="{{ false }}">
     <div class="card blueprint co-section">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <p class="card-body">Nessun prodotto selezionato. Torna a una pagina prodotto e clicca "Ordina ora".</p>
+      <p class="card-body">Il carrello è vuoto. <a href="index.html">Torna ai prodotti</a> e clicca "Aggiungi al carrello".</p>
     </div>
   </sc-if>
 
@@ -237,7 +263,7 @@
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ submitLabel }}
     </button>
     <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin-top:var(--space-4);">Pagamento sicuro tramite Stripe. Riceverai fattura elettronica via SDI o email secondo i dati inseriti.</p>
-    <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{ hasPreventivo }}" hint-placeholder-val="{{ false }}">
       <a href="{{ preventivoHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block blueprint" style="margin-top:var(--space-3);display:flex;max-width:750px;margin-left:auto;margin-right:auto;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi un preventivo ufficiale
       </a>
@@ -276,7 +302,7 @@
 const eur = n => Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 class Component extends DCLogic {
   state = {
-    productId: null, productName: '', productPrice: null, productCollection: 'misura', orderBody: null, design: {},
+    items: [], design: { byKey: {} }, fileErr: {},
     invType: 'privato',
     inv: { name: '', email: '', company: '', vat: '', cf: '', pec: '', sdi: '', address: '', city: '', cap: '', country: '' },
     shipSame: true,
@@ -318,28 +344,102 @@ class Component extends DCLogic {
       .map(([k, v]) => ({ label: this.humanizeKey(k), value: String(v) }));
   }
 
-  componentDidMount() {
+  componentDidMount() { this.initCart(0); }
+
+  // tp-cart.js (helmet) può finire di caricarsi dopo il mount: si attende come per PayPal.
+  initCart(attempts) {
+    const C = window.TPCart;
+    if (!C) { if (attempts < 80) setTimeout(() => this.initCart(attempts + 1), 100); return; }
+    // Vecchio link a prodotto singolo (checkout.html?id=…&cfg=…): lo aggiunge al carrello e pulisce l'URL.
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-    const name = params.get('name');
-    const price = params.get('price');
-    const cfg = params.get('cfg');
-    const col = params.get('col');
-    const ean = params.get('ean') || '';
-    let orderBody = id ? { productId: id } : null;
-    if (cfg) {
-      try { orderBody = JSON.parse(decodeURIComponent(atob(cfg))); } catch (e) {}
+    if (id && C) {
+      let body = { productId: id };
+      const cfg = params.get('cfg');
+      if (cfg) { try { body = JSON.parse(decodeURIComponent(atob(cfg))); } catch (e) {} }
+      C.add({ productId: id, name: params.get('name') || '', price: parseFloat(params.get('price')) || 0, col: params.get('col') || 'misura', ean: params.get('ean') || '', body, details: this.buildOrderDetails(body) });
+      try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
     }
     let design = {};
-    try { design = JSON.parse(sessionStorage.getItem('tp_design') || '{}'); } catch (e) {}
-    if (id) this.setState({ productId: id, productName: name || '', productEan: ean, productPrice: price || '', productCollection: col || 'misura', orderBody, design });
-    if (id) this.mountPaypalWhenReady();
+    try { design = JSON.parse(sessionStorage.getItem('tp_design') || '{}') || {}; } catch (e) {}
+    if (!design.byKey) design.byKey = {};
+    const items = C ? C.items() : [];
+    this.setState({ items, design });
+    if (C) C.onChange(list => this.setState({ items: list }));
+    if (items.length) this.mountPaypalWhenReady();
+  }
+
+  itemCode(it) { return String(it.key || '').slice(-4).toUpperCase(); }
+
+  saveDesign(design) {
+    const items = this.state.items;
+    const parts = [], links = [];
+    items.forEach(it => {
+      const d = design.byKey[it.key] || {};
+      if ((d.names || []).length) parts.push(it.name + ' [' + this.itemCode(it) + ']: ' + d.names.join(', '));
+      if (d.link) links.push((items.length > 1 ? it.name + ' [' + this.itemCode(it) + ']: ' : '') + d.link);
+    });
+    design.names = parts;
+    design.link = links.join(' | ');
+    try { sessionStorage.setItem('tp_design', JSON.stringify(design)); } catch (e) {}
+    if (window.TPFiles) window.TPFiles.setLink(design.link);
+    this.setState({ design: { ...design } });
+  }
+
+  async selectFiles(it, e) {
+    const input = e.target;
+    const files = Array.prototype.slice.call(input.files || []);
+    input.value = '';
+    if (!files.length || !window.TPFiles) return;
+    const code = this.itemCode(it), prefix = code + ' - ';
+    const setErr = (m) => this.setState({ fileErr: { ...this.state.fileErr, [it.key]: m } });
+    setErr('');
+    try {
+      await window.TPFiles.drop(prefix);
+      const used = await window.TPFiles.totalBytes();
+      const add = files.reduce((n, f) => n + f.size, 0);
+      if (used + add > 3 * 1024 * 1024) { setErr('Totale ' + ((used + add) / 1048576).toFixed(1) + ' MB: troppo grande. Massimo 3 MB per tutto l\u2019ordine: per file più pesanti usa il link.'); this.forgetFiles(it); return; }
+      const encoded = await Promise.all(files.map(f => new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res({ name: prefix + f.name, type: f.type, data: String(r.result).split(',')[1] });
+        r.onerror = () => rej(new Error('Lettura del file non riuscita'));
+        r.readAsDataURL(f);
+      })));
+      const design = { ...this.state.design, byKey: { ...this.state.design.byKey } };
+      if (!design.ref) design.ref = 'TP-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+      await window.TPFiles.stash({ files: encoded, ref: design.ref, product: this.state.items.map(x => x.name + ' [' + this.itemCode(x) + ']').join(', ') });
+      design.byKey[it.key] = { ...(design.byKey[it.key] || {}), names: files.map(f => f.name) };
+      this.saveDesign(design);
+    } catch (ex) {
+      setErr('Caricamento non riuscito (' + ex.message + '). Riprova con file più leggeri oppure incolla un link.');
+    }
+  }
+
+  forgetFiles(it) {
+    const design = { ...this.state.design, byKey: { ...this.state.design.byKey } };
+    if (design.byKey[it.key]) design.byKey[it.key] = { ...design.byKey[it.key], names: [] };
+    this.saveDesign(design);
+  }
+
+  setItemLink(it, value) {
+    const design = { ...this.state.design, byKey: { ...this.state.design.byKey } };
+    design.byKey[it.key] = { ...(design.byKey[it.key] || {}), link: String(value || '').trim() };
+    this.saveDesign(design);
+  }
+
+  async removeItem(it) {
+    if (window.TPFiles) { try { await window.TPFiles.drop(this.itemCode(it) + ' - '); } catch (e) {} }
+    const design = { ...this.state.design, byKey: { ...this.state.design.byKey } };
+    delete design.byKey[it.key];
+    if (window.TPCart) window.TPCart.remove(it.key);
+    const items = window.TPCart ? window.TPCart.items() : [];
+    this.setState({ items }, () => this.saveDesign(design));
   }
 
   buildPaymentBody(extra) {
-    const { productId, invType, inv, shipSame, ship, shipZone, useSender, sender, orderBody, design } = this.state;
+    const { invType, inv, shipSame, ship, shipZone, useSender, sender, items, design } = this.state;
     return {
-      ...(orderBody || { productId }),
+      items: items.map(i => i.body),
       shippingFee: this.computeShippingFee(),
       shippingZone: shipZone,
       shippingCountry: shipZone === 'ue' ? this.state.shipCountry : 'Italia',
@@ -400,7 +500,9 @@ class Component extends DCLogic {
   }
 
   buildPreventivoHref(orderDetails) {
-    const s = this.state;
+    const s0 = this.state, it = s0.items[0];
+    if (!it) return 'preventivo.html';
+    const s = { productName: it.name, productPrice: it.price, shipZone: s0.shipZone, productId: it.productId, productEan: it.ean, productCollection: it.col };
     const qtyEntry = orderDetails.find(d => d.label === 'Quantità');
     const cfg = orderDetails.filter(d => d !== qtyEntry).map(d => d.label + ': ' + d.value).join(' · ');
     const p = new URLSearchParams();
@@ -415,24 +517,27 @@ class Component extends DCLogic {
     return 'preventivo.html?' + p.toString();
   }
 
-  rollupQty() {
-    if (this.state.productId !== '197') return 0;
-    const f = (this.state.orderBody && this.state.orderBody.formula) || {};
-    return Math.max(1, parseInt(f.qty, 10) || 1);
+  // Spedizione di un articolo (stessa regola di api/create-checkout-session.js e preventivo.dc.html).
+  itemShippingFee(it) {
+    const zone = this.state.shipZone;
+    // Backdrop '5970': trasporto incluso in Italia, UE + € 55.
+    if (String(it.productId) === '5970') return zone === 'ue' ? 55 : 0;
+    if (it.col === 'strategici') return 0;
+    const rates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
+    // Roll-Up 80/85 a Roma e UE: 1° a tariffa zona, successivi € 15.
+    if (String(it.productId) === '197' && zone !== 'italia') {
+      const rq = Math.max(1, parseInt(((it.body || {}).formula || {}).qty, 10) || 1);
+      return rates[zone] + 15 * (rq - 1);
+    }
+    return rates[zone] ?? 20;
   }
 
+  // Carrello: una sola spedizione = la tariffa più alta tra gli articoli.
   computeShippingFee() {
-    // Backdrop '5970': trasporto incluso in Italia, UE + € 55 (stessa regola in api/create-checkout-session.js e preventivo.dc.html).
-    if (String(this.state.productId) === '5970') return this.state.shipZone === 'ue' ? 55 : 0;
-    if (this.state.productCollection === 'strategici') return 0;
-    // Roll-Up 80/85 a Roma e UE: 1° a tariffa zona, successivi € 15. Altrimenti tariffa zona. Nessuna tariffa ridotta sopra € 100.
-    const rq = this.rollupQty();
-    const rollupFirst = { roma_centro: 20, roma_resto: 30, ue: 35 }[this.state.shipZone];
-    const price = parseFloat(this.state.productPrice) || 0;
-    if (rq && rollupFirst) return rollupFirst + 15 * (rq - 1);
-    const rates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
-    return rates[this.state.shipZone] ?? 20;
+    return Math.max(0, ...this.state.items.map(it => this.itemShippingFee(it)));
   }
+
+  subtotal() { return this.state.items.reduce((a, i) => a + (parseFloat(i.price) || 0), 0); }
 
   validate() {
     const { invType, inv } = this.state;
@@ -444,7 +549,7 @@ class Component extends DCLogic {
     const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
     if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
     if (this.state.shipZone === 'ue' && !this.state.shipCountry) return 'Seleziona il paese UE di destinazione.';
-    if (!this.state.productId) return 'Nessun prodotto selezionato.';
+    if (!this.state.items.length) return 'Il carrello è vuoto.';
     return null;
   }
 
@@ -456,11 +561,13 @@ class Component extends DCLogic {
   // Riepilogo per la pagina "grazie" (solo visualizzazione: l'importo addebitato lo calcola il server).
   saveRecap() {
     try {
-      const s = this.state, fee = this.computeShippingFee(), sub = parseFloat(s.productPrice) || 0;
-      const details = this.buildOrderDetails(s.orderBody).map(d => ({ label: String(d.label), value: String(d.value) }));
+      const s = this.state, fee = this.computeShippingFee(), sub = this.subtotal();
+      const details = s.items.length === 1
+        ? (s.items[0].details || []).map(d => ({ label: String(d.label), value: String(d.value) }))
+        : s.items.map(i => ({ label: String(i.name), value: '€ ' + eur(i.price) }));
       const sn = s.useSender ? s.sender || {} : null;
       localStorage.setItem('tp_last_order', JSON.stringify({
-        name: s.productName || 'Ordine', details, subtotal: sub, shippingFee: fee, total: sub + fee,
+        name: s.items.length === 1 ? s.items[0].name : 'Ordine di ' + s.items.length + ' articoli', details, subtotal: sub, shippingFee: fee, total: sub + fee,
         email: (s.inv || {}).email || '',
         sender: sn ? { company: sn.company || sn.name || '', address: sn.address || '', cap: sn.cap || '', city: sn.city || '', phone: sn.phone || '' } : null,
       }));
@@ -496,28 +603,38 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const shippingFee = this.computeShippingFee();
-    const orderTotal = (parseFloat(s.productPrice) || 0) + shippingFee;
-    const orderDetails = this.buildOrderDetails(s.orderBody);
-    const dz = s.design || {};
-    if ((dz.names || []).length) orderDetails.push({ label: 'File ricevuti', value: dz.names.join(', ') });
-    if (dz.ref) orderDetails.push({ label: 'Riferimento materiale', value: dz.ref });
-    if (dz.link) orderDetails.push({ label: 'Link al file', value: dz.link });
+    const sub = this.subtotal();
+    const n = s.items.length;
+    const byKey = (s.design && s.design.byKey) || {};
+    const cartItems = s.items.map(it => {
+      const d = byKey[it.key] || {};
+      const err = (s.fileErr || {})[it.key] || '';
+      const names = d.names || [];
+      return {
+        key: it.key, name: it.name, code: this.itemCode(it), ean: it.ean || '', hasEan: !!it.ean,
+        priceFmt: eur(parseFloat(it.price) || 0),
+        details: it.details || [], hasDetails: (it.details || []).length > 0,
+        hasFiles: names.length > 0, filesText: names.join(', '), uploadLabel: names.length ? 'Sostituisci file' : 'Carica il tuo file',
+        hasError: !!err, error: err, link: d.link || '',
+        onFiles: (e) => this.selectFiles(it, e),
+        onLink: (e) => this.setItemLink(it, e.target.value),
+        onRemove: () => this.removeItem(it),
+      };
+    });
+    const orderDetails = n === 1 ? (s.items[0].details || []) : [];
     return {
-      hasProduct: !!s.productId,
-      noProduct: !s.productId,
-      hasDetails: orderDetails.length > 0,
-      orderDetails,
-      detailsMarginBottom: orderDetails.length > 0 ? 'var(--space-4)' : '0',
-      productName: s.productName,
-      productEan: s.productEan || '',
-      hasEan: !!s.productEan,
-      productPrice: s.productPrice,
-      orderTotal: eur(orderTotal),
-      productPriceFmt: eur(parseFloat(s.productPrice) || 0),
+      hasProduct: n > 0,
+      noProduct: n === 0,
+      cartItems,
+      itemsCountLabel: n === 1 ? '1 articolo' : n + ' articoli',
+      isMultiItem: n > 1,
+      hasPreventivo: n === 1,
+      orderTotal: eur(sub + shippingFee),
+      productPriceFmt: eur(sub),
       shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: false,
-      isRollupShipping: !!this.rollupQty() && s.shipZone !== 'italia',
-      isBackdrop: String(s.productId) === '5970',
+      isRollupShipping: s.items.some(i => String(i.productId) === '197') && s.shipZone !== 'italia',
+      isBackdrop: s.items.some(i => String(i.productId) === '5970'),
       isZoneRomaCentro: s.shipZone === 'roma_centro',
       isZoneRomaResto: s.shipZone === 'roma_resto',
       isZoneItalia: s.shipZone === 'italia',

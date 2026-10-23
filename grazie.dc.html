@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -193,6 +193,8 @@ class Component extends DCLogic {
     let recap = null;
     if (orderRef) { try { recap = JSON.parse(localStorage.getItem('tp_last_order') || 'null'); } catch (e) {} }
     this.setState({ orderRef, recap });
+    // Ordine pagato: il carrello si svuota.
+    if (orderRef) { try { localStorage.removeItem('tp_cart'); } catch (e) {} }
     this.sendDesignFiles(orderRef);
     if (sessionId) this.loadServerRecap(sessionId, recap);
   }

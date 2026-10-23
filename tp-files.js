@@ -44,9 +44,24 @@
       cur.files = (cur.files || []).concat(opts.files || []).slice(0, 10);
       cur.ref = opts.ref || cur.ref || '';
       cur.product = opts.product || cur.product || '';
+      if (opts.link !== undefined) cur.link = opts.link;
       cur.ts = Date.now();
       await put(cur);
       return cur.files.map(function (f) { return f.name; });
+    },
+
+    // Checkout: toglie i file di un articolo (nomi che iniziano con prefix).
+    async drop(prefix) {
+      var cur = await get();
+      if (!cur) return [];
+      cur.files = (cur.files || []).filter(function (f) { return String(f.name).indexOf(prefix) !== 0; });
+      await put(cur);
+      return cur.files.map(function (f) { return f.name; });
+    },
+
+    async totalBytes() {
+      var cur = await get();
+      return cur && cur.files ? cur.files.reduce(function (n, f) { return n + Math.floor(String(f.data || '').length * 0.75); }, 0) : 0;
     },
 
     async setLink(link) {
