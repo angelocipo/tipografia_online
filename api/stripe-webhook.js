@@ -190,6 +190,21 @@ async function processPaidOrder(session, lineItemsData) {
         })),
       };
       const buyerEmail = md.inv_email || session.customer_details?.email || session.customer_email;
+      // Link firmato per creare a mano il file FatturaPA XML da caricare su Aruba (solo email titolare).
+      let fatturaLink = '';
+      try {
+        const { signTicket } = require('./_paypal');
+        fatturaLink = 'https://tipografia.online/api/fattura-xml?t=' + signTicket({
+          k: 'fattura', ref: order.number, pay: md.payment_method === 'PayPal' ? 'PayPal' : 'Stripe',
+          payId: md.payment_method === 'PayPal' ? (md.paypal_order || '') : '', totalCents: session.amount_total,
+          c: { type: isCompany ? 'azienda' : 'privato', name: md.inv_name || session.customer_details?.name || '', company: md.inv_company || '',
+            vat: md.inv_vat || '', cf: md.inv_cf || '', sdi: md.inv_sdi || '', pec: md.inv_pec || '', address: order.customer.address,
+            cap: order.customer.cap, city: order.customer.city, province: '', country: order.customer.country },
+          lines: lineItems.data.map((li) => ({ d: li.description, q: 1, c: li.amount_total })),
+        });
+      } catch (e) {
+        console.error('Fattura link failed for session', session.id, e);
+      }
       console.log('Order', order.number, 'session', session.id, 'buyerEmail:', buyerEmail || 'NONE', '— owner:', OWNER_EMAIL);
       // DDT in PDF allegato alle email. Caricato in modo lazy e dentro un try: se il file manca
       // o la generazione fallisce, le email partono comunque senza allegato.
@@ -218,7 +233,7 @@ async function processPaidOrder(session, lineItemsData) {
         await sendEmail({
           to: OWNER_EMAIL,
           subject: `Nuovo ordine #${order.number} — € ${total.toFixed(2)}`,
-          html: summaryHtml.replace('</body></html>', ownerBlockHtml(order, buyerEmail, session) + '</body></html>'),
+          html: summaryHtml.replace('</body></html>', ownerBlockHtml(order, buyerEmail, session, fatturaLink) + '</body></html>'),
           attachments,
         });
         console.log('Owner notification sent to', OWNER_EMAIL);
@@ -426,7 +441,7 @@ function orderEmailHtml(order, total, md, hasDdt, lang) {
 </body></html>`;
 }
 
-function ownerBlockHtml(order, buyerEmail, session) {
+function ownerBlockHtml(order, buyerEmail, session, fatturaLink) {
   const md = session.metadata || {};
   const rowsData = [
     ['Cliente', order.customer.name],
@@ -441,6 +456,9 @@ function ownerBlockHtml(order, buyerEmail, session) {
     ['Lingua cliente', md.lang === 'en' ? 'Inglese' : 'Italiano'],
     ['Pagamento', md.payment_method === 'PayPal' ? `PayPal (ordine ${md.paypal_order || '—'})` : 'Carta (Stripe)'],
   ];
+  if (fatturaLink) {
+    rowsData.push(['Fattura Aruba', `<a href="${fatturaLink}" style="color:${STEEL};font-weight:600;">Crea fattura XML</a>`]);
+  }
   if (md.product_ean || md.product_id) {
     rowsData.push(['EAN / Cod. prodotto', [md.product_ean, md.product_id].filter(Boolean).join(' · ')]);
   }
