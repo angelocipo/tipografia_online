@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generatore Fatture XML</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: colonna unica di sezioni del documento, riepilogo totali fisso a lato su schermi larghi */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#16202b; --muted:#5b6774; --line:#d8dee5;
+  --accent:#0077b6; --accent-ink:#ffffff; --soft:#e6f2f9; --warn:#a45a00; --warn-bg:#fff4e2; --err:#b3261e; --err-bg:#fdeceb; --ok:#1e7a46;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#11161c; --panel:#19212a; --ink:#e7edf3; --muted:#9aa7b4; --line:#2c3743;
+  --accent:#4cb3e8; --accent-ink:#06131c; --soft:#16303f; --warn:#f0b35a; --warn-bg:#33270f; --err:#ff8a80; --err-bg:#3a1a18; --ok:#6fd39b;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+header{padding:20px max(16px,4vw) 8px}
+header h1{margin:0;font-size:24px;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;padding:12px max(16px,4vw) 40px;align-items:start}
+@media (max-width:980px){.wrap{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:12px}
+main{display:grid;gap:16px;min-width:0}
+h2{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 12px}
+.wide{grid-column:1/-1}
+.span2{grid-column:span 2}
+@media (max-width:420px){.span2{grid-column:1/-1}}
+label{display:grid;gap:3px;font-size:12px;color:var(--muted);font-weight:500}
+input,select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:58px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+input.bad,select.bad{border-color:var(--err);background:var(--err-bg)}
+.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+button{font:inherit;font-size:14px;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.small{padding:4px 10px;font-size:13px;font-weight:500}
+button.x{padding:4px 9px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:12px;color:var(--muted)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--soft)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:600}
+details[open] summary{margin-bottom:10px}
+.lines{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:4px 6px;font-weight:600}
+td{padding:4px 3px;vertical-align:top}
+td.tot{font-family:var(--mono);text-align:right;padding-top:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+aside{position:sticky;top:12px;display:grid;gap:12px}
+.sum{display:grid;gap:6px;font-variant-numeric:tabular-nums}
+.sum div{display:flex;justify-content:space-between;gap:8px}
+.sum .big{font-size:22px;font-weight:700;border-top:1px solid var(--line);padding-top:8px}
+.sum span:last-child{font-family:var(--mono)}
+.msg{font-size:13px;border-radius:6px;padding:8px 10px}
+.msg.err{background:var(--err-bg);color:var(--err)}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.msg.ok{background:var(--soft);color:var(--ok)}
+.msgs{display:grid;gap:6px}
+.fname{font-family:var(--mono);font-size:13px;word-break:break-all;background:var(--soft);padding:6px 8px;border-radius:6px}
+pre{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;overflow:auto;max-height:420px;margin:0;white-space:pre}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg label{display:flex;align-items:center;gap:5px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--ink)}
+.seg input{width:auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>Generatore Fatture XML</h1>
+  <p>Compila la fattura e scarica il file FatturaPA (FPR12) da caricare su Aruba Fatturazione Elettronica con «Carica fattura» (import XML). Per partire, carica l'ultima fattura emessa: dati aziendali, pagamento e numerazione vengono ripresi da lì.</p>
+</header>
+
+<div class="wrap">
+<main>
+
+<section>
+  <h2>1 · Fattura di partenza</h2>
+  <div class="drop" id="drop" tabindex="0">Trascina qui l'ultimo file XML emesso oppure <u>clicca per sceglierlo</u><br><span class="hint">Il file resta sul tuo computer: nulla viene inviato in rete.</span></div>
+  <input type="file" id="fileIn" accept=".xml,text/xml" hidden>
+  <div class="msgs" id="importMsg"></div>
+</section>
+
+<section>
+  <h2>2 · Documento</h2>
+  <div class="grid">
+    <label>Tipo documento
+      <select id="tipoDoc">
+        <option value="TD01">TD01 · Fattura</option>
+        <option value="TD24">TD24 · Fattura differita</option>
+        <option value="TD04">TD04 · Nota di credito</option>
+        <option value="TD05">TD05 · Nota di debito</option>
+        <option value="TD02">TD02 · Acconto/anticipo su fattura</option>
+        <option value="TD06">TD06 · Parcella</option>
+      </select>
+    </label>
+    <label>Numero fattura<input id="numero" placeholder="es. 125"></label>
+    <label>Data<input type="date" id="data"></label>
+    <label>Progressivo invio (5 caratteri)<input id="progressivo" maxlength="5" class="num" style="text-align:left" placeholder="es. DVYLR"></label>
+    <label class="wide">Causale (facoltativa)<textarea id="causale" rows="2" placeholder="es. Stampa biglietti da visita"></textarea></label>
+  </div>
+  <p class="hint" style="margin:0">Il progressivo invio dà il nome al file e non deve mai ripetersi: viene incrementato in automatico dall'ultimo usato.</p>
+</section>
+
+<section>
+  <h2>3 · Cliente <span class="row"><select id="rubrica" style="width:auto;font-size:13px"><option value="">Clienti salvati…</option></select><button class="small" id="nuovoCliente" type="button">Nuovo cliente</button></span></h2>
+  <div class="row"><span class="seg"><label><input type="radio" name="tipoCli" value="az" checked> Azienda / professionista</label><label><input type="radio" name="tipoCli" value="pf"> Privato</label></span></div>
+  <div class="grid">
+    <label class="span2" data-az>Denominazione<input id="cDen"></label>
+    <label data-pf hidden>Nome<input id="cNome"></label>
+    <label data-pf hidden>Cognome<input id="cCognome"></label>
+    <label>Paese P.IVA<input id="cPaese" value="IT" maxlength="2"></label>
+    <label>Partita IVA<input id="cPiva" placeholder="11 cifre"></label>
+    <label>Codice fiscale<input id="cCf"></label>
+    <label>Codice destinatario (SDI)<input id="cSdi" maxlength="7" placeholder="0000000"></label>
+    <label class="span2">PEC (se manca il codice SDI)<input id="cPec" type="email"></label>
+    <label class="span2">Indirizzo<input id="cInd" placeholder="Via Roma"></label>
+    <label>Civico<input id="cCiv"></label>
+    <label>CAP<input id="cCap" maxlength="5"></label>
+    <label>Comune<input id="cCom"></label>
+    <label>Provincia<input id="cProv" maxlength="2" placeholder="LT"></label>
+    <label>Nazione<input id="cNaz" value="IT" maxlength="2"></label>
+  </div>
+  <p class="hint" style="margin:0">Privati e clienti senza codice: lascia «0000000». Per la Pubblica Amministrazione serve il formato FPA12, non gestito da questo strumento.</p>
+</section>
+
+<section>
+  <h2>4 · Righe <button class="small" id="addRow" type="button">+ Aggiungi riga</button></h2>
+  <div class="lines"><table>
+    <thead><tr><th style="width:38%">Descrizione</th><th>Q.tà</th><th>U.M.</th><th>Prezzo unit.</th><th>IVA %</th><th>Natura (se 0%)</th><th style="text-align:right">Totale</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <div class="grid">
+    <label>Esigibilità IVA
+      <select id="esig"><option value="I">Immediata</option><option value="D">Differita</option><option value="S">Scissione pagamenti (split payment)</option></select>
+    </label>
+    <label class="span2">Riferimento normativo (righe esenti)<input id="rifNorm" placeholder="es. Art. 15 DPR 633/72"></label>
+    <label style="align-self:end;display:flex;gap:6px;align-items:center;color:var(--ink);font-size:13px"><input type="checkbox" id="bollo" style="width:auto"> Bollo virtuale 2,00 €</label>
+  </div>
+</section>
+
+<section>
+  <h2>5 · Pagamento</h2>
+  <div class="grid">
+    <label>Condizioni
+      <select id="condPag"><option value="TP02">TP02 · Pagamento completo</option><option value="TP01">TP01 · A rate</option><option value="TP03">TP03 · Anticipo</option></select>
+    </label>
+    <label>Modalità
+      <select id="modPag">
+        <option value="MP05">MP05 · Bonifico</option><option value="MP01">MP01 · Contanti</option><option value="MP02">MP02 · Assegno</option>
+        <option value="MP08">MP08 · Carta di pagamento</option><option value="MP12">MP12 · RIBA</option><option value="MP19">MP19 · SEPA Direct Debit</option><option value="MP23">MP23 · PagoPA</option>
+      </select>
+    </label>
+    <label>Scadenza<input type="date" id="scad"></label>
+    <label>Giorni (da data fattura)<input type="number" id="giorni" min="0" class="num"></label>
+    <label class="span2">IBAN<input id="iban"></label>
+    <label>Istituto finanziario<input id="banca"></label>
+    <label>Beneficiario<input id="benef"></label>
+  </div>
+</section>
+
+<section>
+  <details id="cedDet">
+    <summary>I tuoi dati aziendali (cedente) e trasmittente</summary>
+    <div class="grid">
+      <label class="span2">Denominazione<input id="sDen"></label>
+      <label>Nome (ditta individuale)<input id="sNome"></label>
+      <label>Cognome<input id="sCognome"></label>
+      <label>Paese<input id="sPaese" value="IT" maxlength="2"></label>
+      <label>Partita IVA<input id="sPiva"></label>
+      <label>Codice fiscale<input id="sCf"></label>
+      <label>Regime fiscale
+        <select id="sRegime">
+          <option value="RF01">RF01 · Ordinario</option><option value="RF19">RF19 · Forfettario</option><option value="RF02">RF02 · Contribuenti minimi</option>
+          <option value="RF04">RF04 · Agricoltura</option><option value="RF10">RF10 · Altro (art. 74 c.6)</option><option value="RF18">RF18 · Altro</option>
+        </select>
+      </label>
+      <label class="span2">Indirizzo<input id="sInd"></label>
+      <label>Civico<input id="sCiv"></label>
+      <label>CAP<input id="sCap" maxlength="5"></label>
+      <label>Comune<input id="sCom"></label>
+      <label>Provincia<input id="sProv" maxlength="2"></label>
+      <label>Nazione<input id="sNaz" value="IT" maxlength="2"></label>
+      <label>Ufficio REA<input id="sReaUff" maxlength="2"></label>
+      <label>Numero REA<input id="sReaNum"></label>
+      <label>Capitale sociale<input id="sReaCap" class="num"></label>
+      <label>Socio unico
+        <select id="sReaSocio"><option value="">—</option><option value="SU">SU · Socio unico</option><option value="SM">SM · Più soci</option></select>
+      </label>
+      <label>Stato liquidazione
+        <select id="sReaLiq"><option value="">—</option><option value="LN">LN · Non in liquidazione</option><option value="LS">LS · In liquidazione</option></select>
+      </label>
+      <label>Telefono<input id="sTel"></label>
+      <label class="span2">Email<input id="sEmail"></label>
+      <label>Trasmittente · Paese<input id="tPaese" value="IT" maxlength="2"></label>
+      <label>Trasmittente · Codice<input id="tCod"></label>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Il trasmittente e il prefisso del nome file vengono presi dalla fattura caricata. Questi dati restano salvati in questo browser.</p>
+  </details>
+</section>
+
+</main>
+
+<aside>
+  <section>
+    <h2>Totali</h2>
+    <div class="sum" id="sum"></div>
+  </section>
+  <section>
+    <h2>File</h2>
+    <div class="fname" id="fname">—</div>
+    <div class="msgs" id="checks"></div>
+    <button class="primary" id="gen" type="button">Scarica XML</button>
+    <div class="row"><button class="small" id="showXml" type="button">Mostra XML</button><button class="small" id="copyXml" type="button">Copia XML</button></div>
+    <p class="hint" style="margin:0">Su Aruba: Fatture emesse › Carica fattura › seleziona il file. Aruba la firma e la invia allo SDI.</p>
+  </section>
+  <section id="xmlBox" hidden><pre id="xmlOut"></pre></section>
+</aside>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem('fpr_'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('fpr_'+k, JSON.stringify(v)); }catch(e){} }
+};
+const NATURE = ['','N1','N2.1','N2.2','N3.1','N3.2','N3.3','N3.4','N3.5','N3.6','N4','N5','N6.1','N6.2','N6.3','N6.4','N6.5','N6.6','N6.7','N6.8','N6.9','N7'];
+const SELLER_IDS = ['sDen','sNome','sCognome','sPaese','sPiva','sCf','sRegime','sInd','sCiv','sCap','sCom','sProv','sNaz','sReaUff','sReaNum','sReaCap','sReaSocio','sReaLiq','sTel','sEmail','tPaese','tCod','condPag','modPag','iban','banca','benef','giorni','esig','rifNorm'];
+const CLI_IDS = ['cDen','cNome','cCognome','cPaese','cPiva','cCf','cSdi','cPec','cInd','cCiv','cCap','cCom','cProv','cNaz'];
+let filePrefix = LS.get('prefix', '');
+
+// ---------- utilità ----------
+const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const num = s => { s = String(s ?? '').trim().replace(/\s/g,''); if (s.includes(',')) s = s.replace(/\./g,'').replace(',', '.'); const n = parseFloat(s); return isFinite(n) ? n : 0; };
+const f2 = n => r2(n).toFixed(2);
+const fPrice = n => { let s = n.toFixed(8).replace(/0+$/,''); const d = (s.split('.')[1]||'').length; return d < 2 ? n.toFixed(2) : s; };
+const euro = n => r2(n).toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const addDays = (iso, n) => { const d = new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const diffDays = (a, b) => Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00')) / 864e5);
+const v = id => $(id).value.trim();
+
+const B36 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function nextProg(p){
+  p = (p||'').toUpperCase();
+  if (!/^[0-9A-Z]{1,5}$/.test(p)) return '00001';
+  const a = p.padStart(5,'0').split('');
+  for (let i = a.length-1; i >= 0; i--){ const k = B36.indexOf(a[i]); if (k < 35){ a[i] = B36[k+1]; return a.join(''); } a[i] = '0'; }
+  return '00001';
+}
+function nextNumero(n){
+  n = String(n||'');
+  const groups = [...n.matchAll(/\d+/g)];
+  if (!groups.length) return n;
+  let g = groups[groups.length-1];
+  if (groups.length > 1 && /^20\d\d$/.test(g[0])) g = groups[groups.length-2];
+  const inc = String(parseInt(g[0],10)+1).padStart(g[0].length,'0');
+  return n.slice(0,g.index) + inc + n.slice(g.index+g[0].length);
+}
+
+// ---------- righe ----------
+function addRow(d = {}){
+  const tr = document.createElement('tr');
+  const natOpts = NATURE.map(x => `<option value="${x}">${x||'—'}</option>`).join('');
+  tr.innerHTML = `<td><textarea rows="1" data-k="desc" aria-label="Descrizione"></textarea></td>
+    <td><input data-k="qta" class="num" style="width:70px" aria-label="Quantità"></td>
+    <td><input data-k="um" style="width:60px" aria-label="Unità di misura"></td>
+    <td><input data-k="prezzo" class="num" style="width:100px" aria-label="Prezzo unitario"></td>
+    <td><input data-k="iva" class="num" style="width:60px" aria-label="Aliquota IVA"></td>
+    <td><select data-k="natura" style="width:92px" aria-label="Natura">${natOpts}</select></td>
+    <td class="tot">0,00</td>
+    <td><button class="x" type="button" title="Elimina riga" aria-label="Elimina riga">✕</button></td>`;
+  const q = k => tr.querySelector(`[data-k="${k}"]`);
+  q('desc').value = d.desc ?? ''; q('qta').value = d.qta ?? '1'; q('um').value = d.um ?? '';
+  q('prezzo').value = d.prezzo ?? ''; q('iva').value = d.iva ?? '22'; q('natura').value = d.natura ?? '';
+  tr.querySelector('.x').onclick = () => { tr.remove(); if (!$('rows').children.length) addRow(); refresh(); };
+  $('rows').appendChild(tr);
+  return tr;
+}
+function readRows(){
+  return [...$('rows').children].map(tr => {
+    const g = k => tr.querySelector(`[data-k="${k}"]`).value.trim();
+    const qta = num(g('qta')), prezzo = num(g('prezzo')), iva = num(g('iva'));
+    return { tr, desc:g('desc'), qtaRaw:g('qta'), qta, um:g('um'), prezzo, iva, natura:g('natura'), tot: r2(qta*prezzo) };
+  });
+}
+function riepilogo(rows){
+  const m = new Map();
+  for (const r of rows){
+    const key = r.iva ? 'A'+r.iva : 'N'+r.natura;
+    const e = m.get(key) || {iva:r.iva, natura:r.iva ? '' : r.natura, imp:0};
+    e.imp = r2(e.imp + r.tot); m.set(key, e);
+  }
+  return [...m.values()].map(e => ({...e, imposta: r2(e.imp*e.iva/100)}));
+}
+
+// ---------- verifica ----------
+function checks(rows, riep, totale){
+  const errs = [], warns = [];
+  const mark = (id, bad) => $(id).classList.toggle('bad', !!bad);
+  const tipoPf = document.querySelector('[name=tipoCli]:checked').value === 'pf';
+  if (!v('numero')) errs.push('Manca il numero fattura.');
+  if (!v('data')) errs.push('Manca la data.');
+  mark('progressivo', !/^[0-9A-Za-z]{5}$/.test(v('progressivo')));
+  if (!/^[0-9A-Za-z]{5}$/.test(v('progressivo'))) errs.push('Il progressivo invio deve avere 5 caratteri (lettere/numeri).');
+  if (!v('sPiva') || !(v('sDen') || (v('sNome') && v('sCognome')))) errs.push('Mancano i tuoi dati aziendali: carica l\'ultima fattura o compila la sezione cedente.');
+  if (!v('tCod')) errs.push('Manca il codice del trasmittente (sezione dati aziendali).');
+  const den = tipoPf ? (v('cNome') && v('cCognome')) : v('cDen');
+  mark(tipoPf ? 'cNome' : 'cDen', !den);
+  if (!den) errs.push(tipoPf ? 'Inserisci nome e cognome del cliente.' : 'Inserisci la denominazione del cliente.');
+  const piva = v('cPiva'), cf = v('cCf');
+  const pivaBad = piva && v('cPaese').toUpperCase() === 'IT' && !/^\d{11}$/.test(piva);
+  mark('cPiva', pivaBad); if (pivaBad) errs.push('La partita IVA italiana deve avere 11 cifre.');
+  const cfBad = cf && !/^([A-Za-z0-9]{16}|\d{11})$/.test(cf);
+  mark('cCf', cfBad); if (cfBad) errs.push('Il codice fiscale deve avere 16 caratteri (o 11 cifre).');
+  if (!piva && !cf) errs.push('Il cliente deve avere partita IVA o codice fiscale.');
+  const sdi = v('cSdi');
+  const sdiBad = sdi && !/^[A-Za-z0-9]{7}$/.test(sdi);
+  mark('cSdi', sdiBad); if (sdiBad) errs.push('Il codice destinatario ha 7 caratteri.');
+  for (const id of ['cInd','cCap','cCom']) mark(id, !v(id));
+  if (!v('cInd') || !v('cCap') || !v('cCom')) errs.push('Completa indirizzo, CAP e comune del cliente.');
+  if (v('cNaz').toUpperCase() === 'IT' && v('cCap') && !/^\d{5}$/.test(v('cCap'))) errs.push('Il CAP deve avere 5 cifre.');
+  if (v('cNaz').toUpperCase() !== 'IT' && (!sdi || sdi === '0000000')) warns.push('Cliente estero: di solito il codice destinatario è XXXXXXX.');
+  rows.forEach((r, i) => {
+    const bad = {desc:!r.desc, qta:!(r.qta>0) && r.qtaRaw!=='', natura: r.iva===0 && !r.natura};
+    for (const k in bad) r.tr.querySelector(`[data-k="${k}"]`).classList.toggle('bad', bad[k]);
+    if (!r.desc) errs.push(`Riga ${i+1}: manca la descrizione.`);
+    if (r.iva === 0 && !r.natura) errs.push(`Riga ${i+1}: con IVA 0% scegli la natura dell'esenzione.`);
+    if (r.iva !== 0 && r.natura) warns.push(`Riga ${i+1}: la natura si usa solo con IVA 0%, verrà ignorata.`);
+  });
+  if (rows.some(r => r.iva === 0) && !v('rifNorm')) warns.push('Righe esenti: indica il riferimento normativo.');
+  const esente = riep.filter(e => !e.iva).reduce((a,e)=>a+e.imp,0);
+  if (esente > 77.47 && !$('bollo').checked) warns.push('Importo esente sopra 77,47 €: probabilmente serve il bollo virtuale.');
+  if ($('modPag').value === 'MP05' && !v('iban')) warns.push('Bonifico senza IBAN: il cliente non saprà dove pagare.');
+  if (totale <= 0 && $('tipoDoc').value !== 'TD04') warns.push('Il totale è zero.');
+  if (v('sRegime') === 'RF19' && rows.some(r => r.iva)) warns.push('Regime forfettario: di solito IVA 0% con natura N2.2.');
+  return {errs, warns};
+}
+
+// ---------- XML ----------
+function anagrafica(den, nome, cognome){
+  return den ? `<Anagrafica><Denominazione>${esc(den)}</Denominazione></Anagrafica>`
+             : `<Anagrafica><Nome>${esc(nome)}</Nome><Cognome>${esc(cognome)}</Cognome></Anagrafica>`;
+}
+function sede(p){
+  return `<Sede><Indirizzo>${esc(v(p+'Ind'))}</Indirizzo>${v(p+'Civ')?`<NumeroCivico>${esc(v(p+'Civ'))}</NumeroCivico>`:''}<CAP>${esc(v(p+'Cap'))}</CAP><Comune>${esc(v(p+'Com'))}</Comune>${v(p+'Prov')?`<Provincia>${esc(v(p+'Prov').toUpperCase())}</Provincia>`:''}<Nazione>${esc((v(p+'Naz')||'IT').toUpperCase())}</Nazione></Sede>`;
+}
+function buildXml(rows, riep, totale){
+  const tipoPf = document.querySelector('[name=tipoCli]:checked').value === 'pf';
+  const sdi = (v('cSdi') || '0000000').toUpperCase();
+  const prog = v('progressivo').toUpperCase();
+  const rea = v('sReaUff') && v('sReaNum') ? `<IscrizioneREA><Ufficio>${esc(v('sReaUff').toUpperCase())}</Ufficio><NumeroREA>${esc(v('sReaNum'))}</NumeroREA>${v('sReaCap')?`<CapitaleSociale>${f2(num(v('sReaCap')))}</CapitaleSociale>`:''}${v('sReaSocio')?`<SocioUnico>${v('sReaSocio')}</SocioUnico>`:''}<StatoLiquidazione>${v('sReaLiq')||'LN'}</StatoLiquidazione></IscrizioneREA>` : '';
+  const contatti = v('sTel') || v('sEmail') ? `<Contatti>${v('sTel')?`<Telefono>${esc(v('sTel'))}</Telefono>`:''}${v('sEmail')?`<Email>${esc(v('sEmail'))}</Email>`:''}</Contatti>` : '';
+  const causali = (v('causale').replace(/\s+/g,' ').match(/.{1,200}/g) || []).map(c => `<Causale>${esc(c)}</Causale>`).join('');
+  const linee = rows.map((r, i) => `<DettaglioLinee><NumeroLinea>${i+1}</NumeroLinea><Descrizione>${esc(r.desc.slice(0,1000))}</Descrizione>${r.qtaRaw!==''?`<Quantita>${fPrice(r.qta)}</Quantita>`:''}${r.um?`<UnitaMisura>${esc(r.um)}</UnitaMisura>`:''}<PrezzoUnitario>${fPrice(r.prezzo)}</PrezzoUnitario><PrezzoTotale>${f2(r.tot)}</PrezzoTotale><AliquotaIVA>${f2(r.iva)}</AliquotaIVA>${!r.iva?`<Natura>${r.natura}</Natura>`:''}</DettaglioLinee>`).join('');
+  const riepXml = riep.map(e => `<DatiRiepilogo><AliquotaIVA>${f2(e.iva)}</AliquotaIVA>${!e.iva?`<Natura>${e.natura}</Natura>`:''}<ImponibileImporto>${f2(e.imp)}</ImponibileImporto><Imposta>${f2(e.imposta)}</Imposta>${e.iva?`<EsigibilitaIVA>${v('esig')}</EsigibilitaIVA>`:''}${!e.iva&&v('rifNorm')?`<RiferimentoNormativo>${esc(v('rifNorm').slice(0,100))}</RiferimentoNormativo>`:''}</DatiRiepilogo>`).join('');
+  const daPagare = v('esig') === 'S' ? r2(totale - riep.reduce((a,e)=>a+e.imposta,0)) : totale;
+  const pag = `<DatiPagamento><CondizioniPagamento>${v('condPag')}</CondizioniPagamento><DettaglioPagamento>${v('benef')?`<Beneficiario>${esc(v('benef'))}</Beneficiario>`:''}<ModalitaPagamento>${v('modPag')}</ModalitaPagamento>${v('scad')?`<DataScadenzaPagamento>${v('scad')}</DataScadenzaPagamento>`:''}<ImportoPagamento>${f2(daPagare)}</ImportoPagamento>${v('banca')?`<IstitutoFinanziario>${esc(v('banca'))}</IstitutoFinanziario>`:''}${v('iban')?`<IBAN>${esc(v('iban').replace(/\s/g,'').toUpperCase())}</IBAN>`:''}</DettaglioPagamento></DatiPagamento>`;
+
+  const x = `<?xml version="1.0" encoding="UTF-8"?>
+<p:FatturaElettronica versione="FPR12" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2 http://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/Schema_del_file_xml_FatturaPA_versione_1.2.xsd">
+<FatturaElettronicaHeader>
+<DatiTrasmissione><IdTrasmittente><IdPaese>${esc(v('tPaese').toUpperCase()||'IT')}</IdPaese><IdCodice>${esc(v('tCod'))}</IdCodice></IdTrasmittente><ProgressivoInvio>${esc(prog)}</ProgressivoInvio><FormatoTrasmissione>FPR12</FormatoTrasmissione><CodiceDestinatario>${esc(sdi)}</CodiceDestinatario>${v('cPec')&&sdi==='0000000'?`<PECDestinatario>${esc(v('cPec'))}</PECDestinatario>`:''}</DatiTrasmissione>
+<CedentePrestatore><DatiAnagrafici><IdFiscaleIVA><IdPaese>${esc(v('sPaese').toUpperCase()||'IT')}</IdPaese><IdCodice>${esc(v('sPiva'))}</IdCodice></IdFiscaleIVA>${v('sCf')?`<CodiceFiscale>${esc(v('sCf').toUpperCase())}</CodiceFiscale>`:''}${anagrafica(v('sDen'), v('sNome'), v('sCognome'))}<RegimeFiscale>${v('sRegime')}</RegimeFiscale></DatiAnagrafici>${sede('s')}${rea}${contatti}</CedentePrestatore>
+<CessionarioCommittente><DatiAnagrafici>${v('cPiva')?`<IdFiscaleIVA><IdPaese>${esc(v('cPaese').toUpperCase()||'IT')}</IdPaese><IdCodice>${esc(v('cPiva'))}</IdCodice></IdFiscaleIVA>`:''}${v('cCf')?`<CodiceFiscale>${esc(v('cCf').toUpperCase())}</CodiceFiscale>`:''}${tipoPf?anagrafica('', v('cNome'), v('cCognome')):anagrafica(v('cDen'))}</DatiAnagrafici>${sede('c')}</CessionarioCommittente>
+</FatturaElettronicaHeader>
+<FatturaElettronicaBody>
+<DatiGenerali><DatiGeneraliDocumento><TipoDocumento>${v('tipoDoc')}</TipoDocumento><Divisa>EUR</Divisa><Data>${v('data')}</Data><Numero>${esc(v('numero'))}</Numero>${$('bollo').checked?'<DatiBollo><BolloVirtuale>SI</BolloVirtuale><ImportoBollo>2.00</ImportoBollo></DatiBollo>':''}<ImportoTotaleDocumento>${f2(totale)}</ImportoTotaleDocumento>${causali}</DatiGeneraliDocumento></DatiGenerali>
+<DatiBeniServizi>${linee}${riepXml}</DatiBeniServizi>
+${pag}
+</FatturaElettronicaBody>
+</p:FatturaElettronica>
+`;
+  return x;
+}
+const fileName = () => `${(filePrefix || ((v('tPaese')||'IT').toUpperCase()+v('tCod')))}_${v('progressivo').toUpperCase()}.xml`;
+
+// ---------- aggiornamento ----------
+let current = null;
+function refresh(){
+  const rows = readRows();
+  rows.forEach(r => r.tr.querySelector('.tot').textContent = r.tot.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  const riep = riepilogo(rows);
+  const imp = riep.reduce((a,e)=>a+e.imp,0), iva = riep.reduce((a,e)=>a+e.imposta,0);
+  const totale = r2(imp + iva);
+  let h = riep.map(e => `<div><span>${e.iva ? 'Imponibile '+e.iva+'%' : 'Esente '+(e.natura||'?')}</span><span>${euro(e.imp)}</span></div>${e.iva?`<div><span>IVA ${e.iva}%</span><span>${euro(e.imposta)}</span></div>`:''}`).join('');
+  h += `<div class="big"><span>Totale</span><span>${euro(totale)}</span></div>`;
+  if (v('esig') === 'S') h += `<div><span>Da pagare (split)</span><span>${euro(totale-iva)}</span></div>`;
+  $('sum').innerHTML = h;
+  const {errs, warns} = checks(rows, riep, totale);
+  $('checks').innerHTML = errs.map(e=>`<div class="msg err">${esc(e)}</div>`).join('') + warns.map(e=>`<div class="msg warn">${esc(e)}</div>`).join('') || '<div class="msg ok">Tutto pronto.</div>';
+  $('fname').textContent = v('progressivo') && (filePrefix || v('tCod')) ? fileName() : '—';
+  $('gen').disabled = errs.length > 0;
+  current = errs.length ? null : buildXml(rows, riep, totale);
+  if (!$('xmlBox').hidden) $('xmlOut').textContent = current || 'Correggi gli errori per vedere l\'XML.';
+  saveDraft();
+}
+
+// ---------- salvataggio locale ----------
+function saveSeller(){ const o = {}; SELLER_IDS.forEach(id => o[id] = $(id).value); LS.set('seller', o); }
+function saveDraft(){
+  saveSeller();
+  const o = {}; CLI_IDS.concat(['tipoDoc','numero','data','progressivo','causale','scad','bollo']).forEach(id => o[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value);
+  o.tipoCli = document.querySelector('[name=tipoCli]:checked').value;
+  o.rows = readRows().map(r => ({desc:r.desc, qta:r.qtaRaw, um:r.um, prezzo:r.tr.querySelector('[data-k=prezzo]').value, iva:r.tr.querySelector('[data-k=iva]').value, natura:r.natura}));
+  LS.set('draft', o);
+}
+function setTipoCli(t){
+  document.querySelector(`[name=tipoCli][value="${t}"]`).checked = true;
+  document.querySelectorAll('[data-az]').forEach(e => e.hidden = t === 'pf');
+  document.querySelectorAll('[data-pf]').forEach(e => e.hidden = t !== 'pf');
+}
+function fillClient(c){
+  CLI_IDS.forEach(id => $(id).value = c[id] ?? (id==='cPaese'||id==='cNaz' ? 'IT' : ''));
+  setTipoCli(c.tipoCli || (c.cNome && !c.cDen ? 'pf' : 'az'));
+}
+function loadRubrica(){
+  const rub = LS.get('clienti', {});
+  const sel = $('rubrica');
+  sel.innerHTML = '<option value="">Clienti salvati…</option>' + Object.keys(rub).sort((a,b)=>a.localeCompare(b,'it')).map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join('');
+}
+function saveClient(){
+  const c = {}; CLI_IDS.forEach(id => c[id] = $(id).value); c.tipoCli = document.querySelector('[name=tipoCli]:checked').value;
+  const name = c.tipoCli === 'pf' ? `${c.cCognome} ${c.cNome}`.trim() : c.cDen;
+  if (!name) return;
+  const rub = LS.get('clienti', {}); rub[name] = c; LS.set('clienti', rub); loadRubrica();
+}
+
+// ---------- import fattura precedente ----------
+function importXml(text, name){
+  const msg = $('importMsg');
+  const doc = new DOMParser().parseFromString(text.replace(/^﻿/,''), 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length){ msg.innerHTML = '<div class="msg err">Il file non è un XML leggibile. Se è un .p7m firmato, scarica da Aruba la versione XML senza firma.</div>'; return; }
+  const all = (el, tag) => el ? [...el.getElementsByTagNameNS('*', tag)] : [];
+  const one = (el, tag) => all(el, tag)[0] || null;
+  const t = (el, tag) => { const n = one(el, tag); return n ? n.textContent.trim() : ''; };
+  const head = one(doc, 'FatturaElettronicaHeader');
+  if (!head){ msg.innerHTML = '<div class="msg err">Non trovo una fattura elettronica in questo file.</div>'; return; }
+  const trasm = one(head, 'DatiTrasmissione'), ced = one(head, 'CedentePrestatore'), ces = one(head, 'CessionarioCommittente');
+  const body = one(doc, 'FatturaElettronicaBody');
+  const gen = one(body, 'DatiGeneraliDocumento');
+  const set = (id, val) => { $(id).value = val ?? ''; };
+
+  // cedente
+  const cAna = one(ced, 'DatiAnagrafici'), cSede = one(ced, 'Sede'), cRea = one(ced, 'IscrizioneREA'), cCont = one(ced, 'Contatti');
+  set('sPaese', t(one(cAna,'IdFiscaleIVA'),'IdPaese') || 'IT'); set('sPiva', t(one(cAna,'IdFiscaleIVA'),'IdCodice')); set('sCf', t(cAna,'CodiceFiscale'));
+  set('sDen', t(cAna,'Denominazione')); set('sNome', t(cAna,'Nome')); set('sCognome', t(cAna,'Cognome'));
+  if (t(cAna,'RegimeFiscale')) { const r = t(cAna,'RegimeFiscale'); if (![...$('sRegime').options].some(o=>o.value===r)) $('sRegime').add(new Option(r, r)); set('sRegime', r); }
+  set('sInd', t(cSede,'Indirizzo')); set('sCiv', t(cSede,'NumeroCivico')); set('sCap', t(cSede,'CAP')); set('sCom', t(cSede,'Comune')); set('sProv', t(cSede,'Provincia')); set('sNaz', t(cSede,'Nazione') || 'IT');
+  set('sReaUff', t(cRea,'Ufficio')); set('sReaNum', t(cRea,'NumeroREA')); set('sReaCap', t(cRea,'CapitaleSociale')); set('sReaSocio', t(cRea,'SocioUnico')); set('sReaLiq', t(cRea,'StatoLiquidazione'));
+  set('sTel', t(cCont,'Telefono')); set('sEmail', t(cCont,'Email'));
+  // trasmittente e nome file
+  set('tPaese', t(one(trasm,'IdTrasmittente'),'IdPaese') || 'IT'); set('tCod', t(one(trasm,'IdTrasmittente'),'IdCodice'));
+  const m = (name||'').match(/^([A-Za-z]{2}[A-Za-z0-9]+)_([A-Za-z0-9]{5})(\.xml)?(\.p7m)?$/i);
+  filePrefix = m ? m[1].toUpperCase() : (v('tPaese')+v('tCod'));
+  LS.set('prefix', filePrefix);
+  const lastProg = (m && m[2]) || t(trasm,'ProgressivoInvio');
+  const usedProg = LS.get('lastProg', '');
+  set('progressivo', nextProg(usedProg && usedProg > lastProg.toUpperCase().padStart(5,'0') ? usedProg : lastProg));
+
+  // cliente
+  const kAna = one(ces,'DatiAnagrafici'), kSede = one(ces,'Sede');
+  fillClient({cDen:t(kAna,'Denominazione'), cNome:t(kAna,'Nome'), cCognome:t(kAna,'Cognome'), cPaese:t(one(kAna,'IdFiscaleIVA'),'IdPaese')||'IT', cPiva:t(one(kAna,'IdFiscaleIVA'),'IdCodice'), cCf:t(kAna,'CodiceFiscale'),
+    cSdi:t(trasm,'CodiceDestinatario'), cPec:t(trasm,'PECDestinatario'), cInd:t(kSede,'Indirizzo'), cCiv:t(kSede,'NumeroCivico'), cCap:t(kSede,'CAP'), cCom:t(kSede,'Comune'), cProv:t(kSede,'Provincia'), cNaz:t(kSede,'Nazione')||'IT'});
+  saveClient();
+
+  // documento
+  const oldNum = t(gen,'Numero'), oldData = t(gen,'Data');
+  set('tipoDoc', ['TD01','TD24','TD04','TD05','TD02','TD06'].includes(t(gen,'TipoDocumento')) ? t(gen,'TipoDocumento') : 'TD01');
+  if ($('tipoDoc').value === 'TD04') set('tipoDoc','TD01');
+  set('numero', nextNumero(oldNum)); set('data', today()); set('causale', all(gen,'Causale').map(n=>n.textContent.trim()).join(' '));
+  $('bollo').checked = !!one(gen,'DatiBollo');
+
+  // righe
+  $('rows').innerHTML = '';
+  const lines = all(body,'DettaglioLinee');
+  lines.forEach(l => addRow({desc:t(l,'Descrizione'), qta:t(l,'Quantita') ? String(num(t(l,'Quantita'))) : '', um:t(l,'UnitaMisura'), prezzo:String(num(t(l,'PrezzoUnitario'))), iva:String(num(t(l,'AliquotaIVA'))), natura:t(l,'Natura')}));
+  if (!lines.length) addRow();
+  const riepN = all(body,'DatiRiepilogo');
+  set('esig', riepN.map(n=>t(n,'EsigibilitaIVA')).find(Boolean) || 'I');
+  set('rifNorm', riepN.map(n=>t(n,'RiferimentoNormativo')).find(Boolean) || '');
+
+  // pagamento
+  const dp = one(body,'DatiPagamento'), det = one(dp,'DettaglioPagamento');
+  if (dp){
+    set('condPag', t(dp,'CondizioniPagamento') || 'TP02');
+    const mp = t(det,'ModalitaPagamento'); if (mp && ![...$('modPag').options].some(o=>o.value===mp)) $('modPag').add(new Option(mp, mp)); set('modPag', mp || 'MP05');
+    set('iban', t(det,'IBAN')); set('banca', t(det,'IstitutoFinanziario')); set('benef', t(det,'Beneficiario'));
+    const sc = t(det,'DataScadenzaPagamento');
+    set('giorni', sc && oldData ? Math.max(0, diffDays(oldData, sc)) : '');
+  }
+  updateScad();
+  const nomeCed = v('sDen') || (v('sNome')+' '+v('sCognome'));
+  msg.innerHTML = `<div class="msg ok">Caricata la fattura n. ${esc(oldNum)} del ${esc(oldData.split('-').reverse().join('/'))} di ${esc(nomeCed)}. Ho preparato la n. ${esc(v('numero'))} con lo stesso cliente e le stesse righe: modifica ciò che cambia.</div>`;
+  refresh();
+}
+function readFile(f){ const r = new FileReader(); r.onload = () => importXml(r.result, f.name); r.readAsText(f); }
+
+// ---------- scadenza ----------
+function updateScad(){ const g = $('giorni').value; if (g !== '' && v('data')) $('scad').value = addDays(v('data'), parseInt(g,10)); }
+
+// ---------- eventi ----------
+$('drop').onclick = () => $('fileIn').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileIn').click(); } };
+$('fileIn').onchange = e => { if (e.target.files[0]) readFile(e.target.files[0]); e.target.value = ''; };
+['dragover','dragenter'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); }));
+['dragleave','drop'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.remove('over'); }));
+$('drop').addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+$('addRow').onclick = () => { addRow({qta:'1', iva: readRows().slice(-1)[0]?.iva ?? 22}); refresh(); };
+document.addEventListener('input', e => { if (e.target.id === 'giorni' || e.target.id === 'data') updateScad(); if (e.target.id === 'scad' && v('data') && v('scad')) $('giorni').value = Math.max(0, diffDays(v('data'), v('scad'))); refresh(); });
+document.addEventListener('change', e => { if (e.target.name === 'tipoCli') setTipoCli(e.target.value); refresh(); });
+$('rubrica').onchange = e => { const c = LS.get('clienti', {})[e.target.value]; if (c) fillClient(c); e.target.value = ''; refresh(); };
+$('nuovoCliente').onclick = () => { fillClient({}); refresh(); $('cDen').focus(); };
+$('showXml').onclick = () => { $('xmlBox').hidden = !$('xmlBox').hidden; $('showXml').textContent = $('xmlBox').hidden ? 'Mostra XML' : 'Nascondi XML'; refresh(); };
+$('copyXml').onclick = async () => { if (!current) return; try { await navigator.clipboard.writeText(current); $('copyXml').textContent = 'Copiato'; } catch(e){ $('xmlBox').hidden = false; refresh(); getSelection().selectAllChildren($('xmlOut')); } setTimeout(()=>$('copyXml').textContent='Copia XML', 1500); };
+$('gen').onclick = () => {
+  refresh(); if (!current) return;
+  const name = fileName();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([current], {type:'application/xml'}));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  // registra numerazione usata e prepara la successiva
+  LS.set('lastProg', v('progressivo').toUpperCase()); LS.set('prefix', filePrefix || name.split('_')[0]);
+  saveClient();
+  const done = `Scaricato ${name} (fattura n. ${v('numero')}).`;
+  $('progressivo').value = nextProg(v('progressivo')); $('numero').value = nextNumero(v('numero'));
+  $('importMsg').innerHTML = `<div class="msg ok">${esc(done)} Numero e progressivo sono già pronti per la prossima.</div>`;
+  refresh();
+};
+
+// ---------- avvio ----------
+(function init(){
+  const s = LS.get('seller', null);
+  if (s) SELLER_IDS.forEach(id => { if (s[id] != null) $(id).value = s[id]; });
+  else $('cedDet').open = true;
+  loadRubrica();
+  const d = LS.get('draft', null);
+  if (d){
+    fillClient(d);
+    ['tipoDoc','numero','data','progressivo','causale','scad'].forEach(id => { if (d[id] != null) $(id).value = d[id]; });
+    $('bollo').checked = !!d.bollo;
+    (d.rows && d.rows.length ? d.rows : [{}]).forEach(r => addRow(r));
+  } else {
+    $('data').value = today(); addRow();
+    $('importMsg').innerHTML = '<div class="msg warn">Primo utilizzo: carica l\'ultima fattura XML emessa per riprendere dati e numerazione.</div>';
+  }
+  if (!v('data')) $('data').value = today();
+  refresh();
+})();
+</script>
+</body>
+</html>
