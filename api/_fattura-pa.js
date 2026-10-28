@@ -87,7 +87,7 @@ function buyerBlock(c, warnings) {
   };
 }
 
-// inv: { number, date: 'YYYY-MM-DD', ref, pay: 'Stripe'|'PayPal', payId, totalCents, customer, lines: [{ d, q, c (centesimi IVA incl.), r? }] }
+// inv: { number? (vuoto: lo assegna Aruba), date: 'YYYY-MM-DD', ref, pay: 'Stripe'|'PayPal', payId, totalCents, customer, lines: [{ d, q, c (centesimi IVA incl.), r? }] }
 function buildFattura(inv) {
   const warnings = [];
   const prog = progressivo();
@@ -115,6 +115,12 @@ function buildFattura(inv) {
   const sumGross = lines.reduce((t, l) => t + l.grossCents, 0);
   if (sumGross !== inv.totalCents) warnings.push(`Somma righe € ${eur(sumGross)} diversa dal pagato € ${eur(inv.totalCents)}`);
 
+  // Il tracciato non ha un campo email per il cliente: la mettiamo in AltriDatiGestionali della riga 1.
+  const email = String(inv.customer.email || '').trim();
+  if (!email) warnings.push('Email cliente mancante: Aruba non potrà inviare la fattura via email');
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 60) warnings.push(`Email cliente non valida: "${email}"`);
+  const emailXml = email ? `
+        <AltriDatiGestionali><TipoDato>EMAIL</TipoDato><RiferimentoTesto>${esc(email.slice(0, 60))}</RiferimentoTesto></AltriDatiGestionali>` : '';
   const dettaglio = lines.map((l, i) => `
       <DettaglioLinee>
         <NumeroLinea>${i + 1}</NumeroLinea>
@@ -122,7 +128,7 @@ function buildFattura(inv) {
         <Quantita>${Number(l.quantity).toFixed(2)}</Quantita>
         <PrezzoUnitario>${(l.netCents / 100 / l.quantity).toFixed(6)}</PrezzoUnitario>
         <PrezzoTotale>${eur(l.netCents)}</PrezzoTotale>
-        <AliquotaIVA>${Number(l.vatRate).toFixed(2)}</AliquotaIVA>
+        <AliquotaIVA>${Number(l.vatRate).toFixed(2)}</AliquotaIVA>${i === 0 ? emailXml : ''}
       </DettaglioLinee>`).join('');
 
   const buyer = buyerBlock(inv.customer, warnings);
@@ -164,7 +170,7 @@ function buildFattura(inv) {
         <TipoDocumento>TD01</TipoDocumento>
         <Divisa>EUR</Divisa>
         <Data>${esc(inv.date)}</Data>
-        <Numero>${esc(inv.number)}</Numero>
+        <Numero>${esc(inv.number || '')}</Numero>
         <ImportoTotaleDocumento>${eur(inv.totalCents)}</ImportoTotaleDocumento>
         <Causale>${esc(`Ordine ${inv.ref} - ${pagato}`.slice(0, 200))}</Causale>
       </DatiGeneraliDocumento>

@@ -1,5 +1,5 @@
-// GET  /api/fattura-xml?t=<ticket>  — link nell'email "Nuovo ordine": chiede il numero fattura
-//      e mostra i dati cliente (modificabili, es. Provincia che il checkout non raccoglie).
+// GET  /api/fattura-xml?t=<ticket>  — link nell'email "Nuovo ordine": chiede la data fattura
+//      (il numero lo assegna Aruba), controlla il pagamento con carta nello stesso giorno e mostra i dati cliente (modificabili, es. Provincia che il checkout non raccoglie).
 // POST /api/fattura-xml               — genera il file FatturaPA XML da caricare su Aruba.
 // Il ticket è firmato (HMAC) dal webhook: i dati d'ordine non si possono alterare dal link.
 const { readTicket } = require('./_paypal');
@@ -22,23 +22,33 @@ ${body}</main></body></html>`;
 }
 const field = (name, label, value, extra = '') => `<div><label style="${lab}" for="${name}">${label}</label><input style="${inp}" id="${name}" name="${name}" value="${h(value)}" ${extra}></div>`;
 
-function form(t, d, numero = '', data = '', err = '') {
+const fmtD = (iso) => iso ? iso.split('-').reverse().join('/') : '';
+// Regola: fattura pagata con carta di credito lo stesso giorno della data fattura.
+function payCheck(d, data) {
+  const w = [];
+  if (d.pay !== 'Stripe') w.push(`Ordine pagato con ${d.pay}, non con carta di credito`);
+  if (!d.pd) w.push('Data di pagamento non presente nel link (ordine precedente all\'aggiornamento): verificala su Stripe/PayPal');
+  else if (data && d.pd !== data) w.push(`Pagamento del ${fmtD(d.pd)}, diverso dalla data fattura ${fmtD(data)}`);
+  return w;
+}
+function form(t, d, data = '', err = '') {
   const c = d.c || {};
   const today = new Date(); const iso = `${today.getFullYear()}-${pad(today.getMonth() + 1, 2)}-${pad(today.getDate(), 2)}`;
   const rows = d.lines.map((l) => `<tr><td style="padding:8px 0;border-bottom:1px solid #dfe4e9;">${h(l.d)}</td><td style="padding:8px 0 8px 12px;border-bottom:1px solid #dfe4e9;text-align:right;white-space:nowrap;">${eur(l.c)}</td></tr>`).join('');
   return page(`Fattura ordine ${d.ref}`, `
 <h1 style="font:600 34px/1.05 ${HF};margin:0 0 6px;">Fattura ordine #${h(d.ref)}</h1>
-<p style="margin:0 0 22px;color:#6b7378;">Pagato ${eur(d.totalCents)} con ${d.pay === 'PayPal' ? 'PayPal' : 'carta (Stripe)'}${d.payId ? ' · ' + h(d.payId) : ''}</p>
+<p style="margin:0 0 22px;color:#6b7378;">Pagato ${eur(d.totalCents)} con ${d.pay === 'PayPal' ? 'PayPal' : 'carta (Stripe)'}${d.pd ? ' il ' + fmtD(d.pd) : ''}${d.payId ? ' · ' + h(d.payId) : ''}</p>
 ${err ? `<p style="margin:0 0 18px;padding:10px 12px;border:1px solid #b4443a;color:#8a2f27;">${h(err)}</p>` : ''}
 <form method="post" action="/api/fattura-xml" style="display:grid;gap:22px;">
   <input type="hidden" name="t" value="${h(t)}">
   <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;padding:16px;border:1px solid #5980a6;background:#fff;">
-    ${field('numero', 'Numero fattura *', numero, 'required autofocus placeholder="es. 262/2026" maxlength="20"')}
-    ${field('data', 'Data fattura', data || iso, 'type="date" required')}
+    ${field('data', 'Data fattura', data || d.pd || iso, 'type="date" required autofocus')}
+    <div style="align-self:end;color:#6b7378;font-size:14px;">Numero fattura: assegnato da Aruba</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
     <div><label style="${lab}" for="type">Tipo cliente</label><select style="${inp}" id="type" name="type"><option value="privato"${c.type !== 'azienda' ? ' selected' : ''}>Privato</option><option value="azienda"${c.type === 'azienda' ? ' selected' : ''}>Azienda</option></select></div>
     ${field('name', 'Nome e cognome', c.name)}
+    ${field('email', 'Email (invio fattura) *', c.email, 'type="email" maxlength="60"')}
     ${field('company', 'Ragione sociale', c.company)}
     ${field('vat', 'Partita IVA', c.vat)}
     ${field('cf', 'Codice fiscale', c.cf)}
@@ -70,23 +80,24 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   if (req.method !== 'POST') { res.status(200).end(form(t, d)); return; }
 
-  const numero = String(b.numero || '').trim();
+
   const data = String(b.data || '').trim();
-  if (!numero || !/\d/.test(numero) || numero.length > 20) { res.status(200).end(form(t, d, numero, data, 'Inserisci il numero fattura (es. 262/2026).')); return; }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { res.status(200).end(form(t, d, numero, data, 'Data non valida.')); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { res.status(200).end(form(t, d, data, 'Data non valida.')); return; }
 
   const customer = {};
-  for (const k of ['type', 'name', 'company', 'vat', 'cf', 'sdi', 'pec', 'address', 'cap', 'city', 'province', 'country']) customer[k] = String(b[k] || '').trim();
-  const { xml, filename, warnings } = buildFattura({ number: numero, date: data, ref: d.ref, pay: d.pay, payId: d.payId, totalCents: d.totalCents, customer, lines: d.lines });
+  for (const k of ['type', 'name', 'email', 'company', 'vat', 'cf', 'sdi', 'pec', 'address', 'cap', 'city', 'province', 'country']) customer[k] = String(b[k] || '').trim();
+  const built = buildFattura({ number: '', date: data, ref: d.ref, pay: d.pay, payId: d.payId, totalCents: d.totalCents, customer, lines: d.lines });
+  const { xml, filename } = built;
+  const warnings = [...payCheck(d, data), ...built.warnings];
   const href = 'data:application/xml;base64,' + Buffer.from(xml, 'utf8').toString('base64');
-  res.status(200).end(page(`Fattura ${numero}`, `
-<h1 style="font:600 34px/1.05 ${HF};margin:0 0 6px;">Fattura ${h(numero)} · ordine #${h(d.ref)}</h1>
+  res.status(200).end(page(`Fattura ordine ${d.ref}`, `
+<h1 style="font:600 34px/1.05 ${HF};margin:0 0 6px;">Fattura ordine #${h(d.ref)} · ${fmtD(data)}</h1>
 <p style="margin:0 0 20px;color:#6b7378;">File: ${h(filename)} · totale ${eur(d.totalCents)}</p>
 ${warnings.length ? `<div style="margin:0 0 20px;padding:12px 14px;border:1px solid #b4443a;background:#fff;"><div style="font:600 12px/1 ${F};letter-spacing:.08em;text-transform:uppercase;color:#8a2f27;margin-bottom:8px;">Da controllare prima di caricare</div><ul style="margin:0;padding-left:18px;">${warnings.map((w) => `<li>${h(w)}</li>`).join('')}</ul></div>` : `<p style="margin:0 0 20px;color:#2f6b3a;">Nessun problema rilevato nei dati.</p>`}
 <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px;">
   <a href="${href}" download="${h(filename)}" style="${btn}">Scarica XML</a>
   <a href="javascript:history.back()" style="${btn}background:transparent;color:#3f6489;border:1px solid #5980a6;">Modifica dati</a>
 </div>
-<p style="margin:0 0 10px;color:#6b7378;">Su Aruba: Fatture emesse → Carica fattura → scegli il file scaricato.</p>
+<p style="margin:0 0 10px;color:#6b7378;">Su Aruba: Fatture emesse → Carica fattura → scegli il file scaricato. Prima dell'invio: lascia che Aruba assegni il numero, controlla l'email del cliente e scegli <b>Inglese</b> come lingua della copia di cortesia PDF.</p>
 <pre style="margin:0;padding:14px;border:1px solid #dfe4e9;background:#fff;overflow:auto;font:12px/1.45 ui-monospace,Menlo,monospace;white-space:pre;">${h(xml)}</pre>`));
 };
