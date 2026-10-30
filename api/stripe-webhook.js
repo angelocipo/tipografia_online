@@ -199,14 +199,24 @@ async function processPaidOrder(session, lineItemsData) {
       let fatturaLink = '', fatturaData = null;
       try {
         const { signTicket } = require('./_paypal');
+        // Struttura per Eventi: la caparra 50% (restituibile, fuori campo IVA art. 15 DPR 633/72) resta
+        // fuori dalla fattura. Importo letto dalla descrizione creata in create-checkout-session.js.
+        let depositCents = 0;
+        const invLines = lineItems.data.map((li) => {
+          const m = / — noleggio € ([\d.]+,\d{2}) \+ caparra 50% € ([\d.]+,\d{2}) \(restituita dopo ispezione\)/.exec(li.description || '');
+          if (!m) return { d: li.description, q: 1, c: li.amount_total };
+          const dep = Math.round(parseFloat(m[2].replace(/\./g, '').replace(',', '.')) * 100);
+          depositCents += dep;
+          return { d: li.description.replace(m[0], ' — noleggio'), q: 1, c: li.amount_total - dep };
+        });
         fatturaData = {
           k: 'fattura', ref: order.number, pay: md.payment_method === 'PayPal' ? 'PayPal' : 'Stripe',
-          payId: md.payment_method === 'PayPal' ? (md.paypal_order || '') : '', totalCents: session.amount_total,
+          payId: md.payment_method === 'PayPal' ? (md.paypal_order || '') : '', totalCents: session.amount_total - depositCents, dep: depositCents,
           pd: new Date((session.created ? session.created * 1000 : Date.now())).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' }),
           c: { email: buyerEmail || '', type: isCompany ? 'azienda' : 'privato', name: md.inv_name || session.customer_details?.name || '', company: md.inv_company || '',
             vat: md.inv_vat || '', cf: md.inv_cf || '', sdi: md.inv_sdi || '', pec: md.inv_pec || '', address: order.customer.address,
             cap: order.customer.cap, city: order.customer.city, province: '', country: order.customer.country },
-          lines: lineItems.data.map((li) => ({ d: li.description, q: 1, c: li.amount_total })),
+          lines: invLines,
         };
         fatturaLink = 'https://tipografia.online/api/fattura-xml?t=' + signTicket(fatturaData);
       } catch (e) {
@@ -232,6 +242,7 @@ async function processPaidOrder(session, lineItemsData) {
             totalCents: fatturaData.totalCents, customer: fatturaData.c, lines: fatturaData.lines });
           xmlAttachments = [{ filename: f.filename, content: Buffer.from(f.xml, 'utf8').toString('base64') }];
           xmlWarnings = f.warnings;
+          if (fatturaData.dep) xmlWarnings.unshift(`Caparra € ${(fatturaData.dep / 100).toFixed(2).replace('.', ',')} incassata ma esclusa dalla fattura (da restituire dopo ispezione)`);
           if (fatturaData.pay !== 'Stripe') xmlWarnings.unshift(`Ordine pagato con ${fatturaData.pay}, non con carta di credito`);
         }
       } catch (xmlErr) {

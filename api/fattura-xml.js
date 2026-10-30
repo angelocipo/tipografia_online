@@ -37,7 +37,7 @@ function form(t, d, data = '', err = '') {
   const rows = d.lines.map((l) => `<tr><td style="padding:8px 0;border-bottom:1px solid #dfe4e9;">${h(l.d)}</td><td style="padding:8px 0 8px 12px;border-bottom:1px solid #dfe4e9;text-align:right;white-space:nowrap;">${eur(l.c)}</td></tr>`).join('');
   return page(`Fattura ordine ${d.ref}`, `
 <h1 style="font:600 34px/1.05 ${HF};margin:0 0 6px;">Fattura ordine #${h(d.ref)}</h1>
-<p style="margin:0 0 22px;color:#6b7378;">Pagato ${eur(d.totalCents)} con ${d.pay === 'PayPal' ? 'PayPal' : 'carta (Stripe)'}${d.pd ? ' il ' + fmtD(d.pd) : ''}${d.payId ? ' · ' + h(d.payId) : ''}</p>
+<p style="margin:0 0 22px;color:#6b7378;">Pagato ${eur(d.totalCents + (d.dep || 0))}${d.dep ? ' (di cui caparra ' + eur(d.dep) + ' esclusa dalla fattura)' : ''} con ${d.pay === 'PayPal' ? 'PayPal' : 'carta (Stripe)'}${d.pd ? ' il ' + fmtD(d.pd) : ''}${d.payId ? ' · ' + h(d.payId) : ''}</p>
 ${err ? `<p style="margin:0 0 18px;padding:10px 12px;border:1px solid #b4443a;color:#8a2f27;">${h(err)}</p>` : ''}
 <form method="post" action="/api/fattura-xml" style="display:grid;gap:22px;">
   <input type="hidden" name="t" value="${h(t)}">

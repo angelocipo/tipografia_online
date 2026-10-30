@@ -390,6 +390,7 @@ module.exports = async (req, res) => {
     // Carrello: una sola spedizione = la tariffa più alta tra gli articoli.
     const shipFeeFor = (productId, formula) => {
       if (productId === '5970') return zone === 'ue' ? 55 : 0; // Backdrop: trasporto incluso in Italia, UE + € 55.
+      if (productId === '215') return 0; // Struttura per Eventi: consegna e montaggio inclusi (solo Roma).
       if (!SHIPPING_IDS.includes(productId)) return 0;
       if (productId === '197' && zone !== 'italia') {
         // Roll-Up 80/85 × 200 (Speedy Boys) a Roma e UE: 1° a tariffa zona, ogni successivo € 15.
