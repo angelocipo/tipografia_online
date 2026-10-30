@@ -67,7 +67,9 @@
         <tr style="border-bottom:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);">
           <td style="padding:14px 6px;vertical-align:top;">
             <div style="display:flex;gap:14px;align-items:flex-start;">
+            <sc-if value="{{ r.hasQr }}" hint-placeholder-val="{{ true }}">
             <img src="{{ r.qrSrc }}" alt="QR {{ r.prodotto }}" style="width:72px;height:72px;flex:0 0 72px;display:block;border:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding:4px;background:#fff;">
+            </sc-if>
             <div style="min-width:0;">
             <div style="font-weight:600;"><a href="{{ r.productUrl }}" target="_blank" rel="noopener" style="color:var(--color-accent-700);text-decoration:none;">{{ r.prodotto }}</a></div>
             <sc-if value="{{ r.hasEan }}" hint-placeholder-val="{{ false }}">
@@ -97,13 +99,18 @@
     </table>
 
     <div style="display:flex;justify-content:flex-end;margin-bottom:32px;">
-      <div style="width:260px;">
+      <div style="width:320px;">
         <div style="display:flex;justify-content:space-between;padding:8px 6px;font-size:14px;">
           <span>Imponibile</span><span style="font-family:ui-monospace,monospace;">€ {{ imponibileFmt }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:8px 6px;font-size:14px;">
           <span>IVA (22%)</span><span style="font-family:ui-monospace,monospace;">€ {{ ivaFmt }}</span>
         </div>
+        <sc-if value="{{ hasCaparra }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;justify-content:space-between;padding:8px 6px;font-size:14px;">
+            <span>Caparra 50% (fuori campo IVA)</span><span style="font-family:ui-monospace,monospace;">€ {{ caparraFmt }}</span>
+          </div>
+        </sc-if>
         <div style="display:flex;justify-content:space-between;padding:10px 6px;font-size:16px;font-weight:700;border-top:1.5px solid var(--color-text);margin-top:4px;">
           <span>Totale</span><span style="font-family:ui-monospace,monospace;">€ {{ totaleFmt }}</span>
         </div>
@@ -149,12 +156,13 @@ class Component extends DCLogic {
     let spedizione = collection === 'misura' && prezzo > 0 ? (zoneRates[zona] ?? 20) : 0;
     // Backdrop '5970': trasporto incluso in Italia, UE + € 55 (stessa regola in checkout.dc.html).
     if (String(pid) === '5970') spedizione = zona === 'ue' ? 55 : 0;
+    if (String(pid) === '215') spedizione = 0; // Struttura per Eventi: consegna inclusa.
     // Roll-Up 80/85 × 200: stessa regola del checkout (1° a tariffa zona, successivi € 15).
     const rollupQ = pid === '197' ? Math.max(1, parseInt(params.get('quantita'), 10) || 1) : 0;
     if (rollupQ && zona !== 'italia' && zoneRates[zona]) spedizione = zoneRates[zona] + 15 * (rollupQ - 1);
     const productUrl = pid ? `/#${encodeURIComponent(pid)}` : '/';
     const now = new Date();
-    let righe = [{ prodotto, dettagli: configurazione.split(' · ').map(s => s.trim()).filter(Boolean), quantita, prezzo, productUrl, ean }];
+    let righe = [{ prodotto, dettagli: configurazione.split(' · ').map(s => s.trim()).filter(Boolean), quantita, prezzo, productUrl, ean, pid: String(pid || '') }];
     let st = { prezzo, spedizione, zona, rollupQ, pid };
     // Carrello (dal checkout): tutte le righe da localStorage, spedizione già calcolata dal checkout.
     if (params.get('cart') === '1') {
@@ -165,7 +173,7 @@ class Component extends DCLogic {
           const det = it.details || [];
           const q = det.find(d => d.label === 'Quantità' || d.label === 'Quantity');
           return {
-            prodotto: it.name || 'Prodotto', ean: it.ean || '', productUrl: it.productId ? '/#' + encodeURIComponent(it.productId) : '/',
+            prodotto: it.name || 'Prodotto', ean: it.ean || '', pid: String(it.productId || ''), productUrl: it.productId ? '/#' + encodeURIComponent(it.productId) : '/',
             dettagli: det.filter(d => d !== q).map(d => d.label + ': ' + d.value),
             quantita: q ? q.value : '1', prezzo: parseFloat(it.price) || 0,
           };
@@ -180,6 +188,15 @@ class Component extends DCLogic {
         };
       }
     }
+    // Struttura per Eventi (215): prezzo = noleggio × 1,5 → riga noleggio + riga caparra 50% (fuori campo IVA).
+    righe = righe.flatMap(r => {
+      if (r.pid !== '215' || !(r.prezzo > 0)) return [r];
+      const noleggio = Math.round(r.prezzo / 1.5 * 100) / 100;
+      return [
+        { ...r, prezzo: noleggio, dettagli: ['Noleggio: struttura, stampa, montaggio e smontaggio', ...r.dettagli] },
+        { prodotto: 'Caparra confirmatoria 50%', dettagli: ['Restituita dopo ispezione senza danni', 'Fuori campo IVA (art. 15 DPR 633/72)'], quantita: '1', prezzo: Math.round((r.prezzo - noleggio) * 100) / 100, productUrl: r.productUrl, ean: '', pid: '', isCaparra: true },
+      ];
+    });
     this.setState({
       righe, collection, ...st,
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
@@ -198,8 +215,9 @@ class Component extends DCLogic {
     const rollupQ = this.state.rollupQ || 0;
     const zona = this.state.zona;
     const totale = prezzo + spedizione;
-    const imponibile = totale / 1.22;
-    const iva = totale - imponibile;
+    const caparra = (this.state.righe || []).filter(r => r.isCaparra).reduce((a, r) => a + r.prezzo, 0);
+    const imponibile = (totale - caparra) / 1.22;
+    const iva = totale - caparra - imponibile;
     const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)', ue: 'Unione Europea (+2/3 giorni)' };
     return {
       hasSpedizione: spedizione > 0,
@@ -213,7 +231,9 @@ class Component extends DCLogic {
       spedizioneFmt: eur(spedizione),
       spedizioneZona: zoneLabels[this.state.zona] || '',
       totaleFmt: eur(totale),
-      righe: (this.state.righe || []).map(r => ({ ...r, hasEan: !!r.ean, quantita: r.quantita || '-', prezzoFmt: eur(r.prezzo),
+      hasCaparra: caparra > 0,
+      caparraFmt: eur(caparra),
+      righe: (this.state.righe || []).map(r => ({ ...r, hasQr: !r.isCaparra, hasEan: !!r.ean, quantita: r.quantita || '-', prezzoFmt: eur(r.prezzo),
         qrSrc: 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=' + encodeURIComponent('https://www.tipografia.online' + r.productUrl) })),
       quoteNumber: this.state.quoteNumber || '',
       dateStr: this.state.dateStr || '',

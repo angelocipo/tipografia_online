@@ -522,6 +522,7 @@ class Component extends DCLogic {
     const zone = this.state.shipZone;
     // Backdrop '5970': trasporto incluso in Italia, UE + € 55.
     if (String(it.productId) === '5970') return zone === 'ue' ? 55 : 0;
+    if (String(it.productId) === '215') return 0; // Struttura per Eventi: consegna inclusa (stessa regola del server).
     if (it.col === 'strategici') return 0;
     const rates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
     // Roll-Up 80/85 a Roma e UE: 1° a tariffa zona, successivi € 15.

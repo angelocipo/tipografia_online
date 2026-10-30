@@ -27,7 +27,7 @@
     quoteHref: function () {
       var a = read();
       var fee = Math.max.apply(null, [0].concat(a.map(function (it) {
-        if (String(it.productId) === '5970' || it.col === 'strategici') return 0;
+        if (String(it.productId) === '5970' || String(it.productId) === '215' || it.col === 'strategici') return 0;
         if (String(it.productId) === '197') { var q = Math.max(1, parseInt(((it.body || {}).formula || {}).qty, 10) || 1); return 20 + 15 * (q - 1); }
         return 20;
       })));
