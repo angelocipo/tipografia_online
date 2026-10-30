@@ -159,6 +159,11 @@ async function processPaidOrder(session, lineItemsData) {
       const lineItems = { data: lineItemsData };
       const total = session.amount_total / 100;
       const md = session.metadata || {};
+      // Struttura per Eventi: blocca le date pagate (montaggio → smontaggio). Non blocca mai l'email.
+      if (md.ev_dates) {
+        try { const b = require('./_bookings'); await b.addBooked(b.daysFromMetadata(md.ev_dates)); }
+        catch (e) { console.error('Blocco date prenotazione fallito', md.ev_dates, e); }
+      }
       const isCompany = md.inv_type === 'azienda';
       const order = {
         number: orderRef(session),

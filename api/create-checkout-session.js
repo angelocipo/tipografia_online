@@ -9,10 +9,11 @@ const { paypalToken, paypalApi, signAmount, signTicket } = require('./_paypal');
 const { PRICING, angoliArrotondatiPrice, plastificataPrice } = require('./_pricing-data');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const { validateRange, getBooked, daysFromMetadata } = require('./_bookings');
 
 function priceItem(product, it) {
   const { productId, tierIndex, sizeIndex, formula, deliveryIndex } = it || {};
-  let unitAmountCents, description;
+  let unitAmountCents, description, evRange;
   // Dimensioni inserite dal cliente: virgola o punto, arrotondate a 1 decimale.
   const dim1 = (v) => { const n = Math.round(parseFloat(String(v).replace(',', '.')) * 10) / 10; return isNaN(n) ? 0 : n; };
   if (product.type === 'formula') {
@@ -132,7 +133,15 @@ function priceItem(product, it) {
     unitAmountCents = Math.round(total * 100);
     description = `${product.nome} — ${w/10}×${h/10} cm, ${materiale || 'gr. 100'}, ${stampa || '1 lato a colori'}${perfRate ? ', perforazione' : ''}${piegheRate ? ', ' + pieghe : ''}, ${q}pz`;
   } else if (product.type === 'strutturaEventi') {
-    const { altezza, larghezza, unit } = formula || {};
+    const { altezza, larghezza, unit, ev_start, ev_end, ev_start_time, ev_end_time, ev_address } = formula || {};
+    const rng = validateRange(ev_start, ev_end);
+    if (rng.error) return { error: 'Struttura per Eventi: ' + rng.error };
+    const tOk = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(t || ''));
+    const addr = String(ev_address || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (!tOk(ev_start_time) || !tOk(ev_end_time) || addr.length < 5) return { error: "Struttura per Eventi: indica ora di montaggio, ora di smontaggio e indirizzo dell'evento." };
+    const itD = (x) => x.slice(8, 10) + '/' + x.slice(5, 7) + '/' + x.slice(0, 4);
+    const evLabel = 'montaggio ' + itD(rng.start) + ' ore ' + ev_start_time + ', smontaggio ' + itD(rng.end) + ' ore ' + ev_end_time + ', ' + addr;
+    evRange = [rng.start, rng.end];
     // I campi sono ora liberi: limito i valori lato server all'intervallo dichiarato per unità.
     const LIMITS = { CM:{h:[100,400],w:[100,600]}, INCH:{h:[40,160],w:[40,240]}, FEET:{h:[4,15],w:[4,20]} };
     const lim = LIMITS[String(unit || 'CM').toUpperCase()] || LIMITS.CM;
@@ -144,7 +153,7 @@ function priceItem(product, it) {
     const base = wCm * 0.002 + 29 + ((2*hCm + 2*wCm) / 100) * 50;
     const total = base * 1.5;
     unitAmountCents = Math.round(total * 100);
-    description = `${product.nome} — ${h}×${w} ${String(unit || 'CM').toUpperCase()}, prezzo € ${base.toFixed(2).replace('.', ',')} + caparra 50% (€ ${(base/2).toFixed(2).replace('.', ',')})`;
+    description = `${product.nome} — Roma, ${evLabel} — ${h}×${w} ${String(unit || 'CM').toUpperCase()}, prezzo € ${base.toFixed(2).replace('.', ',')} + caparra 50% (€ ${(base/2).toFixed(2).replace('.', ',')})`;
   } else if (product.type === 'scatolaGioielli') {
     const { misuraIdx, coloreIdx, qty } = formula || {};
     const mIdx = Math.min(Math.max(Number.isInteger(misuraIdx) ? misuraIdx : 0, 0), product.misuraRate.length - 1);
@@ -306,7 +315,7 @@ function priceItem(product, it) {
   } else {
     return null;
   }
-  return { unitAmountCents, description };
+  return { unitAmountCents, description, ...(evRange ? { evRange } : {}) };
 }
 
 module.exports = async (req, res) => {
@@ -328,6 +337,7 @@ module.exports = async (req, res) => {
       if (!product) { res.status(400).json({ error: 'Prodotto sconosciuto' }); return; }
       const r = priceItem(product, it);
       if (!r) { res.status(400).json({ error: 'Questo prodotto richiede un preventivo, non è acquistabile online' }); return; }
+      if (r.error) { res.status(400).json({ error: r.error }); return; }
       priced.push({ productId: String(it.productId), product, formula: it.formula, ...r });
     }
     const unitAmountCents = priced.reduce((a, p) => a + p.unitAmountCents, 0);
@@ -360,6 +370,21 @@ module.exports = async (req, res) => {
     const shipCountry = zone === 'ue' ? String((req.body && req.body.shippingCountry) || '') : 'Italia';
     if (zone === 'ue' && !EU_COUNTRIES.includes(shipCountry)) {
       res.status(400).json({ error: 'Seleziona un paese UE valido per la spedizione (no Italia, Città del Vaticano o paesi extra UE).' });
+      return;
+    }
+    // Struttura per Eventi: date ancora libere (già pagate = bloccate) e non sovrapposte nel carrello.
+    const evRanges = priced.filter(p => p.evRange).map(p => p.evRange.join('|'));
+    if (evRanges.length) {
+      const wanted = daysFromMetadata(evRanges.join(','));
+      let booked = [];
+      try { booked = await getBooked(); } catch (e) { console.error('Lettura prenotazioni fallita', e); }
+      if (wanted.some(d => booked.includes(d)) || new Set(wanted).size !== wanted.length) {
+        res.status(400).json({ error: 'Struttura per Eventi: alcune date scelte non sono più disponibili. Rimuovila dal carrello e scegli altre date.' });
+        return;
+      }
+    }
+    if (priced.some(p => p.productId === '215') && zone !== 'roma_centro' && zone !== 'roma_resto') {
+      res.status(400).json({ error: 'La Struttura per Eventi è disponibile solo a Roma: scegli una zona di consegna di Roma.' });
       return;
     }
     // Carrello: una sola spedizione = la tariffa più alta tra gli articoli.
@@ -444,6 +469,7 @@ module.exports = async (req, res) => {
     metadata.design_link = typeof designLink === 'string' ? designLink.slice(0, 490) : '';
     metadata.design_files = Array.isArray(designFiles) ? designFiles.join(', ').slice(0, 490) : '';
     metadata.design_ref = typeof designRef === 'string' ? designRef.slice(0, 40) : '';
+    if (evRanges.length) metadata.ev_dates = evRanges.join(',').slice(0, 490);
 
     // PayPal: stesso importo calcolato sopra; l'ordine nasce qui, il browser riceve solo l'ID.
     if (req.body && req.body.provider === 'paypal') {
