@@ -1595,7 +1595,7 @@ const PRODUCTS = [
     img:'img/insieme-copia.webp',
     gallery:['img/insieme-copia.webp'],
     intro:'Fondale su misura per eventi e conferenze: traliccio in alluminio e stampa PVC ad alta definizione, montaggio incluso.',
-    features:['Dimensioni su misura, adattate al tuo spazio (100–400 cm altezza, 100–600 cm larghezza)','Traliccio in alluminio certificato + telo in PVC ignifugo, robusto e riutilizzabile','Stampa ad alta definizione','Consegna, installazione, messa in bolla e smontaggio a cura del nostro team','Richiesta caparra confirmatoria del 50%, restituita dopo ispezione senza danni'],
+    features:['Dimensioni su misura, adattate al tuo spazio (100–400 cm altezza, 100–600 cm larghezza)','Traliccio in alluminio certificato + telo in PVC ignifugo, robusto e riutilizzabile','Stampa ad alta definizione','Consegna, installazione, messa in bolla e smontaggio a cura del nostro team','Richiesta caparra confirmatoria del 50%, restituita dopo ispezione senza danni','Servizio disponibile solo a Roma: scegli montaggio e smontaggio nel calendario'],
     specs:{'Altezza':'100 – 400 cm','Larghezza':'100 – 600 cm','Materiale':'Alluminio certificato + PVC ignifugo'},
     pricing:{type:'quote',
       formula: (sel) => {
@@ -2264,6 +2264,101 @@ function priceLabelFor(p, group){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// Calendario prenotazione Struttura per Eventi (215): montaggio → smontaggio. Regole allineate
+// con api/_bookings.js: preavviso, durata massima, niente montaggi/smontaggi la domenica e nei festivi
+// (nazionali + Pasquetta + 29/06 patrono di Roma). Le date già pagate arrivano da /api/event-bookings.
+const EVENT_NOTICE_DAYS = 5, EVENT_MAX_SPAN = 30;
+function isoDay(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function isoAdd(iso, n){ const [y,m,d] = iso.split('-').map(Number); return isoDay(new Date(y, m-1, d+n)); }
+function eventDateRange(){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const min = new Date(t); min.setDate(min.getDate() + EVENT_NOTICE_DAYS);
+  const max = new Date(t); max.setFullYear(max.getFullYear() + 1);
+  return { min: isoDay(min), max: isoDay(max) };
+}
+function easterIso(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+  return isoDay(new Date(y, Math.floor((h+l-7*m+114)/31)-1, ((h+l-7*m+114)%31)+1));
+}
+function eventNoInstall(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  if (new Date(y, m-1, d).getDay() === 0) return true;
+  if (['01-01','01-06','04-25','05-01','06-02','06-29','08-15','11-01','12-08','12-25','12-26'].includes(iso.slice(5))) return true;
+  return isoAdd(easterIso(y), 1) === iso;
+}
+function fmtEventDate(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return '';
+  return m[3] + '/' + m[2] + '/' + m[1];
+}
+function eventBooked(){
+  if (!state.evBookedLoaded){
+    state.evBookedLoaded = 'loading';
+    fetch('/api/event-bookings').then(r => r.json()).then(j => { state.evBooked = j.booked || []; })
+      .catch(() => {}).finally(() => { state.evBookedLoaded = true; if (document.getElementById('eventCalendar')) renderDetail(); });
+  }
+  return state.evBooked || [];
+}
+function eventRangeHasBooked(a, b){ return eventBooked().some(d => d >= a && d <= b); }
+const EVENT_TIMES = Array.from({ length: 31 }, (_, i) => String(7 + Math.floor(i/2)).padStart(2,'0') + (i % 2 ? ':30' : ':00'));
+function eventCalendarHtml(p, sel){
+  const en = window.tpLang === 'en';
+  const { min, max } = eventDateRange();
+  const booked = eventBooked();
+  const s = sel.ev_start || '', e = sel.ev_end || '';
+  const ym = state.calMonthById[p.id] || (s || min).slice(0, 7);
+  const [y, mo] = ym.split('-').map(Number);
+  const first = new Date(y, mo - 1, 1);
+  const days = new Date(y, mo, 0).getDate();
+  const lead = (first.getDay() + 6) % 7;
+  const monthName = first.toLocaleDateString(en ? 'en-GB' : 'it-IT', { month: 'long', year: 'numeric' });
+  const wd = en ? ['Mo','Tu','We','Th','Fr','Sa','Su'] : ['Lu','Ma','Me','Gi','Ve','Sa','Do'];
+  const canPrev = ym > min.slice(0, 7), canNext = ym < max.slice(0, 7);
+  const G = 'oklch(0.42 0.12 155)', TINT = 'oklch(0.93 0.04 155)';
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<span></span>');
+  for (let d = 1; d <= days; d++){
+    const iso = ym + '-' + String(d).padStart(2, '0');
+    const isBooked = booked.includes(iso);
+    const off = iso < min || iso > max || isBooked || eventNoInstall(iso);
+    const edge = iso === s || iso === e;
+    const inRange = s && e && iso > s && iso < e;
+    const base = 'height:38px; border-radius:8px; font-size:13.5px; font-family:inherit; display:flex; align-items:center; justify-content:center;';
+    if (off) cells.push(`<span title="${isBooked ? (en ? 'Booked' : 'Già prenotato') : ''}" style="${base} color:oklch(0.78 0.005 90); background:${inRange ? TINT : 'transparent'};${isBooked ? ' text-decoration:line-through;' : ''}">${d}</span>`);
+    else cells.push(`<button type="button" data-cal-day="${iso}" aria-pressed="${edge}" style="${base} cursor:pointer; border:1.5px solid ${edge ? G : (inRange ? TINT : 'oklch(0.9 0.005 90)')}; background:${edge ? G : (inRange ? TINT : '#fff')}; color:${edge ? '#fff' : 'inherit'}; font-weight:${edge ? 700 : 500};">${d}</button>`);
+  }
+  const navBtn = (dir, ok, label) => `<button type="button" ${ok ? `data-cal-nav="${dir}"` : 'disabled'} aria-label="${label}" style="width:36px; height:36px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); background:#fff; font-size:16px; cursor:${ok ? 'pointer' : 'default'}; opacity:${ok ? 1 : .35};">${dir < 0 ? '‹' : '›'}</button>`;
+  const lab = 'font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;';
+  const field = 'width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit; background:#fff;';
+  const timeSel = (key, val) => `<select data-ev-field="${key}" style="${field}"><option value="">${en ? 'Time' : 'Ora'}</option>${EVENT_TIMES.map(t => `<option ${t === val ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  const hint = state.evMsg ? `<span style="color:#b3261e;">${esc(state.evMsg)}</span>`
+    : !s ? (en ? `Pick the installation day (at least ${EVENT_NOTICE_DAYS} days from today).` : `Scegli il giorno di montaggio (almeno ${EVENT_NOTICE_DAYS} giorni da oggi).`)
+    : !e ? (en ? 'Now pick the dismantling day (can be the same day).' : 'Ora scegli il giorno di smontaggio (anche lo stesso giorno).')
+    : (en ? 'Click a day to start over.' : 'Clicca un giorno per ricominciare.');
+  return `<div id="eventCalendar" data-no-i18n style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+    <div>
+      <div style="${lab}">${en ? 'Installation and dismantling' : 'Montaggio e smontaggio'} <span style="opacity:.7;">(${en ? 'Rome only' : 'solo Roma'})</span></div>
+      <div style="border:1.5px solid oklch(0.9 0.005 90); border-radius:10px; padding:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+          ${navBtn(-1, canPrev, en ? 'Previous month' : 'Mese precedente')}
+          <div style="font-size:14px; font-weight:700; text-transform:capitalize;">${esc(monthName)}</div>
+          ${navBtn(1, canNext, en ? 'Next month' : 'Mese successivo')}
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; margin-bottom:4px;">${wd.map(w => `<span style="text-align:center; font-size:11px; color:oklch(0.5 0.01 90); text-transform:uppercase; letter-spacing:.04em;">${w}</span>`).join('')}</div>
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px;">${cells.join('')}</div>
+      </div>
+      <div style="font-size:12px; margin-top:8px; color:oklch(0.5 0.01 90); line-height:1.45;">${hint}<br>${en ? 'No installation or dismantling on Sundays and public holidays. Struck-through days are already booked.' : 'Niente montaggi o smontaggi la domenica e nei festivi. I giorni barrati sono già prenotati.'}</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <div style="flex:1 1 0; min-width:0;"><div style="${lab}">${en ? 'Installation' : 'Montaggio'}${s ? ' ' + fmtEventDate(s) : ''}</div>${timeSel('ev_start_time', sel.ev_start_time)}</div>
+      <div style="flex:1 1 0; min-width:0;"><div style="${lab}">${en ? 'Dismantling' : 'Smontaggio'}${e ? ' ' + fmtEventDate(e) : ''}</div>${timeSel('ev_end_time', sel.ev_end_time)}</div>
+    </div>
+    <div>
+      <div style="${lab}">${en ? 'Event address (Rome)' : 'Indirizzo dell\'evento (Roma)'}</div>
+      <input type="text" data-ev-field="ev_address" maxlength="120" value="${esc(sel.ev_address || '')}" placeholder="${en ? 'Street, number, venue' : 'Via, numero civico, location'}" style="${field}">
+    </div>
+  </div>`;
+}
 const QUOTE_LABELS = {
   copie:'Copie stesso soggetto', base:'Base (cm)', larghezza:'Larghezza (cm)', altezza:'Altezza (cm)',
   pagCol:'Pagine a colori', pagBn:'Pagine b/n', altroColore:'Altro colore', canva:'Link file / Canva',
@@ -2325,6 +2420,10 @@ function quoteConfigText(p, f, selectionIdx){
       if (k === 'altroColore') continue;
       if (typeof v !== 'string' && typeof v !== 'number') continue;
       if (v === '' || v === 0) continue;
+      if (k === 'ev_start'){ parts.push('Montaggio: ' + fmtEventDate(v) + (f.ev_start_time ? ' ore ' + f.ev_start_time : '')); continue; }
+      if (k === 'ev_end'){ parts.push('Smontaggio: ' + fmtEventDate(v) + (f.ev_end_time ? ' ore ' + f.ev_end_time : '')); continue; }
+      if (k === 'ev_address'){ parts.push('Indirizzo evento: ' + v + ' (Roma)'); continue; }
+      if (k === 'ev_start_time' || k === 'ev_end_time') continue;
       const opt = opts.find(o => o.key === k);
       parts.push(((opt && opt.label) || QUOTE_LABELS[k] || k) + ': ' + v);
     }
@@ -2435,7 +2534,19 @@ async function startStripeCheckout(btn){
     }
     if (pricingType === 'quote' && productId === '215') {
       const sel = state.quoteSelById[productId] || {};
-      body.formula = { unit: sel.unit || 'CM', altezza: sel.altezza || '100', larghezza: sel.larghezza || '100' };
+      const en = window.tpLang === 'en';
+      const { min: dMin, max: dMax } = eventDateRange();
+      const evErr = !sel.ev_start || !sel.ev_end || sel.ev_start < dMin || sel.ev_start > dMax
+          ? (en ? 'pick the installation and dismantling days in the calendar first.' : 'scegli prima i giorni di montaggio e smontaggio nel calendario.')
+        : (eventRangeHasBooked(sel.ev_start, sel.ev_end) ? (en ? 'some of the chosen days are already booked.' : 'alcuni dei giorni scelti sono già prenotati.')
+        : (!sel.ev_start_time || !sel.ev_end_time ? (en ? 'choose the installation and dismantling times.' : "scegli l'ora di montaggio e di smontaggio.")
+        : ((sel.ev_address || '').trim().length < 5 ? (en ? 'enter the event address in Rome.' : "inserisci l'indirizzo dell'evento a Roma.") : '')));
+      if (evErr) throw new Error(evErr);
+      const ev = { ev_start: sel.ev_start, ev_end: sel.ev_end, ev_start_time: sel.ev_start_time, ev_end_time: sel.ev_end_time, ev_address: sel.ev_address.trim() };
+      body.formula = { unit: sel.unit || 'CM', altezza: sel.altezza || '100', larghezza: sel.larghezza || '100', ...ev };
+      const u215 = (sel.unit || 'CM').toLowerCase();
+      human = { 'Altezza': (sel.altezza || '100') + ' ' + u215, 'Larghezza': (sel.larghezza || '100') + ' ' + u215,
+        'Montaggio': fmtEventDate(ev.ev_start) + ' ore ' + ev.ev_start_time, 'Smontaggio': fmtEventDate(ev.ev_end) + ' ore ' + ev.ev_end_time, 'Indirizzo evento': ev.ev_address + ' (Roma)' };
     }
     if (pricingType === 'quote' && productId === '198') {
       const sel = state.quoteSelById[productId] || {};
@@ -2558,6 +2669,7 @@ let state = {
   scatolaById: {},
   rilegatureById: {},
   quoteSelById: {},
+  calMonthById: {},
   formulaById: {},
 };
 
@@ -3887,6 +3999,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
         return out.join('');
         })()}
       </div>
+      ${p.id === '215' ? eventCalendarHtml(p, sel) : ''}
       <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90);">
         ${p.id === '215' ? (() => {
             const base = p.pricing.formula(sel);
@@ -4210,6 +4323,28 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
       state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [key]: String(n) };
     });
   });
+  app.querySelectorAll('[data-cal-day]').forEach(el => el.addEventListener('click', () => {
+    const cur = { ...(state.quoteSelById[p.id]||{}) };
+    const d = el.dataset.calDay;
+    state.evMsg = '';
+    if (!cur.ev_start || cur.ev_end || d < cur.ev_start) { cur.ev_start = d; cur.ev_end = ''; }
+    else if (eventRangeHasBooked(cur.ev_start, d)) state.evMsg = window.tpLang === 'en' ? 'Some days in this range are already booked.' : 'Alcuni giorni in questo intervallo sono già prenotati.';
+    else if ((new Date(d) - new Date(cur.ev_start)) / 864e5 + 1 > EVENT_MAX_SPAN) state.evMsg = (window.tpLang === 'en' ? 'Maximum ' : 'Durata massima ') + EVENT_MAX_SPAN + (window.tpLang === 'en' ? ' days.' : ' giorni.');
+    else cur.ev_end = d;
+    state.quoteSelById[p.id] = cur;
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-ev-field]').forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.evField]: el.value };
+  }));
+  app.querySelectorAll('[data-cal-nav]').forEach(el => el.addEventListener('click', () => {
+    const sel = state.quoteSelById[p.id] || {};
+    const cur = state.calMonthById[p.id] || (sel.ev_start || eventDateRange().min).slice(0, 7);
+    const [y, m] = cur.split('-').map(Number);
+    const d = new Date(y, m - 1 + Number(el.dataset.calNav), 1);
+    state.calMonthById[p.id] = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    renderDetail();
+  }));
   bindNum('formulaQty', 1, null, (n) => { formulaState(p).qty = n; });
   const canvaInput = document.getElementById('formulaCanva');
   if (canvaInput) canvaInput.addEventListener('input', (e) => { formulaState(p).canva = e.target.value; });
