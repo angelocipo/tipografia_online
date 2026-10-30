@@ -4003,10 +4003,17 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
       <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90);">
         ${p.id === '215' ? (() => {
             const base = p.pricing.formula(sel);
-            const total = base * 1.5;
-            return `<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
-              <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+            const row = (l, v, note) => `<div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:6px 0;">
+              <span style="font-size:14px;">${l}${note ? `<span style="display:block; font-size:12px; color:oklch(0.5 0.01 90);">${note}</span>` : ''}</span>
+              <span style="font-size:16px; font-weight:600; font-family:ui-monospace,monospace; white-space:nowrap;">€ ${fmtEUR(v)}</span>
+            </div>`;
+            return `<div style="margin-bottom:10px;">
+              ${row('Noleggio', base, 'Struttura, stampa, montaggio e smontaggio')}
+              ${row('Caparra 50%', base / 2, 'Restituita dopo ispezione senza danni')}
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:6px; padding-top:10px; border-top:1px solid oklch(0.92 0.005 90);">
+                <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale da pagare ora</span>
+                <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(base * 1.5)}</span>
+              </div>
             </div>`;
           })() : ''}
         ${p.pricing.formula && p.id !== '215' ? (() => {
@@ -4021,7 +4028,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
               <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">da € ${fmtEUR(p.pricing.basePrice)}</span>
             </div>` : '')}
         <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${(p.id === '215' || p.id === '5851') ? 'Totale sopra, IVA inclusa.' : 'Prezzo su richiesta in base alla configurazione selezionata.'}</div>
-        ${p.pricing.depositNote ? `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${esc(p.pricing.depositNote(sel, p))}</div>` : ''}
+        ${p.pricing.depositNote && p.id !== '215' ? `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${esc(p.pricing.depositNote(sel, p))}</div>` : ''}
         <div style="margin:16px 0; ${p.pricing.hideUpload ? 'display:none;' : ''}">
           ${uploadBlockHtml()}
         </div>
@@ -4036,6 +4043,9 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
       </div>`;
   }
 
+  // Ridisegno senza sobbalzi: blocco l'altezza e la posizione di scorrimento durante lo scambio.
+  const _scrollY = window.scrollY;
+  app.style.minHeight = app.offsetHeight + 'px';
   app.innerHTML = `
     <div class="p-page" style="max-width:1200px; margin:0 auto;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;">
@@ -4068,6 +4078,8 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
         </div>
       </div>
     </div>`;
+  window.scrollTo(0, _scrollY);
+  requestAnimationFrame(() => requestAnimationFrame(() => { app.style.minHeight = ''; }));
 
   if (_focusId) {
     const _el = document.getElementById(_focusId);
