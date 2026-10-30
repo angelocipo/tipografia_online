@@ -28,6 +28,8 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-341HJWRT35"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-341HJWRT35');</script>
 <style>
+  /* iPhone: niente zoom da doppio tocco sui pulsanti (+/−, pill, calendario) che faceva sobbalzare la pagina. */
+  button, .pill, .swatch, [data-cal-day] { touch-action: manipulation; }
   .idx-wrap{max-width:1180px;margin:0 auto;padding:0 var(--space-6);}
   .idx-grid{display:grid;gap:var(--space-6);}
   .idx-grid-4{grid-template-columns:repeat(4,1fr);}
@@ -4046,7 +4048,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
   // Ridisegno senza sobbalzi: blocco l'altezza e la posizione di scorrimento durante lo scambio.
   const _scrollY = window.scrollY;
   app.style.minHeight = app.offsetHeight + 'px';
-  app.innerHTML = `
+  const _detailHtml = `
     <div class="p-page" style="max-width:1200px; margin:0 auto;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
@@ -4073,11 +4075,21 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
           </div>
           <div style="border:1px solid oklch(0.9 0.005 90); border-radius:14px; padding:22px;">
             <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:oklch(0.5 0.01 90); margin-bottom:16px;">Configura il tuo ordine</div>
-            ${pricingHtml}
+            <div id="pConfig" data-pid="${esc(p.id)}" data-img="${esc(mainImage)}">${pricingHtml}</div>
           </div>
         </div>
       </div>
     </div>`;
+  // Stesso prodotto e stessa immagine: aggiorno solo il pannello "Configura il tuo ordine".
+  // Ridisegnare tutta la pagina ricaricava foto e miniature e la faceva sobbalzare (iPhone).
+  const _cfg = document.getElementById('pConfig');
+  if (_cfg && _cfg.dataset.pid === String(p.id) && _cfg.dataset.img === String(mainImage)) {
+    const _tpl = document.createElement('template');
+    _tpl.innerHTML = _detailHtml;
+    _cfg.innerHTML = _tpl.content.getElementById('pConfig').innerHTML;
+  } else {
+    app.innerHTML = _detailHtml;
+  }
   window.scrollTo(0, _scrollY);
   requestAnimationFrame(() => requestAnimationFrame(() => { app.style.minHeight = ''; }));
 
@@ -4113,7 +4125,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
     const mkBtn = (label, aria, delta) => {
       const b = document.createElement('button');
       b.type = 'button'; b.tabIndex = -1; b.textContent = label; b.setAttribute('aria-label', aria);
-      b.style.cssText = 'position:absolute;top:5px;bottom:5px;' + (delta < 0 ? 'left:5px;' : 'right:5px;') + 'width:32px;padding:0;border-radius:6px;border:none;background:oklch(0.95 0.005 90);color:oklch(0.25 0.01 90);font-family:inherit;font-size:16px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;';
+      b.style.cssText = 'touch-action:manipulation;-webkit-user-select:none;user-select:none;position:absolute;top:5px;bottom:5px;' + (delta < 0 ? 'left:5px;' : 'right:5px;') + 'width:32px;padding:0;border-radius:6px;border:none;background:oklch(0.95 0.005 90);color:oklch(0.25 0.01 90);font-family:inherit;font-size:16px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;';
       b.addEventListener('click', () => {
         let n = parseVal(el.value);
         if (isNaN(n)) n = min != null ? min : 1;
@@ -4296,7 +4308,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
   app.querySelectorAll('[data-str-consegna]').forEach(el => el.addEventListener('click', () => { striscioniState(p).consegnaIdx = parseInt(el.dataset.strConsegna,10); renderDetail(); }));
   app.querySelectorAll('[data-str-occhielli]').forEach(el => el.addEventListener('click', () => { striscioniState(p).occhielliIdx = parseInt(el.dataset.strOcchielli,10); renderDetail(); }));
   app.querySelectorAll('[data-str-formato]').forEach(el => el.addEventListener('click', () => { striscioniState(p).formatIdx = parseInt(el.dataset.strFormato,10); renderDetail(); }));
-  app.querySelectorAll('[data-thumb]').forEach(el => el.addEventListener('click', () => { state.mainImageOverride = el.dataset.thumb; renderDetail(); }));
+  app.querySelectorAll('[data-thumb]:not([data-bound])').forEach(el => { el.dataset.bound = '1'; el.addEventListener('click', () => { state.mainImageOverride = el.dataset.thumb; renderDetail(); }); });
   app.querySelectorAll('[data-quote-key][data-quote-val]').forEach(el => el.addEventListener('click', () => {
     const prevUnit = (state.quoteSelById[p.id]||{}).unit || 'CM';
     state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.dataset.quoteVal };
