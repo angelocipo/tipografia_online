@@ -122,6 +122,23 @@
       Preventivo generato automaticamente in base alla configurazione selezionata sul sito. Prezzi IVA inclusa, salvo diversa indicazione. Per confermare l'ordine o richiedere modifiche, contattateci a info@tipografia.online o tramite il modulo sul sito.
     </div>
   </section>
+  <section class="page" style="width:100%;height:100%;padding:56px 64px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--font-body);color:var(--color-text);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--color-accent);padding-bottom:20px;margin-bottom:32px;">
+      <img src="img/tipografia-online-logo.webp" alt="Tipografia Online by Printing Italy" style="height:44px;width:auto;display:block;">
+      <div style="font-size:13px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">N. {{ quoteNumber }}</div>
+    </div>
+    <div style="font-family:var(--font-heading);font-size:22px;font-weight:700;margin-bottom:6px;">Scansiona per aprire il prodotto</div>
+    <div style="font-size:13px;color:color-mix(in srgb, var(--color-text) 65%, transparent);margin-bottom:28px;">Inquadra il codice QR con la fotocamera del telefono per vedere il prodotto sul sito e ordinarlo.</div>
+    <div style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:28px 24px;">
+      <sc-for list="{{ qrItems }}" as="q" hint-placeholder-count="1">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;">
+          <img src="{{ q.qrSrc }}" alt="QR {{ q.prodotto }}" style="width:150px;height:150px;display:block;border:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding:8px;background:#fff;">
+          <div style="font-weight:600;font-size:13.5px;line-height:1.35;">{{ q.prodotto }}</div>
+          <div style="font-size:11px;color:color-mix(in srgb, var(--color-text) 55%, transparent);font-family:ui-monospace,monospace;word-break:break-all;">{{ q.url }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
 </doc-page>
 
 </x-dc>
@@ -180,7 +197,12 @@ class Component extends DCLogic {
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
       dateStr: now.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
-    setTimeout(() => window.print(), 400);
+    // Stampa solo quando i QR sono caricati (max 4 s), altrimenti nel PDF uscirebbero vuoti.
+    setTimeout(() => {
+      const imgs = [...document.querySelectorAll('img')].filter(i => !i.complete);
+      const wait = Promise.all(imgs.map(i => new Promise(r => { i.onload = i.onerror = r; })));
+      Promise.race([wait, new Promise(r => setTimeout(r, 4000))]).then(() => window.print());
+    }, 400);
   }
   renderVals() {
     const prezzo = this.state.prezzo || 0;
@@ -204,6 +226,13 @@ class Component extends DCLogic {
       spedizioneZona: zoneLabels[this.state.zona] || '',
       totaleFmt: eur(totale),
       righe: (this.state.righe || []).map(r => ({ ...r, hasEan: !!r.ean, quantita: r.quantita || '-', prezzoFmt: eur(r.prezzo) })),
+      qrItems: (() => {
+        const seen = new Set();
+        return (this.state.righe || []).filter(r => { if (seen.has(r.productUrl)) return false; seen.add(r.productUrl); return true; }).map(r => {
+          const url = 'https://www.tipografia.online' + r.productUrl;
+          return { prodotto: r.prodotto, url, qrSrc: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=' + encodeURIComponent(url) };
+        });
+      })(),
       quoteNumber: this.state.quoteNumber || '',
       dateStr: this.state.dateStr || '',
       prezzoFmt: eur(prezzo),
