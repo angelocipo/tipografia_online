@@ -2427,6 +2427,9 @@ function quoteConfigText(p, f, selectionIdx){
       if (k === 'ev_address'){ parts.push('Indirizzo evento: ' + v + ' (Roma)'); continue; }
       if (k === 'ev_start_time' || k === 'ev_end_time') continue;
       const opt = opts.find(o => o.key === k);
+      // Misure con unità (CM/INCH/FEET): unità accanto al valore, niente riga "Unità di misura" a parte.
+      if (k === 'unit' && opts.some(o => o.choicesByUnit)) continue;
+      if (opt && opt.choicesByUnit){ parts.push(opt.label + ': ' + v + ' ' + String(f.unit || Object.keys(opt.choicesByUnit)[0]).toLowerCase()); continue; }
       parts.push(((opt && opt.label) || QUOTE_LABELS[k] || k) + ': ' + v);
     }
   }
