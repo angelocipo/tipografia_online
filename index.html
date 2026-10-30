@@ -3844,7 +3844,8 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
             const nums = choices.map(Number);
             const min = nums[0], max = nums[nums.length-1];
             // Campi dimensione: 1 cifra dopo la virgola; le quantità restano interi.
-            const step = opt.step || (['larghezza','altezza','base','lato_lungo','lato_corto'].includes(opt.key) ? 0.1 : 1);
+            const step = opt.step || (opt.choicesByUnit ? 1 : (['larghezza','altezza','base','lato_lungo','lato_corto'].includes(opt.key) ? 0.1 : 1));
+            // Misure con unità CM/INCH/FEET: +/− a unità intere (cambio unità arrotonda all'intero).
             const shown = Math.min(Math.max(Number(current) || min, min), max);
             return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
               <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
@@ -4190,7 +4191,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
       (p.pricing.options||[]).forEach(o => {
         if (!o.choicesByUnit) return;
         const v = Number(sel2[o.key]);
-        if (!isNaN(v) && kOld !== kNew) sel2[o.key] = String(Math.round(v * kOld / kNew * 10) / 10);
+        if (!isNaN(v) && kOld !== kNew) sel2[o.key] = String(Math.round(v * kOld / kNew));
       });
       (p.pricing.options||[]).forEach(o => {
         if (!o.choicesByUnit) return;
