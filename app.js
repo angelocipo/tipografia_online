@@ -1,0 +1,4191 @@
+// ---- Payment: Stripe checkout is created dynamically by /api/create-checkout-session (see DEPLOY.md). ----
+// ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
+
+const ROLLUP_VARIANTS = [
+  { label: '200 × 200 cm', price: 530 },
+];
+const ROLLUP_FEATURES = [
+  'Stampa 4/0 colori (CMYK) su carta sintetica bi-strato',
+  'Struttura in alluminio con piede estraibile',
+  'Banner sostituibile, consegnato preconfezionato',
+  'Include borsa da trasporto',
+];
+// Struttura per Eventi: le misure si inseriscono in cm, inch o feet ma il prezzo si calcola sempre in cm.
+const STRUTTURA_TO_CM = { CM:1, INCH:2.54, FEET:30.48 };
+function struttura215cm(sel) {
+  const k = STRUTTURA_TO_CM[String(sel.unit || 'CM').toUpperCase()] || 1;
+  return [(Number(sel.altezza) || 100) * k, (Number(sel.larghezza) || 100) * k];
+}
+
+const GARMENT_CAT = 'Stampa su indumento';
+const CATEGORIES = ['Rollup', 'Biglietti da Visita', 'Volantini', 'Pieghevoli', 'Locandine e Manifesti', 'Block Notes', 'Forex', 'Adesivi', 'Adesivi Sagomati', 'Banner', 'Quadri', 'Gadget', 'Eventi', 'Servizi', 'Buste'];
+
+const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
+// Plastificazione: sovrapprezzo IVA incl. per quantità (per ogni motivo).
+// Derivato dal listino plastificati/non plastificati, interpolato in log(quantità) dove il
+// listino non era monotono (50, 75, 250, 500, 2500, 5000), extrapolato per 20000, poi ×2.
+const PLASTIFICATA_TIERS = [{qty:10,price:14.80},{qty:25,price:14.98},{qty:50,price:15.32},{qty:75,price:15.50},{qty:100,price:15.64},{qty:250,price:18.64},{qty:500,price:20.90},{qty:1000,price:23.18},{qty:2500,price:34.10},{qty:5000,price:42.36},{qty:7500,price:47.20},{qty:10000,price:59.62},{qty:15000,price:89.16},{qty:20000,price:118.88}];
+function plastPrice(qty){
+  const t = PLASTIFICATA_TIERS.find(t => qty <= t.qty);
+  return (t || PLASTIFICATA_TIERS[PLASTIFICATA_TIERS.length-1]).price;
+}
+const GRAFICA_PRICE = 25; // Creazione grafica: € 25 a motivo, IVA compresa.
+function graficaCheckboxHtml(p, compact){
+  const checked = !!state.graficaById[p.id];
+  return `<div style="margin-bottom:${compact ? '0' : '14px'};">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; flex-wrap:wrap;">
+      <input type="checkbox" data-grafica-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
+      Creazione grafica <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(GRAFICA_PRICE)} a motivo)</span>
+    </label>
+  </div>`;
+}
+function plastCheckboxHtml(p, qty, compact){
+  const checked = !!state.plastById[p.id];
+  return `<div style="margin-bottom:${compact ? '0' : '14px'};">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; flex-wrap:wrap;">
+      <input type="checkbox" data-plast-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
+      Plastificata <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(plastPrice(qty))})</span>
+    </label>
+  </div>`;
+}
+// Formato diviso in due righe: Misura (8,5×5,5 = 5,5×8,5) + Orientamento. I bottoni puntano all'indice del formato.
+// Etichetta breve per i bottoni Carta (l'etichetta completa resta nell'ordine).
+function shortPaperLabel(l){
+  const m = String(l).match(/^gr\. ?\d+/);
+  if (!m) return l;
+  if (/SBS/i.test(l)) return m[0] + ' SBS';
+  if (/offset/i.test(l)) return m[0] + ' offset';
+  return m[0];
+}
+function formatSplitHtml(formats, curIdx, attr){
+  const num = x => parseFloat(String(x).replace(',', '.'));
+  const items = formats.map((f, i) => {
+    const m = f.label.match(/^(\S+)\s+([\d,]+)×([\d,]+)/);
+    if (!m) return { i, o: '', size: f.label };
+    const d = num(m[2]) >= num(m[3]) ? [m[2], m[3]] : [m[3], m[2]];
+    return { i, o: m[1], size: d[0] + '×' + d[1] + ' cm' };
+  });
+  const cur = items[curIdx] || items[0];
+  const sizes = [...new Set(items.map(x => x.size))];
+  const lbl = t => `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${t}</div>`;
+  const sizeBtns = sizes.map(s => { const t = items.find(x => x.size === s && x.o === cur.o) || items.find(x => x.size === s); return `<button class="pill ${s===cur.size?'active':''}" ${attr}="${t.i}">${esc(s)}</button>`; }).join('');
+  const orBtns = items.filter(x => x.size === cur.size && x.o).map(x => `<button class="pill ${x.i===cur.i?'active':''}" ${attr}="${x.i}">${esc(x.o)}</button>`).join('');
+  return `<div style="margin-bottom:14px;">${lbl('Misura')}<div style="display:flex; gap:8px; flex-wrap:wrap;">${sizeBtns}</div></div>` +
+    (orBtns ? `<div style="margin-bottom:14px;">${lbl('Orientamento')}<div style="display:flex; gap:8px; flex-wrap:wrap;">${orBtns}</div></div>` : '');
+}
+function angoliPrice(qty){
+  const t = ANGOLI_ARROTONDATI_TIERS.find(t => qty <= t.qty);
+  return (t || ANGOLI_ARROTONDATI_TIERS[ANGOLI_ARROTONDATI_TIERS.length-1]).price;
+}
+function angoliCheckboxHtml(p, qty, compact){
+  const checked = !!state.angoliById[p.id];
+  return `<div style="margin-bottom:${compact ? '0' : '14px'};">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; flex-wrap:wrap;">
+      <input type="checkbox" data-angoli-toggle="${p.id}" ${checked?'checked':''} style="width:16px;height:16px;">
+      Angoli arrotondati <span style="color:oklch(0.5 0.01 90);">(+€ ${fmtEUR(angoliPrice(qty))})</span>
+    </label>
+  </div>`;
+}
+
+// Cartella colori ORACAL 751C High Performance Cast — 117 colori.
+// Codici e nomi dalla mazzetta ufficiale ORAFOL; tinte campionate dalle tavole
+// (img/oracal-751c-1..3.png). Ordine identico alla mazzetta.
+const ORACAL_751 = [
+  { code:'020', nome:'Giallo Oro', hex:'#fdb401' }, { code:'219', nome:'Giallo Tuorlo', hex:'#fabd02' }, { code:'203', nome:'Giallo Paglia', hex:'#f9ba02' },
+  { code:'211', nome:'Giallo Sole', hex:'#fab502' }, { code:'019', nome:'Giallo Segnale', hex:'#dea202' }, { code:'208', nome:'Giallo Postale', hex:'#d69b01' },
+  { code:'209', nome:'Giallo Mais', hex:'#fcbc01' }, { code:'021', nome:'Giallo', hex:'#fab801' }, { code:'216', nome:'Giallo Traffico', hex:'#fcd401' },
+  { code:'022', nome:'Giallo Chiaro', hex:'#fddd01' }, { code:'025', nome:'Giallo Zolfo', hex:'#fdee02' }, { code:'026', nome:'Rosso Porpora', hex:'#6a0118' },
+  { code:'361', nome:'Rosso Mela', hex:'#800108' }, { code:'030', nome:'Rosso Scuro', hex:'#790a1e' }, { code:'348', nome:'Rosso Scarlatto', hex:'#8f031f' },
+  { code:'306', nome:'Cremisi', hex:'#a30116' }, { code:'031', nome:'Rosso', hex:'#b50417' }, { code:'027', nome:'Rosso Pomodoro', hex:'#cb0d15' },
+  { code:'028', nome:'Rosso Cardinale', hex:'#d70214' }, { code:'325', nome:'Rosso Medio', hex:'#c30206' }, { code:'324', nome:'Rosso Sangue', hex:'#c9010c' },
+  { code:'032', nome:'Rosso Chiaro', hex:'#d00104' }, { code:'326', nome:'Rosso Segnale', hex:'#c90202' }, { code:'047', nome:'Rosso Arancio', hex:'#da2301' },
+  { code:'033', nome:'Arancio Rosso', hex:'#db2101' }, { code:'335', nome:'Rosso Marte', hex:'#de1a01' }, { code:'333', nome:'Arancio Puro', hex:'#f54401' },
+  { code:'034', nome:'Arancione', hex:'#fc4d02' }, { code:'332', nome:'Arancio Intenso', hex:'#f54c02' }, { code:'035', nome:'Arancio Pastello', hex:'#fa6302' },
+  { code:'340', nome:'Castagna', hex:'#48242b' }, { code:'048', nome:'Bordeaux', hex:'#721034' }, { code:'415', nome:'Prugna', hex:'#632c58' },
+  { code:'040', nome:'Viola', hex:'#582b76' }, { code:'403', nome:'Viola Chiaro', hex:'#533983' }, { code:'043', nome:'Lavanda', hex:'#7866ad' },
+  { code:'042', nome:'Lilla', hex:'#af79af' }, { code:'041', nome:'Rosa', hex:'#ce2871' }, { code:'077', nome:'Telemagenta', hex:'#c7025f' },
+  { code:'044', nome:'Magenta', hex:'#cd0164' }, { code:'045', nome:'Rosa Tenue', hex:'#e0539b' }, { code:'532', nome:'Blu Nero', hex:'#0a1226' },
+  { code:'588', nome:'Blu Alpha', hex:'#081547' }, { code:'590', nome:'Mirtillo', hex:'#081958' }, { code:'518', nome:'Blu Acciaio', hex:'#091955' },
+  { code:'591', nome:'Blu Mezzanotte', hex:'#08226a' }, { code:'050', nome:'Blu Scuro', hex:'#062072' }, { code:'058', nome:'Blu Oltremare', hex:'#052587' },
+  { code:'537', nome:'Blu Profondo', hex:'#071961' }, { code:'065', nome:'Blu Cobalto', hex:'#00238b' }, { code:'049', nome:'Blu Reale', hex:'#002795' },
+  { code:'918', nome:'Nichel', hex:'#575757' }, { code:'592', nome:'Blu Marino', hex:'#001865' }, { code:'593', nome:'Blu Deciso', hex:'#01228c' },
+  { code:'150', nome:'Blu Brillante L', hex:'#013db9' }, { code:'536', nome:'Blu Medio', hex:'#04359d' }, { code:'510', nome:'Blu Clematide', hex:'#08349e' },
+  { code:'067', nome:'Blu', hex:'#003c86' }, { code:'595', nome:'Blu Verde', hex:'#014e91' }, { code:'057', nome:'Blu Traffico', hex:'#003e97' },
+  { code:'051', nome:'Blu Genziana', hex:'#003da7' }, { code:'509', nome:'Blu Mare', hex:'#003aa0' }, { code:'508', nome:'Blu Segnale', hex:'#0042b2' },
+  { code:'052', nome:'Azzurro', hex:'#004fc4' }, { code:'507', nome:'Blu Capri', hex:'#0050c4' }, { code:'555', nome:'Blu Ghiacciaio', hex:'#3372c8' },
+  { code:'594', nome:'Blu Pastello', hex:'#1270c9' }, { code:'517', nome:'Blu Euro', hex:'#016dc6' }, { code:'053', nome:'Blu Chiaro', hex:'#198ee6' },
+  { code:'056', nome:'Blu Ghiaccio', hex:'#53adee' }, { code:'549', nome:'Blu Tortora', hex:'#7493ab' }, { code:'608', nome:'Petrolio', hex:'#01597c' },
+  { code:'066', nome:'Blu Turchese', hex:'#017594' }, { code:'054', nome:'Turchese', hex:'#0199a5' }, { code:'055', nome:'Menta', hex:'#5acfcd' },
+  { code:'599', nome:'Turchese Pastello', hex:'#6accde' }, { code:'060', nome:'Verde Scuro', hex:'#013821' }, { code:'661', nome:'Verde Foglia', hex:'#014c33' },
+  { code:'078', nome:'Verde Fogliame', hex:'#034d26' }, { code:'617', nome:'Smeraldo', hex:'#026141' }, { code:'607', nome:'Verde Turchese', hex:'#027163' },
+  { code:'604', nome:'Verde Cactus', hex:'#017659' }, { code:'061', nome:'Verde', hex:'#02744e' }, { code:'068', nome:'Verde Erba', hex:'#01764b' },
+  { code:'619', nome:'Verde Traffico', hex:'#018b51' }, { code:'062', nome:'Verde Chiaro', hex:'#159a34' }, { code:'064', nome:'Verde Giallo', hex:'#41ac1b' },
+  { code:'063', nome:'Verde Tiglio', hex:'#6bc71e' }, { code:'080', nome:'Marrone', hex:'#3e1814' }, { code:'803', nome:'Marrone Cioccolato', hex:'#421b0e' },
+  { code:'828', nome:'Marrone Terra', hex:'#3a1a06' }, { code:'079', nome:'Marrone Rosso', hex:'#590907' }, { code:'083', nome:'Marrone Nocciola', hex:'#c13d02' },
+  { code:'801', nome:'Marrone Argilla', hex:'#814617' }, { code:'811', nome:'Beige Sahara', hex:'#ad8241' }, { code:'081', nome:'Marrone Chiaro', hex:'#bc915c' },
+  { code:'818', nome:'Zafferano', hex:'#f9cc8e' }, { code:'804', nome:'Beige Marrone', hex:'#dab57b' }, { code:'023', nome:'Crema', hex:'#fee8ba' },
+  { code:'813', nome:'Crema Chiaro', hex:'#f7dbb8' }, { code:'018', nome:'Avorio Chiaro', hex:'#f4e8c3' }, { code:'070', nome:'Nero', hex:'#080808' },
+  { code:'720', nome:'Grigio Komatsu', hex:'#313838' }, { code:'073', nome:'Grigio Scuro', hex:'#3d4544' }, { code:'713', nome:'Grigio Ferro', hex:'#4c5354' },
+  { code:'071', nome:'Grigio', hex:'#666b69' }, { code:'721', nome:'Grigio Ardesia', hex:'#798790' }, { code:'076', nome:'Telegrigio', hex:'#aaa9a9' },
+  { code:'074', nome:'Grigio Medio', hex:'#a7a7a7' }, { code:'724', nome:'Grigio Ghiaccio', hex:'#d2d3d4' }, { code:'072', nome:'Grigio Chiaro', hex:'#d0d0d2' },
+  { code:'109', nome:'Bianco Scafo', hex:'#f4f3f1' }, { code:'010', nome:'Bianco', hex:'#fefdfb' }, { code:'090', nome:'Grigio Argento', hex:'#c1bfbc' },
+  { code:'930', nome:'Oro L', hex:'#b18416' }, { code:'093', nome:'Antracite', hex:'#393e3c' }, { code:'932', nome:'Grafite Metallizzato', hex:'#4b504e' },
+];
+const oracalLabel = (c) => `${c.code} ${c.nome}`;
+const ORACAL_HEX = Object.fromEntries(ORACAL_751.map(c => [oracalLabel(c), c.hex]));
+const ORACAL_LABELS = ORACAL_751.slice().sort((a, b) => Number(a.code) - Number(b.code)).map(oracalLabel);
+
+// Block notes: tipo di legatura (non incide sul prezzo). o = orientamento, e = lato incollato.
+const LEGATURA_BLOCK_NOTES = [
+  { label:'Formato verticale, legatura a sinistra', o:'v', e:'l' },
+  { label:'Formato orizzontale, legatura a sinistra', o:'h', e:'l' },
+  { label:'Formato verticale, legatura in alto', o:'v', e:'t' },
+  { label:'Formato orizzontale, legatura in alto', o:'h', e:'t' },
+];
+const PRODUCTS = [
+  { id:'197', ean:'0652026573206', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
+    templatePdfs:[{'label':'80×200 cm','path':'template/rollup-80x200.pdf'},{'label':'85×200 cm','path':'template/rollup-85x200.pdf'}],
+    img:'img/rollup.webp',
+    gallery:['img/rollup.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    intro:"Rollup stampato in 24H. Stampa il tuo Roll-Up a Roma in 24 ore e presentati sempre al meglio, anche all'ultimo minuto. Qualità premium, colori vivi e materiali resistenti.",
+    features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'80×200 · 85×200 cm','Uso':'Interni'},
+    // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
+    pricing:{ type:'formula',
+      formatChoices: ['80x200cm','85x200cm'],
+      tempiChoices: ['24H'], hideTempi: true, // selettore tempi rimosso: sempre 24H
+      strutturaChoices: [
+        { label:'Con struttura', rate:30 },
+        { label:'Solo stampa', rate:0 },
+      ],
+      rollupRate: (qty) => (qty > 6 ? 20 : qty > 4 ? 25 : 30),
+      rate24h: 10,
+    } },
+  { id:'5833', ean:'0652026573213', nome:'Stampa Roll-Up 200 × 200 cm', categoria:'Rollup',
+    templatePdf:'template/rollup-200x200.pdf',
+    img:'img/Professional-rollup-banner-mockup-display-copia2.webp',
+    gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
+    features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
+    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0} },
+  { id:'5850', ean:'0652026573220', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
+    templatePdf:'template/rollup-150x200.pdf',
+    img:'img/Professional-roll-up-banner-mockup-copia700.webp',
+    gallery:['img/Professional-roll-up-banner-mockup-copia700.webp','img/IMG_4265ac-copia.webp','img/IMG_4262ac-copia.webp','img/rollup-500.webp'],
+    intro:"La via di mezzo perfetta: largo abbastanza da farsi notare, comodo da spostare tra un evento e l'altro. Stampa il tuo Roll-Up a Roma in 3gg.",
+    features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'150×200 cm','Uso':'Interni'},
+    // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
+    pricing:{ type:'formula',
+      formatChoices: ['150x200cm'],
+      tempiChoices: ['72H'],
+      strutturaChoices: [
+        { label:'Con struttura', rate:255 },
+        { label:'Solo stampa', rate:0 },
+      ],
+      rollupRate: (qty) => (qty > 1 ? 90 : 95),
+      rate24h: 0,
+    } },
+  { id:'5970', ean:'', nome:'Backdrop in tessuto', categoria:'Eventi',
+    img:'img/backdrop-tube.webp',
+    gallery:['img/backdrop-tube.webp','img/backdrop-tessuto-pearl.webp'],
+    intro:'Backdrop fondale in tessuto Pearl 230 g/m², altezza 230 cm, completo di struttura o solo stampa. Ideale per fiere, eventi, photocall e allestimenti. Stampa in quadricromia a sublimazione, tessuto ignifugo classe B1.',
+    features:['Tessuto Pearl 230 g/m², indemagliabile, non lucido','Stampa quadricromia digitale a sublimazione','Inchiostri atossici, senza solventi chimici','Certificazione ignifuga classe B1','Completo di struttura o solo stampa','Trasporto incluso in Italia · UE + € 55'],
+    specs:{'Materiale':'Tessuto Pearl 230 g/m²','Altezza':'230 cm','Larghezza':'da 100 a 600 cm','Trasparenza':'20% (molto bassa)','Certificazione':'B1 Flame Retard','Tempi':'24/48 ore'},
+    // Prezzi = costo fornitore (display [+ struttura], IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa.
+    pricing:{type:'size', unit:'cadauno', defaultIndex:2,
+      // Indici 0–6 = Completo, 7–13 = Solo stampa (stesso ordine in api/_pricing-data.js).
+      groups:[{ label:'Completo (con struttura)', from:0, to:7 }, { label:'Solo stampa', from:7, to:14 }],
+      variants:[
+      { label:'100 × 230 cm — Completo (con struttura)', size:'100 × 230 cm', price:364 },
+      { label:'150 × 230 cm — Completo (con struttura)', size:'150 × 230 cm', price:444 },
+      { label:'230 × 230 cm — Completo (con struttura)', size:'230 × 230 cm', price:585.6 },
+      { label:'300 × 230 cm — Completo (con struttura)', size:'300 × 230 cm', price:672.8 },
+      { label:'400 × 230 cm — Completo (con struttura)', size:'400 × 230 cm', price:838.4 },
+      { label:'500 × 230 cm — Completo (con struttura)', size:'500 × 230 cm', price:1023.2 },
+      { label:'600 × 230 cm — Completo (con struttura)', size:'600 × 230 cm', price:1152 },
+      { label:'100 × 230 cm — Solo stampa', size:'100 × 230 cm', price:228 },
+      { label:'150 × 230 cm — Solo stampa', size:'150 × 230 cm', price:300 },
+      { label:'230 × 230 cm — Solo stampa', size:'230 × 230 cm', price:412.8 },
+      { label:'300 × 230 cm — Solo stampa', size:'300 × 230 cm', price:482.4 },
+      { label:'400 × 230 cm — Solo stampa', size:'400 × 230 cm', price:600 },
+      { label:'500 × 230 cm — Solo stampa', size:'500 × 230 cm', price:712.8 },
+      { label:'600 × 230 cm — Solo stampa', size:'600 × 230 cm', price:825.6 },
+    ]} },
+  // Prodotto di TEST (€ 1) per verificare ogni settimana pagamenti ed email. Nascosto: non compare nel catalogo, raggiungibile solo da index.html#test-1.
+  { id:'test-1', ean:'', nome:'Prodotto di test', categoria:'Servizi', hidden:true,
+    img:'img/tipografia-online-logo.webp', gallery:['img/tipografia-online-logo.webp'],
+    intro:'Prodotto interno di prova da € 1, per verificare il funzionamento di pagamenti, email e ordini. Non spedire.',
+    features:['Solo per test interni'], specs:{'Uso':'Test pagamento'},
+    pricing:{ type:'flat', price:1, hideUpload:true } },
+  { id:'5392', ean:'0652026573237', nome:'Volantini A5 gr 130 Opaca o Lucida', categoria:'Volantini',
+    templatePdf:'template/formato-14-8x21.pdf',
+    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.webp',
+    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a5-copia.webp'],
+    intro:'Volantini formato A5 (148 × 210 mm), stampa fronte/retro in quadricromia offset su carta patinata 130 g/m².',
+    features:['Stampa fronte/retro in quadricromia offset','Definizione nitida e colori saturi','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'A5 · 148×210 mm','Carta':'Patinata opaca o lucida 130 g/m²','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati; Carta non incide sul prezzo).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:100,price:33},{qty:250,price:36},{qty:500,price:41},{qty:1000,price:48},{qty:2500,price:74},{qty:5000,price:107},{qty:10000,price:166},{qty:20000,price:299},{qty:30000,price:440},{qty:40000,price:573},{qty:50000,price:712},{qty:60000,price:851},{qty:70000,price:990},{qty:80000,price:1119},{qty:90000,price:1257},{qty:100000,price:1395}],
+        [{qty:100,price:66},{qty:250,price:69},{qty:500,price:74},{qty:1000,price:81},{qty:2500,price:107},{qty:5000,price:141},{qty:10000,price:204},{qty:20000,price:364},{qty:30000,price:527},{qty:40000,price:685},{qty:50000,price:848},{qty:60000,price:1012},{qty:70000,price:1176},{qty:80000,price:1330},{qty:90000,price:1492},{qty:100000,price:1655}],
+      ],
+    } },
+  { id:'5560', ean:'0652026573244', nome:'Volantini A4 gr 170 Opaca', categoria:'Volantini',
+    templatePdf:'template/formato-21x29-7.pdf',
+    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.webp',
+    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a4-copia.webp'],
+    intro:'Volantini formato A4 (210 × 297 mm), stampa fronte/retro in quadricromia offset su carta patinata 170 g/m².',
+    features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'A4 · 210×297 mm','Carta':'Patinata opaca 170 g/m²','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      defaultQtyIdx: 7, // apertura su 1000 copie
+      readyDays: [[4,6], [2,2]], // "Pronto previsto" in giorni lavorativi per consegna (null = non mostrato)
+      readyCutoffHour: 9,
+      tiersByDelivery: [
+        [{qty:10,price:24.27},{qty:25,price:28.8},{qty:50,price:34.72},{qty:75,price:41.49},{qty:100,price:47.97},{qty:250,price:55.22},{qty:500,price:65.41},{qty:1000,price:85.3},{qty:2500,price:137.28},{qty:5000,price:232.38},{qty:7500,price:338.32},{qty:10000,price:423.04},{qty:15000,price:608.5},{qty:20000,price:783.94}],
+        [{qty:10,price:61.34},{qty:25,price:66.37},{qty:50,price:72.37},{qty:75,price:79.5},{qty:100,price:86.45},{qty:250,price:93.95},{qty:500,price:104.35},{qty:1000,price:124.69},{qty:2500,price:174.94},{qty:5000,price:295.55},{qty:7500,price:428.29},{qty:10000,price:513.01},{qty:15000,price:752.06},{qty:20000,price:954.32}],
+      ],
+    } },
+  { id:'5840', ean:'0652026573251', nome:'Volantini A6 gr 130 Opaca o Lucida', categoria:'Volantini',
+    templatePdf:'template/formato-10-5x14-8.pdf',
+    img:'img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.webp',
+    gallery:['img/Creative-flyer-design-workspace-flatlay-copia-kl-a6-copia.webp'],
+    intro:'Volantini formato A6 (105 × 148 mm), il più piccolo e conveniente per grandi tirature.',
+    features:['Stampa fronte/retro in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'A6 · 105×148 mm','Carta':'Patinata opaca o lucida 130 g/m²','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati; Carta non incide sul prezzo).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:100,price:25},{qty:250,price:30},{qty:500,price:31},{qty:1000,price:35},{qty:2500,price:44},{qty:5000,price:67},{qty:10000,price:108},{qty:20000,price:190},{qty:30000,price:277},{qty:40000,price:346},{qty:50000,price:437},{qty:60000,price:526},{qty:70000,price:596},{qty:80000,price:687},{qty:90000,price:776},{qty:100000,price:847}],
+        [{qty:100,price:56},{qty:250,price:60},{qty:500,price:65},{qty:1000,price:70},{qty:2500,price:82},{qty:5000,price:100},{qty:10000,price:142},{qty:20000,price:253},{qty:30000,price:368},{qty:40000,price:441},{qty:50000,price:550},{qty:60000,price:664},{qty:70000,price:737},{qty:80000,price:851},{qty:90000,price:964},{qty:100000,price:1040}],
+      ],
+    } },
+  { id:'5723', ean:'0652026573268', nome:'Volantini 10×21 cm Opaca o Lucida', categoria:'Volantini',
+    templatePdf:'template/formato-10x21.pdf',
+    img:'img/Flyers-personalizzati-e-stampa-professionale-copia.webp',
+    gallery:['img/Flyers-personalizzati-e-stampa-professionale-copia.webp'],
+    intro:'Il formato DL (10×21 cm), stretto e verticale: ideale per espositori, distribuzione manuale e campagne porta a porta.',
+    features:['Stampa solo fronte o fronte/retro','Colori pieni e definiti','Controllo file prima di stampa'],
+    specs:{'Formato':'DL · 10×21 cm','Carta':'Patinata opaca o lucida','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati; Carta non incide sul prezzo).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:1000,price:35},{qty:2500,price:54},{qty:5000,price:83},{qty:10000,price:135},{qty:20000,price:238},{qty:30000,price:350},{qty:40000,price:458},{qty:50000,price:571},{qty:60000,price:683},{qty:70000,price:796},{qty:80000,price:909},{qty:90000,price:1022},{qty:100000,price:1114}],
+        [{qty:1000,price:68},{qty:2500,price:87},{qty:5000,price:117},{qty:10000,price:170},{qty:20000,price:302},{qty:30000,price:442},{qty:40000,price:579},{qty:50000,price:709},{qty:60000,price:847},{qty:70000,price:985},{qty:80000,price:1123},{qty:90000,price:1260},{qty:100000,price:1352}],
+      ],
+    } },
+  { id:'5398', ean:'0652026573275', nome:'Pieghevoli A4 a 2 Ante A5', categoria:'Pieghevoli',
+    templatePdf:'template/pieghevole-a4-2-ante.pdf',
+    img:'img/piegh-IMG_1027-kl-copia.webp',
+    gallery:['img/piegh-IMG_1027-kl-copia.webp'],
+    intro:'Pieghevole aperto A4, chiuso A5 (148 × 210 mm): stampa fronte/retro in quadricromia offset su carta patinata 130 g/m².',
+    features:['Stampa fronte/retro in quadricromia offset','Piega centrale a metà','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'Aperto A4 · chiuso A5','Carta':'Patinata opaca 130 g/m²','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati; Carta Lucida/Opaca non incide sul prezzo).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:100,price:48},{qty:500,price:71},{qty:1000,price:89},{qty:2500,price:138},{qty:5000,price:236},{qty:10000,price:410},{qty:20000,price:769},{qty:30000,price:1169},{qty:40000,price:1563},{qty:50000,price:1902},{qty:60000,price:2315},{qty:70000,price:2784},{qty:80000,price:3037},{qty:90000,price:3427},{qty:100000,price:3619}],
+        [{qty:100,price:81},{qty:500,price:105},{qty:1000,price:122},{qty:2500,price:173},{qty:5000,price:298},{qty:10000,price:500},{qty:20000,price:969},{qty:30000,price:1438},{qty:40000,price:1908},{qty:50000,price:2334},{qty:60000,price:2795},{qty:70000,price:3318},{qty:80000,price:3717},{qty:90000,price:4179},{qty:100000,price:4611}],
+      ],
+    } },
+  { id:'5794', ean:'0652026573282', nome:'Pieghevoli A4 a 3 Ante 10×21 cm', categoria:'Pieghevoli',
+    templatePdf:'template/pieghevole-a4-3-ante.pdf',
+    img:'img/Tri-fold-brochures-with-Italian-design700.webp',
+    gallery:['img/Tri-fold-brochures-with-Italian-design700.webp'],
+    intro:"Pieghevole aperto A4, chiuso 10×21 cm, con piega a portafoglio o a zig-zag: ordinato e d'impatto per servizi, menù e listini.",
+    features:['Piega a portafoglio o a zig-zag','Layout ordinato per menù e listini','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'Aperto A4 · chiuso 10×21 cm','Piega':'Portafoglio o zig-zag','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati; Carta e Piega non incidono sul prezzo).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:100,price:55},{qty:500,price:70},{qty:1000,price:81},{qty:2500,price:142},{qty:5000,price:240},{qty:10000,price:433},{qty:20000,price:842},{qty:30000,price:1245},{qty:40000,price:1678},{qty:50000,price:2013},{qty:60000,price:2393},{qty:70000,price:2787},{qty:80000,price:3140},{qty:90000,price:3431},{qty:100000,price:3685}],
+        [{qty:100,price:90},{qty:500,price:103},{qty:1000,price:115},{qty:2500,price:177},{qty:5000,price:304},{qty:10000,price:528},{qty:20000,price:1027},{qty:30000,price:1493},{qty:40000,price:2029},{qty:50000,price:2445},{qty:60000,price:2853},{qty:70000,price:3322},{qty:80000,price:3749},{qty:90000,price:4183},{qty:100000,price:4643}],
+      ],
+    } },
+  { id:'5606', ean:'0652026573299', nome:'Locandine 70×100 cm', categoria:'Locandine e Manifesti',
+    templatePdf:'template/formato-70x100.pdf',
+    img:'img/locandine700x700-copia.webp',
+    gallery:['img/locandine700x700-copia.webp'],
+    intro:'Locandine 70×100 cm stampate fronte in quadricromia offset su carta patinata lucida 100 g/m².',
+    features:['Stampa fronte in quadricromia offset','Alta resa cromatica','Prezzi all inclusive: stampa, gestione file e IVA'],
+    specs:{'Formato':'70×100 cm','Carta':'Patinata lucida 100 g/m²','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:20,price:52},{qty:30,price:66},{qty:40,price:82},{qty:50,price:97},{qty:55,price:103},{qty:60,price:109},{qty:65,price:116},{qty:70,price:122},{qty:75,price:128},{qty:80,price:133},{qty:85,price:139},{qty:90,price:144},{qty:95,price:148},{qty:100,price:151},{qty:150,price:175},{qty:200,price:190},{qty:250,price:204},{qty:300,price:222},{qty:400,price:268},{qty:500,price:295},{qty:750,price:385},{qty:1000,price:454},{qty:1500,price:633},{qty:2000,price:792},{qty:3000,price:1118},{qty:4000,price:1437},{qty:5000,price:1770},{qty:6000,price:2104}],
+        [{qty:20,price:129},{qty:30,price:129},{qty:40,price:129},{qty:50,price:129},{qty:55,price:135},{qty:60,price:142},{qty:65,price:148},{qty:70,price:154},{qty:75,price:160},{qty:80,price:166},{qty:85,price:171},{qty:90,price:177},{qty:95,price:180},{qty:100,price:183},{qty:150,price:207},{qty:200,price:222},{qty:250,price:236},{qty:300,price:254},{qty:400,price:325},{qty:500,price:352},{qty:750,price:466},{qty:1000,price:534},{qty:1500,price:768},{qty:2000,price:954},{qty:3000,price:1366},{qty:4000,price:1737},{qty:5000,price:2149},{qty:6000,price:2521}],
+      ],
+    } },
+  { id:'5960', ean:'', nome:'Block Notes A4 50 fogli', categoria:'Block Notes',
+    templatePdf:'template/formato-21x29-7.pdf',
+    img:'img/block-notes-700.webp',
+    gallery:['img/block-notes-700.webp'],
+    intro:'Block notes DIN A4 (21×29,7 cm) da 50 fogli incollati, con 4 tipi di legatura: verticale o orizzontale, incollaggio a sinistra o in alto. Carta offset bianca 80 g, stampa 4/0 colori.',
+    features:['50 fogli incollati, 4 tipi di legatura','Carta offset bianca 80 g','Stampa 4/0 colori (solo fronte)','Da 10 a 900 pezzi'],
+    specs:{'Formato':'DIN A4 (21×29,7 cm)','Fogli':'50','Carta':'80 g offset bianca','Stampa':'4/0 colori','Legatura':'Verticale o orizzontale, a sinistra o in alto','Tempi':'Standard 6–8 gg · Express 3–4 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 200 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      legaturaChoices: LEGATURA_BLOCK_NOTES,
+      deliveryChoices: ['Standard 6–8 gg','Express 3–4 gg','Overnight 1 gg'],
+      readyDays: [[6,8], [3,4], [1,1]],
+      readyCutoffHours: [12, 10, 10],
+      tiersByDelivery: [
+        [{qty:10,price:76.29},{qty:25,price:101.14},{qty:50,price:138.51},{qty:75,price:176.26},{qty:100,price:226.54},{qty:150,price:298.85},{qty:200,price:390.48},{qty:250,price:464.1},{qty:300,price:556.32},{qty:400,price:720.18},{qty:500,price:882.06},{qty:600,price:1055.07},{qty:700,price:1215.82},{qty:750,price:1307.79},{qty:800,price:1381.12},{qty:900,price:1546.43}],
+        [{qty:10,price:110.27},{qty:25,price:135.23},{qty:50,price:172.21},{qty:75,price:209.98},{qty:100,price:285.2},{qty:150,price:357.55},{qty:200,price:474.1},{qty:250,price:547.71},{qty:300,price:664.83},{qty:400,price:853.6},{qty:500,price:1040.4},{qty:600,price:1238.32},{qty:700,price:1423.98},{qty:750,price:1540.85},{qty:800,price:1614.19},{qty:900,price:1804.42}],
+        [{qty:10,price:133.7},{qty:25,price:158.62},{qty:50,price:193.97},{qty:75,price:235.74},{qty:100,price:311.82},{qty:150,price:384.18},{qty:200,price:501.58}],
+      ],
+    } },
+  { id:'5961', ean:'', variantOf:'5960', nome:'Block Notes A5 50 fogli', categoria:'Block Notes',
+    templatePdf:'template/formato-14-8x21.pdf',
+    img:'img/block-notes-700.webp',
+    gallery:['img/block-notes-700.webp'],
+    intro:'Block notes DIN A5 (14,8×21 cm) da 50 fogli incollati, con 4 tipi di legatura: verticale o orizzontale, incollaggio a sinistra o in alto. Carta offset bianca 80 g, stampa 4/0 colori.',
+    features:['50 fogli incollati, 4 tipi di legatura','Carta offset bianca 80 g','Stampa 4/0 colori (solo fronte)','Da 10 a 1000 pezzi'],
+    specs:{'Formato':'DIN A5 (14,8×21 cm)','Fogli':'50','Carta':'80 g offset bianca','Stampa':'4/0 colori','Legatura':'Verticale o orizzontale, a sinistra o in alto','Tempi':'Standard 6–8 gg · Express 3–4 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 200 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      legaturaChoices: LEGATURA_BLOCK_NOTES,
+      deliveryChoices: ['Standard 6–8 gg','Express 3–4 gg','Overnight 1 gg'],
+      readyDays: [[6,8], [3,4], [1,1]],
+      readyCutoffHours: [12, 10, 10],
+      tiersByDelivery: [
+        [{qty:10,price:57.09},{qty:25,price:71.3},{qty:50,price:94.5},{qty:75,price:114.64},{qty:100,price:136.72},{qty:150,price:174.32},{qty:200,price:231.68},{qty:250,price:272.32},{qty:300,price:312.38},{qty:400,price:412.4},{qty:500,price:498.42},{qty:600,price:598.18},{qty:700,price:680.72},{qty:750,price:740.58},{qty:800,price:781.84},{qty:900,price:864.37},{qty:1000,price:946.42}],
+        [{qty:10,price:91.15},{qty:25,price:105.65},{qty:50,price:129.31},{qty:75,price:148.34},{qty:100,price:170.42},{qty:150,price:208.05},{qty:200,price:290.34},{qty:250,price:331.02},{qty:300,price:371.09},{qty:400,price:496.02},{qty:500,price:582.03},{qty:600,price:706.7},{qty:700,price:789.23},{qty:750,price:874},{qty:800,price:915.26},{qty:900,price:997.81},{qty:1000,price:1104.75}],
+        [{qty:10,price:114.54},{qty:25,price:129.04},{qty:50,price:152.7},{qty:75,price:171.01},{qty:100,price:192.26},{qty:150,price:233.81},{qty:200,price:316.94}],
+      ],
+    } },
+  { id:'5962', ean:'', variantOf:'5960', nome:'Block Notes A6 50 fogli', categoria:'Block Notes',
+    templatePdf:'template/formato-10-5x14-8.pdf',
+    img:'img/block-notes-700.webp',
+    gallery:['img/block-notes-700.webp'],
+    intro:'Block notes DIN A6 (10,5×14,8 cm) da 50 fogli incollati, con 4 tipi di legatura: verticale o orizzontale, incollaggio a sinistra o in alto. Carta offset bianca 80 g, stampa 4/0 colori.',
+    features:['50 fogli incollati, 4 tipi di legatura','Carta offset bianca 80 g','Stampa 4/0 colori (solo fronte)','Da 10 a 900 pezzi'],
+    specs:{'Formato':'DIN A6 (10,5×14,8 cm)','Fogli':'50','Carta':'80 g offset bianca','Stampa':'4/0 colori','Legatura':'Verticale o orizzontale, a sinistra o in alto','Tempi':'Standard 6–8 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      legaturaChoices: LEGATURA_BLOCK_NOTES,
+      deliveryChoices: ['Standard 6–8 gg'],
+      readyDays: [[6,8]],
+      readyCutoffHours: [12],
+      tiersByDelivery: [
+        [{qty:10,price:46.5},{qty:25,price:53.81},{qty:50,price:67.22},{qty:75,price:79.82},{qty:100,price:92.18},{qty:150,price:115.71},{qty:200,price:136.83},{qty:250,price:160.32},{qty:300,price:182.21},{qty:400,price:242.85},{qty:500,price:285.63},{qty:600,price:334.75},{qty:700,price:379.74},{qty:750,price:421.18},{qty:800,price:444.02},{qty:900,price:487.74}],
+      ],
+    } },
+  { id:'5720', ean:'0652026573305', nome:'Adesivo PVC 42×10 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-42x10.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo PVC impermeabile per esterni, 42×10cm, stampato su PVC 90 µm retro intagliato: resiste anche a immersioni prolungate in acqua piovana o salata, mantenendo intatte stampa e adesione.',
+    features:['Vinile PVC impermeabile, retro intagliato','Resiste a pioggia e acqua salata','Tempi di produzione: Budget 4–6 gg lavorativi o Express 2 gg (extra)'],
+    specs:{'Materiale':'PVC 90 µm','Formato':'42×10 cm','Uso':'Interni ed esterni'},
+    // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
+      tiersByDelivery: [
+        [{qty:50,price:121},{qty:100,price:155},{qty:250,price:175},{qty:500,price:220},{qty:1000,price:257},{qty:2500,price:499},{qty:5000,price:945},{qty:7500,price:1387},{qty:10000,price:1834}],
+        [{qty:50,price:156},{qty:100,price:191},{qty:250,price:210},{qty:500,price:255},{qty:1000,price:292},{qty:2500,price:533},{qty:5000,price:1004},{qty:7500,price:1472},{qty:10000,price:1943}],
+      ],
+    } },
+  { id:'5722', ean:'', variantOf:'5720', nome:'Adesivo PVC ø2 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-2.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø2 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø2 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164},{qty:30000,price:186}],
+      ],
+    } },
+  { id:'5724', ean:'', variantOf:'5720', nome:'Adesivo PVC ø3 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-3.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø3 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø3 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:17},{qty:75,price:18},{qty:100,price:19},{qty:250,price:21},{qty:500,price:23},{qty:1000,price:27},{qty:2500,price:36},{qty:5000,price:51},{qty:7500,price:66},{qty:10000,price:84},{qty:15000,price:112},{qty:20000,price:139},{qty:25000,price:164}],
+      ],
+    } },
+  { id:'5725', ean:'', variantOf:'5720', nome:'Adesivo PVC ø4 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-4.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø4 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø4 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258},{qty:25000,price:316},{qty:30000,price:367}],
+      ],
+    } },
+  { id:'5721', ean:'', variantOf:'5720', nome:'Adesivo PVC ø5 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-5.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø5 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø5 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:19},{qty:75,price:20},{qty:100,price:21},{qty:250,price:26},{qty:500,price:30},{qty:1000,price:36},{qty:2500,price:55},{qty:5000,price:87},{qty:7500,price:118},{qty:10000,price:147},{qty:15000,price:201},{qty:20000,price:258}],
+      ],
+    } },
+  { id:'5726', ean:'', variantOf:'5720', nome:'Adesivo PVC ø6 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-6.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø6 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø6 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:21},{qty:75,price:22},{qty:100,price:23},{qty:250,price:30},{qty:500,price:35},{qty:1000,price:44},{qty:2500,price:70},{qty:5000,price:114},{qty:7500,price:150},{qty:10000,price:192},{qty:15000,price:272},{qty:20000,price:354},{qty:25000,price:436}],
+      ],
+    } },
+  { id:'5728', ean:'', variantOf:'5720', nome:'Adesivo PVC ø14 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-14.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø14 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø14 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:44},{qty:75,price:47},{qty:100,price:51},{qty:250,price:79},{qty:500,price:100},{qty:1000,price:141},{qty:2500,price:259},{qty:5000,price:472},{qty:7500,price:697},{qty:10000,price:922},{qty:15000,price:1358},{qty:20000,price:1799},{qty:25000,price:2222},{qty:30000,price:2606}],
+      ],
+    } },
+  { id:'5727', ean:'', variantOf:'5720', nome:'Adesivo PVC ø9,5 cm', categoria:'Adesivi',
+    templatePdf:'template/tondo-9-5.pdf',
+    img:'img/adesivo-pvc-tondo-700.webp',
+    gallery:['img/adesivo-pvc-tondo-700.webp'],
+    intro:'Adesivo tondo ø9,5 cm in pellicola adesiva bianca opaca 90 µm, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca opaca 90 µm','Stampa 4/0 colori','Resiste a pioggia e acqua salata'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca opaca','Formato':'rotondo ø9,5 cm','Stampa':'4/0 colori','Tempi':'6 giorni lavorativi'},
+    pricing:{ type:'tiersDelivery', readyDays: [[6,6]], unit:'copie',
+      deliveryChoices: ['Budget 1 Settimana'],
+      tiersByDelivery: [
+        [{qty:50,price:29},{qty:75,price:31},{qty:100,price:33},{qty:250,price:48},{qty:500,price:59},{qty:1000,price:81},{qty:2500,price:138},{qty:5000,price:236},{qty:7500,price:336},{qty:10000,price:446},{qty:15000,price:665},{qty:20000,price:866},{qty:25000,price:1089},{qty:30000,price:1260}],
+      ],
+    } },
+  { id:'5729', ean:'', variantOf:'5720', nome:'Adesivo PVC 5×5 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-5x5.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo quadrato 5×5 cm in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'quadrato 5×5 cm','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:18.22},{qty:75,price:19.7},{qty:100,price:20.69},{qty:250,price:24.14},{qty:500,price:27.41},{qty:1000,price:32.77},{qty:2500,price:49.66},{qty:5000,price:77.68},{qty:7500,price:103.09},{qty:10000,price:128.32},{qty:15000,price:179.73},{qty:20000,price:228.27},{qty:25000,price:279.73},{qty:30000,price:330.77},{qty:40000,price:432.51},{qty:50000,price:542.58}],
+        [{qty:50,price:53.07},{qty:75,price:53.92},{qty:100,price:54.56},{qty:250,price:58.16},{qty:500,price:61.02},{qty:1000,price:66.38},{qty:2500,price:83.71},{qty:5000,price:111.73},{qty:7500,price:137.15},{qty:10000,price:162.43},{qty:15000,price:213.86},{qty:20000,price:262.42},{qty:25000,price:313.87},{qty:30000,price:364.93},{qty:40000,price:466.7},{qty:50000,price:602.13}],
+        [{qty:50,price:75.02},{qty:75,price:76.27},{qty:100,price:77.15},{qty:250,price:80.82},{qty:500,price:83.73},{qty:1000,price:92.66},{qty:2500,price:114.27}],
+      ],
+    } },
+  { id:'5735', ean:'', variantOf:'5720', nome:'Adesivo PVC A8 5,2×7,4 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-5-2x7-4.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo DIN A8 (5,2×7,4 cm) in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'DIN A8 (5,2×7,4 cm)','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:20.61},{qty:75,price:21.36},{qty:100,price:23.04},{qty:250,price:27.52},{qty:500,price:31.46},{qty:1000,price:39.6},{qty:2500,price:65.52},{qty:5000,price:105.49},{qty:7500,price:141.23},{qty:10000,price:179.36},{qty:15000,price:258.08},{qty:20000,price:335.74},{qty:25000,price:414.59},{qty:30000,price:510.7},{qty:40000,price:663.89},{qty:50000,price:799.81}],
+        [{qty:50,price:54.99},{qty:75,price:55.55},{qty:100,price:56.94},{qty:250,price:61.14},{qty:500,price:65.07},{qty:1000,price:73.22},{qty:2500,price:99.6},{qty:5000,price:139.55},{qty:7500,price:175.34},{qty:10000,price:213.47},{qty:15000,price:292.22},{qty:20000,price:369.92},{qty:25000,price:448.8},{qty:30000,price:570.27},{qty:40000,price:723.44},{qty:50000,price:859.36}],
+        [{qty:50,price:77.07},{qty:75,price:77.73},{qty:100,price:79.84},{qty:250,price:83.84},{qty:500,price:87.6},{qty:1000,price:99.3},{qty:2500,price:130.3}],
+      ],
+    } },
+  { id:'5730', ean:'', variantOf:'5720', nome:'Adesivo PVC 5,5×8,5 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-5-5x8-5.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo 5,5×8,5 cm in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'5,5×8,5 cm','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:21.82},{qty:75,price:23.01},{qty:100,price:24.82},{qty:250,price:29.46},{qty:500,price:34.27},{qty:1000,price:44.14},{qty:2500,price:75.34},{qty:5000,price:121.66},{qty:7500,price:165.5},{qty:10000,price:209.06},{qty:15000,price:307.7},{qty:20000,price:402.11},{qty:25000,price:514.75},{qty:30000,price:606.7},{qty:40000,price:793.57},{qty:50000,price:978.43}],
+        [{qty:50,price:56.05},{qty:75,price:57.2},{qty:100,price:58.42},{qty:250,price:63.07},{qty:500,price:67.87},{qty:1000,price:77.74},{qty:2500,price:109.41},{qty:5000,price:155.78},{qty:7500,price:199.62},{qty:10000,price:243.17},{qty:15000,price:341.82},{qty:20000,price:436.26},{qty:25000,price:574.3},{qty:30000,price:666.26},{qty:40000,price:853.14},{qty:50000,price:1063.33}],
+        [{qty:50,price:78.14},{qty:75,price:79.76},{qty:100,price:81.47},{qty:250,price:85.94},{qty:500,price:90.59},{qty:1000,price:103.97},{qty:2500,price:139.89}],
+      ],
+    } },
+  { id:'5731', ean:'', variantOf:'5720', nome:'Adesivo PVC A7 7,4×10,5 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-7-4x10-5.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo DIN A7 (7,4×10,5 cm) in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'DIN A7 (7,4×10,5 cm)','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:26.08},{qty:75,price:28.67},{qty:100,price:29.63},{qty:250,price:35.79},{qty:500,price:44.35},{qty:1000,price:60.86},{qty:2500,price:108.82},{qty:5000,price:179.94},{qty:7500,price:254.42},{qty:10000,price:329.68},{qty:15000,price:510.22},{qty:20000,price:661.98},{qty:25000,price:815.2},{qty:30000,price:989.12},{qty:40000,price:1289.5},{qty:50000,price:1578.18}],
+        [{qty:50,price:60.22},{qty:75,price:62.29},{qty:100,price:63.25},{qty:250,price:69.42},{qty:500,price:77.97},{qty:1000,price:94.48},{qty:2500,price:142.9},{qty:5000,price:214.06},{qty:7500,price:288.56},{qty:10000,price:363.82},{qty:15000,price:569.79},{qty:20000,price:721.54},{qty:25000,price:874.77},{qty:30000,price:1074},{qty:40000,price:1374.4},{qty:50000,price:1688.42}],
+        [{qty:50,price:82.54},{qty:75,price:85.42},{qty:100,price:86.51},{qty:250,price:92.19},{qty:500,price:100.96},{qty:1000,price:121.14},{qty:2500,price:172.02}],
+      ],
+    } },
+  { id:'5732', ean:'', variantOf:'5720', nome:'Adesivo PVC 9,8×9,8 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-9-8x9-8.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo quadrato 9,8×9,8 cm in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'quadrato 9,8×9,8 cm','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:28.96},{qty:75,price:32.24},{qty:100,price:33.46},{qty:250,price:39.62},{qty:500,price:50.05},{qty:1000,price:70.13},{qty:2500,price:127.5},{qty:5000,price:215.31},{qty:7500,price:308.3},{qty:10000,price:401.52},{qty:15000,price:616.1},{qty:20000,price:804.53},{qty:25000,price:1013.65},{qty:30000,price:1196.46},{qty:40000,price:1592.13},{qty:50000,price:1942.37}],
+        [{qty:50,price:62.7},{qty:75,price:66.38},{qty:100,price:67.73},{qty:250,price:73.22},{qty:500,price:83.66},{qty:1000,price:103.74},{qty:2500,price:161.62},{qty:5000,price:249.44},{qty:7500,price:342.43},{qty:10000,price:435.68},{qty:15000,price:675.66},{qty:20000,price:864.1},{qty:25000,price:1098.54},{qty:30000,price:1281.36},{qty:40000,price:1702.37},{qty:50000,price:2077.95}],
+        [{qty:50,price:85.14},{qty:75,price:89.78},{qty:100,price:91.12},{qty:250,price:95.98},{qty:500,price:106.64},{qty:1000,price:130.24},{qty:2500,price:188.74}],
+      ],
+    } },
+  { id:'5737', ean:'', variantOf:'5720', nome:'Adesivo PVC 9,8×21 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-9-8x21.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo 9,8×21 cm in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'9,8×21 cm','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:44.14},{qty:75,price:46.48},{qty:100,price:48.42},{qty:250,price:63.81},{qty:500,price:85.06},{qty:1000,price:125.63},{qty:2500,price:241.86},{qty:5000,price:441.94},{qty:7500,price:660.62},{qty:10000,price:860.35},{qty:15000,price:1274.53},{qty:20000,price:1692.69},{qty:25000,price:2110.88},{qty:30000,price:2507.47},{qty:40000,price:3312.27},{qty:50000,price:3979.46}],
+        [{qty:50,price:77.76},{qty:75,price:80.21},{qty:100,price:82.05},{qty:250,price:97.79},{qty:500,price:118.86},{qty:1000,price:159.26},{qty:2500,price:275.98},{qty:5000,price:476.11},{qty:7500,price:720.19},{qty:10000,price:919.92},{qty:15000,price:1359.42},{qty:20000,price:1802.93},{qty:25000,price:2246.46},{qty:30000,price:2668.4},{qty:40000,price:3523.86},{qty:50000,price:4241.74}],
+        [{qty:50,price:101.14},{qty:75,price:103.6},{qty:100,price:105.42},{qty:250,price:121.18},{qty:500,price:142.26},{qty:1000,price:184.27},{qty:2500,price:306.05}],
+      ],
+    } },
+  { id:'5733', ean:'', variantOf:'5720', nome:'Adesivo PVC A6 10,5×14,8 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-10-5x14-8.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo DIN A6 (10,5×14,8 cm) in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 40.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'DIN A6 (10,5×14,8 cm)','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:36.82},{qty:75,price:38.54},{qty:100,price:40.29},{qty:250,price:52.34},{qty:500,price:68.42},{qty:1000,price:100.58},{qty:2500,price:185.42},{qty:5000,price:333.09},{qty:7500,price:501.1},{qty:10000,price:647.5},{qty:15000,price:984.5},{qty:20000,price:1280.93},{qty:25000,price:1602.53},{qty:30000,price:1924.14},{qty:40000,price:2524.96}],
+        [{qty:50,price:70.43},{qty:75,price:72.16},{qty:100,price:73.9},{qty:250,price:85.95},{qty:500,price:102.02},{qty:1000,price:134.21},{qty:2500,price:219.54},{qty:5000,price:367.25},{qty:7500,price:560.67},{qty:10000,price:707.07},{qty:15000,price:1069.41},{qty:20000,price:1365.82},{qty:25000,price:1712.75},{qty:30000,price:2059.73},{qty:40000,price:2685.89}],
+        [{qty:50,price:93.1},{qty:75,price:94.88},{qty:100,price:96.72},{qty:250,price:109.01},{qty:500,price:124.94},{qty:1000,price:160.02},{qty:2500,price:249.6}],
+      ],
+    } },
+  { id:'5734', ean:'', variantOf:'5720', nome:'Adesivo PVC A5 14,8×21 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-14-8x21.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo DIN A5 (14,8×21 cm) in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'DIN A5 (14,8×21 cm)','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:56.91},{qty:75,price:60.69},{qty:100,price:63.52},{qty:250,price:83.7},{qty:500,price:114.13},{qty:1000,price:170.27},{qty:2500,price:344.99},{qty:5000,price:656.54},{qty:7500,price:970.13},{qty:10000,price:1257.06},{qty:15000,price:1922.11},{qty:20000,price:2517.38},{qty:25000,price:3128.98},{qty:30000,price:3677.01},{qty:40000,price:4893.01},{qty:50000,price:5948.78}],
+        [{qty:50,price:90.53},{qty:75,price:94.53},{qty:100,price:97.14},{qty:250,price:117.33},{qty:500,price:147.76},{qty:1000,price:203.94},{qty:2500,price:379.15},{qty:5000,price:716.11},{qty:7500,price:1055.02},{qty:10000,price:1341.95},{qty:15000,price:2057.7},{qty:20000,price:2678.29},{qty:25000,price:3315.23},{qty:30000,price:3913.94},{qty:40000,price:5205.97},{qty:50000,price:6312.43}],
+        [{qty:50,price:113.78},{qty:75,price:117.92},{qty:100,price:120.48},{qty:250,price:139.89},{qty:500,price:169.5},{qty:1000,price:231.84},{qty:2500,price:409.22}],
+      ],
+    } },
+  { id:'5736', ean:'', variantOf:'5720', nome:'Adesivo PVC A4 21×29,7 cm', categoria:'Adesivi',
+    templatePdf:'template/formato-21x29-7.pdf',
+    img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
+    gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
+    intro:'Adesivo DIN A4 (21×29,7 cm) in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'DIN A4 (21×29,7 cm)','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:50,price:94.1},{qty:75,price:104.19},{qty:100,price:107.68},{qty:250,price:140.9},{qty:500,price:196.72},{qty:1000,price:315.52},{qty:2500,price:683.86},{qty:5000,price:1282.29},{qty:7500,price:1904.51},{qty:10000,price:2484.3},{qty:15000,price:3694.27},{qty:20000,price:4906.4},{qty:25000,price:6098.06},{qty:30000,price:7310.21},{qty:40000,price:9734.51},{qty:50000,price:11859.82}],
+        [{qty:50,price:127.71},{qty:75,price:139.15},{qty:100,price:141.3},{qty:250,price:174.53},{qty:500,price:230.4},{qty:1000,price:349.23},{qty:2500,price:743.41},{qty:5000,price:1367.18},{qty:7500,price:2040.08},{qty:10000,price:2645.22},{qty:15000,price:3931.22},{qty:20000,price:5219.38},{qty:25000,price:6461.71},{qty:30000,price:7749.87},{qty:40000,price:10326.22},{qty:50000,price:12578.22}],
+        [{qty:50,price:149.9},{qty:75,price:162.54},{qty:100,price:163.97},{qty:250,price:196.27},{qty:500,price:256.16},{qty:1000,price:377.12},{qty:2500,price:774.34}],
+      ],
+    } },
+  { id:'5920', ean:'', nome:'Banner PVC 400gr 100×50 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-100x50.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 100×50 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'100×50 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:22.78},{qty:2,price:29.55},{qty:3,price:36.06},{qty:4,price:42.54},{qty:5,price:49.01},{qty:6,price:55.47},{qty:7,price:61.95},{qty:8,price:68.42},{qty:9,price:74.88},{qty:10,price:81.36},{qty:11,price:105.04},{qty:12,price:111.52},{qty:13,price:117.97},{qty:14,price:124.45},{qty:15,price:130.93}],
+      ],
+    } },
+  { id:'5921', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 100×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-100x100.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 100×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'100×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:27.02},{qty:2,price:37.62},{qty:3,price:47.82},{qty:4,price:58.03},{qty:5,price:68.21},{qty:6,price:78.42},{qty:7,price:88.64},{qty:8,price:99.1},{qty:9,price:109.31},{qty:10,price:119.52},{qty:11,price:146.24},{qty:12,price:156.35},{qty:13,price:167.02},{qty:14,price:177.15},{qty:15,price:187.26}],
+      ],
+    } },
+  { id:'5922', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 150×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-150x100.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 150×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'150×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:31.28},{qty:2,price:45.2},{qty:3,price:59.18},{qty:4,price:73.17},{qty:5,price:87.46},{qty:6,price:101.44},{qty:7,price:115.42},{qty:8,price:128.48},{qty:9,price:142.35},{qty:10,price:156.51},{qty:11,price:188.11},{qty:12,price:201.98},{qty:13,price:215.87},{qty:14,price:230.54},{qty:15,price:244.42}],
+      ],
+    } },
+  { id:'5923', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 150×150 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-150x150.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 150×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'150×150 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:41.15},{qty:2,price:60.37},{qty:3,price:80.19},{qty:4,price:100.16},{qty:5,price:120.1},{qty:6,price:138.4},{qty:7,price:158.1},{qty:8,price:177.78},{qty:9,price:217.71},{qty:10,price:237.41},{qty:11,price:257.09},{qty:12,price:276.78},{qty:13,price:296.46},{qty:14,price:316.16},{qty:15,price:335.86}],
+      ],
+    } },
+  { id:'5924', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 200×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-200x100.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 200×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'200×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:35.25},{qty:2,price:52.61},{qty:3,price:70.29},{qty:4,price:88.29},{qty:5,price:105.97},{qty:6,price:140.24},{qty:7,price:158.34},{qty:8,price:175.9},{qty:9,price:193.44},{qty:10,price:211.79},{qty:11,price:247.47},{qty:12,price:265.02},{qty:13,price:282.58},{qty:14,price:301.87},{qty:15,price:319.44}],
+      ],
+    } },
+  { id:'5925', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 200×150 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-200x150.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 200×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'200×150 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:46.98},{qty:2,price:72.3},{qty:3,price:97.92},{qty:4,price:123.52},{qty:5,price:147.36},{qty:6,price:172.62},{qty:7,price:197.89},{qty:8,price:223.18},{qty:9,price:248.43},{qty:10,price:273.71},{qty:11,price:319.98},{qty:12,price:345.25},{qty:13,price:370.54},{qty:14,price:395.79},{qty:15,price:421.06}],
+      ],
+    } },
+  { id:'5926', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 200×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-200x200.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 200×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'200×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:55.07},{qty:2,price:88.42},{qty:3,price:121.79},{qty:4,price:153.3},{qty:5,price:186.22},{qty:6,price:240.75},{qty:7,price:273.68},{qty:8,price:306.61},{qty:9,price:339.52},{qty:10,price:372.45},{qty:11,price:426.96},{qty:12,price:459.89},{qty:13,price:492.82},{qty:14,price:525.76},{qty:15,price:558.67}],
+      ],
+    } },
+  { id:'5927', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 250×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-250x100.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 250×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'250×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:39.34},{qty:2,price:60.69},{qty:3,price:82.3},{qty:4,price:103.68},{qty:5,price:125.02},{qty:6,price:145.6},{qty:7,price:185.25},{qty:8,price:207.22},{qty:9,price:228.42},{qty:10,price:249.58},{qty:11,price:270.78},{qty:12,price:293.17},{qty:13,price:333.76},{qty:14,price:354.93},{qty:15,price:376.11}],
+      ],
+    } },
+  { id:'5928', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 250×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-250x200.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 250×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'250×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:62.8},{qty:2,price:103.92},{qty:3,price:143.34},{qty:4,price:183.95},{qty:5,price:224.53},{qty:6,price:265.09},{qty:7,price:327.3},{qty:8,price:367.86},{qty:9,price:408.45},{qty:10,price:449.06},{qty:11,price:489.65},{qty:12,price:530.22},{qty:13,price:592.4},{qty:14,price:632.99},{qty:15,price:673.55}],
+      ],
+    } },
+  { id:'5929', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 250×250 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-250x250.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 250×250 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'250×250 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:76.5},{qty:2,price:127.28},{qty:3,price:175.92},{qty:4,price:226.08},{qty:5,price:276.18},{qty:6,price:351.84},{qty:7,price:401.97},{qty:8,price:452.1},{qty:9,price:502.22},{qty:10,price:552.37},{qty:11,price:628.02},{qty:12,price:678.18},{qty:13,price:728.29},{qty:14,price:740.94},{qty:15,price:787.73}],
+      ],
+    } },
+  { id:'5930', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x100.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:43.38},{qty:2,price:68.77},{qty:3,price:94.46},{qty:4,price:119.86},{qty:5,price:144.48},{qty:6,price:169.66},{qty:7,price:214.13},{qty:8,price:239.33},{qty:9,price:264.53},{qty:10,price:290.9},{qty:11,price:316.06},{qty:12,price:341.28},{qty:13,price:385.95},{qty:14,price:411.12},{qty:15,price:436.88}],
+      ],
+    } },
+  { id:'5936', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×150 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x150.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×150 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:58.64},{qty:2,price:96.16},{qty:3,price:132.13},{qty:4,price:169.17},{qty:5,price:206.21},{qty:6,price:243.25},{qty:7,price:301.31},{qty:8,price:338.34},{qty:9,price:375.38},{qty:10,price:412.42},{qty:11,price:449.46},{qty:12,price:486.5},{qty:13,price:544.53},{qty:14,price:581.57},{qty:15,price:618.61}],
+      ],
+    } },
+  { id:'5931', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x200.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:70.61},{qty:2,price:119.52},{qty:3,price:166.45},{qty:4,price:236.29},{qty:5,price:284.59},{qty:6,price:332.86},{qty:7,price:402.72},{qty:8,price:450.99},{qty:9,price:499.28},{qty:10,price:571.86},{qty:11,price:619.76},{qty:12,price:666.93},{qty:13,price:739.34},{qty:14,price:755.74},{qty:15,price:800.78}],
+      ],
+    } },
+  { id:'5932', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 300×300 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x300.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 300×300 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'300×300 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:187.97},{qty:2,price:257.68},{qty:3,price:444.53},{qty:4,price:515.33},{qty:5,price:702.18},{qty:6,price:772.99},{qty:7,price:959.87},{qty:8,price:1030.67},{qty:9,price:1166.11},{qty:10,price:1231.71},{qty:11,price:1412.45},{qty:12,price:1478.03},{qty:13,price:1658.8},{qty:14,price:1724.38},{qty:15,price:1858.56}],
+      ],
+    } },
+  { id:'5933', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 400×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x100.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 400×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'400×100 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:51.47},{qty:2,price:85.25},{qty:3,price:118.75},{qty:4,price:169.89},{qty:5,price:203.9},{qty:6,price:237.14},{qty:7,price:290.99},{qty:8,price:324.21},{qty:9,price:357.44},{qty:10,price:410.88},{qty:11,price:444.11},{qty:12,price:478.16},{qty:13,price:532.16},{qty:14,price:566.32},{qty:15,price:600.51}],
+      ],
+    } },
+  { id:'5934', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 400×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x200.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 400×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'400×200 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:86.19},{qty:2,price:148.91},{qty:3,price:212.59},{qty:4,price:297.82},{qty:5,price:361.46},{qty:6,price:425.14},{qty:7,price:510.38},{qty:8,price:574.06},{qty:9,price:637.71},{qty:10,price:722.96},{qty:11,price:753.46},{qty:12,price:812.88},{qty:13,price:897.28},{qty:14,price:956.69},{qty:15,price:1016.1}],
+      ],
+    } },
+  { id:'5935', ean:'', variantOf:'5920', nome:'Banner PVC 400gr 400×300 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x300.pdf',
+    img:'img/banner-pvc-senza-occhielli-700.webp',
+    gallery:['img/banner-pvc-senza-occhielli-700.webp'],
+    intro:'Banner in PVC 400 g formato 400×300 cm, stampa 4/0 colori (solo fronte, CMYK), taglio lungo tutto il perimetro, senza occhielli. Adatto a interni ed esterni.',
+    features:['Telo PVC 400 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio lungo tutto il perimetro, senza occhielli','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 400 g','Formato':'400×300 cm','Stampa':'4/0 colori','Finitura':'Taglio a filo perimetrale, senza occhielli','Tempi':'Standard 4–6 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6. Solo Standard (Express/Overnight non disponibili).
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg'],
+      readyDays: [[4,6]],
+      readyCutoffHours: [10],
+      tiersByDelivery: [
+        [{qty:1,price:210.74},{qty:2,price:302.62},{qty:3,price:511.94},{qty:4,price:605.23},{qty:5,price:814.56},{qty:6,price:907.86},{qty:7,price:1065.49},{qty:8,price:1151.9},{qty:9,price:1353.46},{qty:10,price:1439.86},{qty:11,price:1641.41},{qty:12,price:1679.9},{qty:13,price:1877.23},{qty:14,price:1959.87},{qty:15,price:2157.18}],
+      ],
+    } },
+  { id:'5940', ean:'', nome:'Banner PVC 500gr con occhielli 100×50 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-100x50.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 100×50 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'100×50 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:23.98},{qty:2,price:32.27},{qty:3,price:40.19},{qty:4,price:48.16},{qty:5,price:56.1},{qty:6,price:64.22},{qty:7,price:72.91},{qty:8,price:81.6},{qty:9,price:90.29},{qty:10,price:98.96},{qty:11,price:120.7},{qty:12,price:127.78},{qty:13,price:135.68},{qty:14,price:144.05},{qty:15,price:152.61}],
+        [{qty:1,price:58.02},{qty:2,price:65.89},{qty:3,price:74.05},{qty:4,price:82.72},{qty:5,price:91.38},{qty:6,price:100.03},{qty:7,price:108.74},{qty:8,price:117.41},{qty:9,price:126.1},{qty:10,price:134.77},{qty:11,price:179.7},{qty:12,price:186.88},{qty:13,price:195.41},{qty:14,price:203.98},{qty:15,price:212.54}],
+        [{qty:1,price:87.6},{qty:2,price:96.13},{qty:3,price:104.74},{qty:4,price:113.42},{qty:5,price:122.08},{qty:6,price:130.75},{qty:7,price:139.42},{qty:8,price:148.13},{qty:9,price:156.8},{qty:10,price:165.47},{qty:11,price:211.87},{qty:12,price:219.04},{qty:13,price:227.6},{qty:14,price:236.14},{qty:15,price:244.7}],
+      ],
+    } },
+  { id:'5941', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 100×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-100x100.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 100×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'100×100 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:30.13},{qty:2,price:43.78},{qty:3,price:57.12},{qty:4,price:70.48},{qty:5,price:83.82},{qty:6,price:97.47},{qty:7,price:110.85},{qty:8,price:123.31},{qty:9,price:136.56},{qty:10,price:149.81},{qty:11,price:186.69},{qty:12,price:200.27},{qty:13,price:213.81},{qty:14,price:228.02},{qty:15,price:242.18}],
+        [{qty:1,price:64.08},{qty:2,price:77.39},{qty:3,price:90.72},{qty:4,price:104.1},{qty:5,price:117.78},{qty:6,price:131.58},{qty:7,price:145.36},{qty:8,price:157.62},{qty:9,price:171.2},{qty:10,price:184.8},{qty:11,price:245.44},{qty:12,price:259.62},{qty:13,price:273.73},{qty:14,price:287.95},{qty:15,price:302.13}],
+        [{qty:1,price:93.47},{qty:2,price:107.18},{qty:3,price:120.93},{qty:4,price:134.72},{qty:5,price:148.5},{qty:6,price:162.29},{qty:7,price:176.05},{qty:8,price:188.3},{qty:9,price:201.9},{qty:10,price:215.5},{qty:11,price:277.6},{qty:12,price:291.78},{qty:13,price:305.89},{qty:14,price:320.11},{qty:15,price:334.29}],
+      ],
+    } },
+  { id:'5942', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 150×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-150x100.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 150×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'150×100 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:35.71},{qty:2,price:54.38},{qty:3,price:73.09},{qty:4,price:92.75},{qty:5,price:112.77},{qty:6,price:131.06},{qty:7,price:150.8},{qty:8,price:170.51},{qty:9,price:190.21},{qty:10,price:209.94},{qty:11,price:242.35},{qty:12,price:262.05},{qty:13,price:281.79},{qty:14,price:301.5},{qty:15,price:321.22}],
+        [{qty:1,price:69.33},{qty:2,price:88.66},{qty:3,price:108.58},{qty:4,price:128.59},{qty:5,price:148.59},{qty:6,price:166.88},{qty:7,price:186.61},{qty:8,price:206.3},{qty:9,price:226.03},{qty:10,price:245.76},{qty:11,price:302.3},{qty:12,price:322},{qty:13,price:341.73},{qty:14,price:361.44},{qty:15,price:381.15}],
+        [{qty:1,price:99.44},{qty:2,price:119.34},{qty:3,price:139.31},{qty:4,price:159.28},{qty:5,price:179.3},{qty:6,price:197.58},{qty:7,price:217.31},{qty:8,price:237.02},{qty:9,price:256.74},{qty:10,price:276.45},{qty:11,price:334.46},{qty:12,price:354.18},{qty:13,price:373.89},{qty:14,price:393.6},{qty:15,price:413.31}],
+      ],
+    } },
+  { id:'5943', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 200×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-200x100.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 200×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'200×100 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:40.94},{qty:2,price:64.69},{qty:3,price:88.96},{qty:4,price:114.35},{qty:5,price:137.97},{qty:6,price:176.67},{qty:7,price:200.75},{qty:8,price:225.79},{qty:9,price:250.83},{qty:10,price:275.87},{qty:11,price:315.18},{qty:12,price:338.8},{qty:13,price:363.71},{qty:14,price:388.74},{qty:15,price:413.79}],
+        [{qty:1,price:74.56},{qty:2,price:99.5},{qty:3,price:124.78},{qty:4,price:150.16},{qty:5,price:173.78},{qty:6,price:235.68},{qty:7,price:260.69},{qty:8,price:285.74},{qty:9,price:310.77},{qty:10,price:335.81},{qty:11,price:398.54},{qty:12,price:422.74},{qty:13,price:447.78},{qty:14,price:472.82},{qty:15,price:497.84}],
+        [{qty:1,price:105.02},{qty:2,price:130.21},{qty:3,price:155.5},{qty:4,price:180.86},{qty:5,price:204.48},{qty:6,price:267.84},{qty:7,price:292.86},{qty:8,price:317.9},{qty:9,price:342.93},{qty:10,price:367.98},{qty:11,price:431.31},{qty:12,price:456.35},{qty:13,price:481.41},{qty:14,price:506.43},{qty:15,price:531.47}],
+      ],
+    } },
+  { id:'5944', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 200×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-200x200.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 200×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'200×200 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:65.06},{qty:2,price:121.55},{qty:3,price:171.23},{qty:4,price:220.54},{qty:5,price:270.3},{qty:6,price:321.49},{qty:7,price:370.34},{qty:8,price:394.19},{qty:9,price:438.5},{qty:10,price:482.78},{qty:11,price:554.05},{qty:12,price:599.36},{qty:13,price:637.33},{qty:14,price:682.06},{qty:15,price:726.85}],
+        [{qty:1,price:100.86},{qty:2,price:157.38},{qty:3,price:207.07},{qty:4,price:256.37},{qty:5,price:306.11},{qty:6,price:381.44},{qty:7,price:430.26},{qty:8,price:454.14},{qty:9,price:498.45},{qty:10,price:542.72},{qty:11,price:638.1},{qty:12,price:683.41},{qty:13,price:721.41},{qty:14,price:766.13},{qty:15,price:810.91}],
+        [{qty:1,price:131.57},{qty:2,price:188.06},{qty:3,price:237.78},{qty:4,price:287.07},{qty:5,price:336.82},{qty:6,price:413.6},{qty:7,price:462.42},{qty:8,price:486.3},{qty:9,price:530.61},{qty:10,price:574.88},{qty:11,price:671.73},{qty:12,price:717.04},{qty:13,price:755.01},{qty:14,price:799.76},{qty:15,price:844.51}],
+      ],
+    } },
+  { id:'5945', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 250×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-250x200.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 250×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'250×200 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:75.17},{qty:2,price:128.54},{qty:3,price:182.85},{qty:4,price:237.09},{qty:5,price:291.36},{qty:6,price:345.65},{qty:7,price:419.76},{qty:8,price:474.06},{qty:9,price:528.34},{qty:10,price:582.59},{qty:11,price:636.86},{qty:12,price:641.26},{qty:13,price:710.93},{qty:14,price:761.09},{qty:15,price:811.3}],
+        [{qty:1,price:110.96},{qty:2,price:164.37},{qty:3,price:218.67},{qty:4,price:272.91},{qty:5,price:327.18},{qty:6,price:381.47},{qty:7,price:479.71},{qty:8,price:533.98},{qty:9,price:588.29},{qty:10,price:642.54},{qty:11,price:696.82},{qty:12,price:701.2},{qty:13,price:794.98},{qty:14,price:845.15},{qty:15,price:895.36}],
+        [{qty:1,price:141.7},{qty:2,price:195.09},{qty:3,price:249.36},{qty:4,price:303.63},{qty:5,price:357.87},{qty:6,price:412.16},{qty:7,price:511.89},{qty:8,price:566.16},{qty:9,price:620.45},{qty:10,price:674.7},{qty:11,price:728.98},{qty:12,price:733.38},{qty:13,price:828.62},{qty:14,price:878.77},{qty:15,price:928.99}],
+      ],
+    } },
+  { id:'5946', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 300×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x100.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 300×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'300×100 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:50.11},{qty:2,price:88.96},{qty:3,price:126.19},{qty:4,price:156.94},{qty:5,price:192.88},{qty:6,price:228.83},{qty:7,price:277.87},{qty:8,price:313.84},{qty:9,price:349.78},{qty:10,price:385.71},{qty:11,price:421.65},{qty:12,price:457.63},{qty:13,price:493.9},{qty:14,price:528.45},{qty:15,price:563.06}],
+        [{qty:1,price:83.74},{qty:2,price:124.78},{qty:3,price:162},{qty:4,price:192.77},{qty:5,price:228.7},{qty:6,price:264.66},{qty:7,price:337.81},{qty:8,price:373.78},{qty:9,price:409.71},{qty:10,price:445.66},{qty:11,price:481.6},{qty:12,price:517.57},{qty:13,price:577.97},{qty:14,price:612.53},{qty:15,price:647.14}],
+        [{qty:1,price:113.92},{qty:2,price:155.5},{qty:3,price:192.7},{qty:4,price:223.47},{qty:5,price:259.41},{qty:6,price:295.34},{qty:7,price:369.98},{qty:8,price:405.94},{qty:9,price:441.87},{qty:10,price:477.82},{qty:11,price:513.78},{qty:12,price:549.73},{qty:13,price:611.57},{qty:14,price:646.16},{qty:15,price:680.75}],
+      ],
+    } },
+  { id:'5947', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 300×150 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x150.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 300×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'300×150 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:70.11},{qty:2,price:120.58},{qty:3,price:168.96},{qty:4,price:218.78},{qty:5,price:268.62},{qty:6,price:318.45},{qty:7,price:387.62},{qty:8,price:437.46},{qty:9,price:487.3},{qty:10,price:537.1},{qty:11,price:586.96},{qty:12,price:636.8},{qty:13,price:656.06},{qty:14,price:702.11},{qty:15,price:748.22}],
+        [{qty:1,price:105.92},{qty:2,price:156.38},{qty:3,price:204.77},{qty:4,price:254.61},{qty:5,price:304.45},{qty:6,price:354.26},{qty:7,price:447.55},{qty:8,price:497.41},{qty:9,price:547.23},{qty:10,price:597.06},{qty:11,price:646.9},{qty:12,price:696.72},{qty:13,price:740.13},{qty:14,price:786.18},{qty:15,price:832.29}],
+        [{qty:1,price:136.62},{qty:2,price:187.1},{qty:3,price:235.47},{qty:4,price:285.31},{qty:5,price:335.14},{qty:6,price:384.96},{qty:7,price:479.73},{qty:8,price:529.57},{qty:9,price:579.39},{qty:10,price:629.22},{qty:11,price:679.06},{qty:12,price:728.9},{qty:13,price:773.73},{qty:14,price:819.79},{qty:15,price:865.92}],
+      ],
+    } },
+  { id:'5948', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 300×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x200.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 300×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'300×200 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:85.28},{qty:2,price:148.54},{qty:3,price:212.78},{qty:4,price:296.91},{qty:5,price:361.15},{qty:6,price:425.41},{qty:7,price:509.54},{qty:8,price:573.78},{qty:9,price:638.03},{qty:10,price:672.11},{qty:11,price:731.54},{qty:12,price:790.91},{qty:13,price:869.79},{qty:14,price:929.22},{qty:15,price:988.62}],
+        [{qty:1,price:121.1},{qty:2,price:184.37},{qty:3,price:248.59},{qty:4,price:356.85},{qty:5,price:421.1},{qty:6,price:485.36},{qty:7,price:593.58},{qty:8,price:657.84},{qty:9,price:722.1},{qty:10,price:780.3},{qty:11,price:839.71},{qty:12,price:899.12},{qty:13,price:1002.13},{qty:14,price:1061.54},{qty:15,price:1120.93}],
+        [{qty:1,price:151.81},{qty:2,price:215.06},{qty:3,price:279.31},{qty:4,price:389.01},{qty:5,price:453.26},{qty:6,price:517.52},{qty:7,price:627.22},{qty:8,price:691.46},{qty:9,price:755.71},{qty:10,price:815.38},{qty:11,price:874.82},{qty:12,price:934.19},{qty:13,price:1038.66},{qty:14,price:1098.08},{qty:15,price:1157.47}],
+      ],
+    } },
+  { id:'5949', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 300×300 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-300x300.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 300×300 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'300×300 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:205.58},{qty:2,price:296.56},{qty:3,price:500.14},{qty:4,price:592.77},{qty:5,price:796.3},{qty:6,price:888.99},{qty:7,price:1040.08},{qty:8,price:1125.76},{qty:9,price:1321.44},{qty:10,price:1407.17},{qty:11,price:1558},{qty:12,price:1639.89},{qty:13,price:1831.26},{qty:14,price:1913.18},{qty:15,price:2104.51}],
+        [{qty:1,price:241.38},{qty:2,price:332.37},{qty:3,price:560.08},{qty:4,price:652.7},{qty:5,price:880.37},{qty:6,price:973.06},{qty:7,price:1148.27},{qty:8,price:1233.95},{qty:9,price:1453.74},{qty:10,price:1539.46},{qty:11,price:1714.43},{qty:12,price:1796.32},{qty:13,price:2011.82},{qty:14,price:2093.74},{qty:15,price:2309.18}],
+        [{qty:1,price:272.1},{qty:2,price:363.09},{qty:3,price:592.24},{qty:4,price:684.88},{qty:5,price:914},{qty:6,price:1006.69},{qty:7,price:1183.36},{qty:8,price:1269.04},{qty:9,price:1490.29},{qty:10,price:1576.02},{qty:11,price:1752.46},{qty:12,price:1834.34},{qty:13,price:2051.31},{qty:14,price:2133.2},{qty:15,price:2350.13}],
+      ],
+    } },
+  { id:'5950', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 400×100 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x100.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 400×100 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'400×100 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:60.1},{qty:2,price:108.51},{qty:3,price:159.58},{qty:4,price:213.7},{qty:5,price:262.69},{qty:6,price:310.96},{qty:7,price:361.34},{qty:8,price:398.88},{qty:9,price:443.57},{qty:10,price:500.37},{qty:11,price:543.14},{qty:12,price:585.89},{qty:13,price:642.27},{qty:14,price:683.81},{qty:15,price:725.26}],
+        [{qty:1,price:93.71},{qty:2,price:144.32},{qty:3,price:195.38},{qty:4,price:273.66},{qty:5,price:322.62},{qty:6,price:370.9},{qty:7,price:444.72},{qty:8,price:482.24},{qty:9,price:527.01},{qty:10,price:608.66},{qty:11,price:651.54},{qty:12,price:694.32},{qty:13,price:775.7},{qty:14,price:817.23},{qty:15,price:858.72}],
+        [{qty:1,price:124.26},{qty:2,price:175.02},{qty:3,price:226.11},{qty:4,price:305.82},{qty:5,price:354.78},{qty:6,price:403.07},{qty:7,price:477.68},{qty:8,price:514.03},{qty:9,price:559.68},{qty:10,price:641.31},{qty:11,price:684.18},{qty:12,price:726.96},{qty:13,price:809.22},{qty:14,price:850.74},{qty:15,price:892.21}],
+      ],
+    } },
+  { id:'5951', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 400×150 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x150.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 400×150 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'400×150 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:85.82},{qty:2,price:150.14},{qty:3,price:215.49},{qty:4,price:300.18},{qty:5,price:365.49},{qty:6,price:430.83},{qty:7,price:515.52},{qty:8,price:580.83},{qty:9,price:646.18},{qty:10,price:680.16},{qty:11,price:740.58},{qty:12,price:800.98},{qty:13,price:880.37},{qty:14,price:940.8},{qty:15,price:1001.18}],
+        [{qty:1,price:121.65},{qty:2,price:185.97},{qty:3,price:251.31},{qty:4,price:360.11},{qty:5,price:425.42},{qty:6,price:490.78},{qty:7,price:599.58},{qty:8,price:664.91},{qty:9,price:730.24},{qty:10,price:788.34},{qty:11,price:848.75},{qty:12,price:909.17},{qty:13,price:1012.69},{qty:14,price:1073.12},{qty:15,price:1133.5}],
+        [{qty:1,price:152.35},{qty:2,price:216.67},{qty:3,price:282},{qty:4,price:392.29},{qty:5,price:457.58},{qty:6,price:522.94},{qty:7,price:633.2},{qty:8,price:698.53},{qty:9,price:763.86},{qty:10,price:823.44},{qty:11,price:883.84},{qty:12,price:944.26},{qty:13,price:1049.25},{qty:14,price:1109.66},{qty:15,price:1170.05}],
+      ],
+    } },
+  { id:'5952', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 400×200 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x200.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 400×200 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'400×200 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:105.47},{qty:2,price:188.42},{qty:3,price:272.58},{qty:4,price:376.61},{qty:5,price:460.77},{qty:6,price:544.98},{qty:7,price:648.98},{qty:8,price:681.2},{qty:9,price:759.04},{qty:10,price:856.3},{qty:11,price:934.14},{qty:12,price:1011.97},{qty:13,price:1069.41},{qty:14,price:1142.5},{qty:15,price:1215.62}],
+        [{qty:1,price:141.3},{qty:2,price:224.22},{qty:3,price:308.4},{qty:4,price:436.56},{qty:5,price:520.7},{qty:6,price:604.91},{qty:7,price:733.02},{qty:8,price:765.28},{qty:9,price:843.09},{qty:10,price:964.5},{qty:11,price:1042.34},{qty:12,price:1120.14},{qty:13,price:1202.83},{qty:14,price:1275.92},{qty:15,price:1349.06}],
+        [{qty:1,price:171.98},{qty:2,price:254.94},{qty:3,price:339.1},{qty:4,price:468.74},{qty:5,price:552.86},{qty:6,price:637.06},{qty:7,price:766.66},{qty:8,price:798.88},{qty:9,price:876.74},{qty:10,price:999.58},{qty:11,price:1077.41},{qty:12,price:1155.23},{qty:13,price:1236.34},{qty:14,price:1309.42},{qty:15,price:1382.54}],
+      ],
+    } },
+  { id:'5953', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 400×250 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x250.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 400×250 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'400×250 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:127.12},{qty:2,price:230.1},{qty:3,price:333.1},{qty:4,price:459.98},{qty:5,price:562.98},{qty:6,price:617.97},{qty:7,price:736.38},{qty:8,price:831.62},{qty:9,price:926.86},{qty:10,price:1003.73},{qty:11,price:1093.06},{qty:12,price:1183.41},{qty:13,price:1299.22},{qty:14,price:1388.56},{qty:15,price:1479.2}],
+        [{qty:1,price:162.94},{qty:2,price:265.92},{qty:3,price:368.93},{qty:4,price:519.92},{qty:5,price:622.91},{qty:6,price:677.9},{qty:7,price:820.45},{qty:8,price:915.68},{qty:9,price:1010.93},{qty:10,price:1112.26},{qty:11,price:1201.58},{qty:12,price:1291.6},{qty:13,price:1432.64},{qty:14,price:1522},{qty:15,price:1611.5}],
+        [{qty:1,price:193.65},{qty:2,price:296.64},{qty:3,price:399.62},{qty:4,price:552.08},{qty:5,price:655.09},{qty:6,price:710.06},{qty:7,price:854.06},{qty:8,price:949.3},{qty:9,price:1044.56},{qty:10,price:1144.88},{qty:11,price:1235.68},{qty:12,price:1326.69},{qty:13,price:1466.16},{qty:14,price:1557.06},{qty:15,price:1648.05}],
+      ],
+    } },
+  { id:'5954', ean:'', variantOf:'5940', nome:'Banner PVC 500gr con occhielli 400×300 cm', categoria:'Banner',
+    templatePdf:'template/banner-pvc-400x300.pdf',
+    img:'img/banner-pvc-700.webp',
+    gallery:['img/banner-pvc-700.webp'],
+    intro:'Banner in PVC 500 g formato 400×300 cm, stampa 4/0 colori (solo fronte, CMYK), taglio e occhielli lungo tutto il perimetro. Adatto a interni ed esterni.',
+    features:['Telo PVC 500 g','Stampa 4/0 colori (solo fronte, CMYK)','Taglio e occhielli lungo tutto il perimetro','Da 1 a 15 pezzi'],
+    specs:{'Materiale':'Telo PVC 500 g','Formato':'400×300 cm','Stampa':'4/0 colori','Finitura':'Taglio e occhielli perimetrali','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
+    // Prezzi = prezzo scontato fornitore × 1,6.
+    pricing:{ type:'tiersDelivery', unit:'pz',
+      deliveryChoices: ['Standard 4–6 gg', 'Express 2 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:1,price:232.64},{qty:2,price:353.95},{qty:3,price:585.98},{qty:4,price:707.52},{qty:5,price:891.07},{qty:6,price:1003.49},{qty:7,price:1225.39},{qty:8,price:1337.84},{qty:9,price:1512.42},{qty:10,price:1619.84},{qty:11,price:1836.29},{qty:12,price:1943.73},{qty:13,price:2160.22},{qty:14,price:2267.65},{qty:15,price:2484.1}],
+        [{qty:1,price:268.45},{qty:2,price:389.76},{qty:3,price:645.94},{qty:4,price:767.46},{qty:5,price:975.14},{qty:6,price:1087.54},{qty:7,price:1333.6},{qty:8,price:1446.03},{qty:9,price:1644.7},{qty:10,price:1752.13},{qty:11,price:1992.75},{qty:12,price:2100.18},{qty:13,price:2340.78},{qty:14,price:2448.21},{qty:15,price:2688.78}],
+        [{qty:1,price:299.17},{qty:2,price:420.46},{qty:3,price:678.1},{qty:4,price:799.62},{qty:5,price:1008.77},{qty:6,price:1121.17},{qty:7,price:1368.69},{qty:8,price:1481.12},{qty:9,price:1681.28},{qty:10,price:1788.69},{qty:11,price:2030.75},{qty:12,price:2138.18},{qty:13,price:2380.26},{qty:14,price:2487.68},{qty:15,price:2729.71}],
+      ],
+    } },
+  { id:'5910', ean:'', nome:'Spille ø2,5 cm', categoria:'Gadget',
+    templatePdf:'template/spilla-2-5.pdf',
+    img:'img/spille-700.webp',
+    gallery:['img/spille-700.webp'],
+    intro:'Spilla tonda ø2,5 cm, stampa 4/0 colori.',
+    features:['Stampa 4/0 colori','Formato tondo ø2,5 cm','Da 50 a 2.500 pezzi'],
+    specs:{'Formato':'diametro 2,5 cm','Stampa':'4/0 colori','Tempi':'Standard 7–10 gg · Express 4–5 gg · Overnight 1 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa. Express fino a 250 pz, Overnight fino a 100 pz.
+    pricing:{ type:'tiersDelivery', unit:'pezzi',
+      deliveryChoices: ['Standard 7–10 gg', 'Express 4–5 gg', 'Overnight 1 gg'],
+      readyDays: [[7,10], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      defaultQtyIdx: 1, // apertura su Standard 100 pz
+      tiersByDelivery: [
+        [{qty:50,price:38.45},{qty:100,price:59.66},{qty:150,price:80.9},{qty:200,price:102.11},{qty:250,price:123.3},{qty:500,price:225.76},{qty:1000,price:427.5},{qty:1500,price:646.3},{qty:2000,price:854.05},{qty:2500,price:1005.63}],
+        [{qty:50,price:62.96},{qty:100,price:87.15},{qty:150,price:110.93},{qty:200,price:134.69},{qty:250,price:160.02}],
+        [{qty:50,price:85.15},{qty:100,price:108.91}],
+      ],
+    } },
+  { id:'5911', ean:'', variantOf:'5910', nome:'Spille ø3,8 cm', categoria:'Gadget',
+    templatePdf:'template/spilla-3-8.pdf',
+    img:'img/spille-700.webp',
+    gallery:['img/spille-700.webp'],
+    intro:'Spilla tonda ø3,8 cm, stampa 4/0 colori.',
+    features:['Stampa 4/0 colori','Formato tondo ø3,8 cm','Da 50 a 2.500 pezzi'],
+    specs:{'Formato':'diametro 3,8 cm','Stampa':'4/0 colori','Tempi':'Standard 7–10 gg · Express 4–5 gg · Overnight 1 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa. Express fino a 250 pz, Overnight fino a 100 pz.
+    pricing:{ type:'tiersDelivery', unit:'pezzi',
+      deliveryChoices: ['Standard 7–10 gg', 'Express 4–5 gg', 'Overnight 1 gg'],
+      readyDays: [[7,10], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      defaultQtyIdx: 1, // apertura su Standard 100 pz
+      tiersByDelivery: [
+        [{qty:50,price:38.99},{qty:100,price:60.16},{qty:150,price:82.58},{qty:200,price:104.99},{qty:250,price:127.38},{qty:500,price:240.06},{qty:1000,price:464.78},{qty:1500,price:695.2},{qty:2000,price:920.24},{qty:2500,price:1150.11}],
+        [{qty:50,price:64.22},{qty:100,price:87.66},{qty:150,price:113.14},{qty:200,price:140.03},{qty:250,price:166.9}],
+        [{qty:50,price:85.98},{qty:100,price:109.6}],
+      ],
+    } },
+  { id:'5912', ean:'', variantOf:'5910', nome:'Spille ø5 cm', categoria:'Gadget',
+    templatePdf:'template/spilla-5.pdf',
+    img:'img/spille-700.webp',
+    gallery:['img/spille-700.webp'],
+    intro:'Spilla tonda ø5 cm, stampa 4/0 colori.',
+    features:['Stampa 4/0 colori','Formato tondo ø5 cm','Da 50 a 2.500 pezzi'],
+    specs:{'Formato':'diametro 5 cm','Stampa':'4/0 colori','Tempi':'Standard 7–10 gg · Express 4–5 gg · Overnight 1 gg'},
+    // Prezzi = costo fornitore (IVA esclusa) × 1,6 → prezzo di vendita IVA inclusa. Express fino a 250 pz, Overnight fino a 100 pz.
+    pricing:{ type:'tiersDelivery', unit:'pezzi',
+      deliveryChoices: ['Standard 7–10 gg', 'Express 4–5 gg', 'Overnight 1 gg'],
+      readyDays: [[7,10], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      defaultQtyIdx: 1, // apertura su Standard 100 pz
+      tiersByDelivery: [
+        [{qty:50,price:44.4},{qty:100,price:71.81},{qty:150,price:99.89},{qty:200,price:127.34},{qty:250,price:154.75},{qty:500,price:292.48},{qty:1000,price:568.4},{qty:1500,price:849.3},{qty:2000,price:1124.18},{qty:2500,price:1379.79}],
+        [{qty:50,price:69.5},{qty:100,price:100.21},{qty:150,price:133.92},{qty:200,price:166.85},{qty:250,price:199.73}],
+        [{qty:50,price:91.25},{qty:100,price:123.6}],
+      ],
+    } },
+  { id:'198', ean:'0652026573312', nome:'Foto Quadro Personalizzato', categoria:'Quadri',
+    img:'img/AdobeStock_325367840-foto-quadro-copia.webp',
+    gallery:['img/AdobeStock_325367840-foto-quadro-copia.webp'],
+    intro:'Decora i tuoi ambienti con un quadro stampato dalla tua foto, resa cromatica di qualità eccellente.',
+    features:['Lato lungo da 30 a 200 cm, lato corto da 21 a 80 cm','Spessore telaio 2 cm o 4 cm','Carica la tua foto direttamente in fase d\'ordine'],
+    specs:{'Lato lungo':'30 – 200 cm','Lato corto':'21 – 80 cm','Spessore telaio':'2 cm, 4 cm'},
+    pricing:{type:'quote', basePrice:30,
+      formula: (sel) => {
+        const unit = 1.3 * Number(sel.lato_lungo ?? 30) * Number(sel.lato_corto ?? 21) / 100 + 22;
+        const perQuadro = sel.tipo === 'Tela solo' ? unit / 2 : unit;
+        return perQuadro * Number(sel.qty ?? 1);
+      },
+      options:[
+      { key:'lato_lungo', label:'Lato lungo (cm)', type:'slider', row:true, rowGroup:'dim', choices:['30','50','70','100','120','150','180','200'] },
+      { key:'lato_corto', label:'Lato corto (cm)', type:'slider', row:true, rowGroup:'dim', choices:['21','30','40','50','60','70','80'] },
+      { key:'tipo', label:'Tipo', row:true, rowGroup:'tipo', choices:['Tela su telaio','Tela solo'] },
+      { key:'spessore', label:'Spessore Telaio', row:true, rowGroup:'tipo', choices:['2 cm','4 cm'], showIf: (sel) => sel.tipo !== 'Tela solo' },
+      { key:'qty', label:'Quantità (anche diversi file)', type:'slider', unitSuffix:'pz', choices:['1','10'] },
+    ] } },
+  { id:'199', ean:'0652026573329', nome:'Marilyn Monroe Warhol', categoria:'Quadri',
+    img:'img/marilyn-AdobeStock_463390374-copia-scaled-1.webp',
+    gallery:['img/marilyn-AdobeStock_463390374-copia-scaled-1.webp'],
+    intro:'Riempi di colori ed emozione i tuoi ambienti con un quadro Marilyn Monroe stile Warhol, realizzato da artigiani italiani, Made in Italy.',
+    features:['2 formati: 50×40 cm o 70×50 cm','Spessore telaio 2 cm o 4 cm','Realizzato da artigiani italiani, Made in Italy'],
+    specs:{'Formati':'50×40 cm, 70×50 cm','Spessore telaio':'2 cm, 4 cm'},
+    pricing:{ type:'size', unit:'cadauno', hideUpload:true, variants:[
+      { label: '50×40 cm', price: 48 },
+      { label: '70×50 cm', price: 67 },
+    ] } },
+  { id:'200', ean:'0652026573336', nome:'Quadro Claude Monet', categoria:'Quadri',
+    img:'img/AdobeStock_463390374-monet-high-res-quadro-500x500-1.webp',
+    gallery:['img/AdobeStock_463390374-monet-high-res-quadro-500x500-1.webp'],
+    intro:'Riempi di colori ed emozione i tuoi ambienti con un quadro Claude Monet su tela, realizzato da artigiani italiani, Made in Italy.',
+    features:['2 formati: 50×40 cm o 70×50 cm','Spessore telaio 2 cm o 4 cm','Realizzato da artigiani italiani, Made in Italy'],
+    specs:{'Formati':'50×40 cm, 70×50 cm','Spessore telaio':'2 cm, 4 cm'},
+    pricing:{ type:'size', unit:'cadauno', hideUpload:true, variants:[
+      { label: '50×40 cm', price: 48 },
+      { label: '70×50 cm', price: 67 },
+    ] } },
+  { id:'201', ean:'0652026573343', nome:'Quadro Van Gogh "Notte stellata"', categoria:'Quadri',
+    img:'img/AdobeStock_463390374-van-gogh-grande.webp',
+    gallery:['img/AdobeStock_463390374-van-gogh-grande.webp'],
+    intro:'Notte Stellata di Van Gogh stampata su tela canvas, realizzata da artigiani italiani, Made in Italy.',
+    features:['2 formati: 50×40 cm o 70×50 cm','Spessore telaio 2 cm o 4 cm','Realizzato da artigiani italiani, Made in Italy'],
+    specs:{'Formati':'50×40 cm, 70×50 cm','Spessore telaio':'2 cm, 4 cm'},
+    pricing:{ type:'size', unit:'cadauno', hideUpload:true, variants:[
+      { label: '50×40 cm', price: 48 },
+      { label: '70×50 cm', price: 67 },
+    ] } },
+  { id:'203', ean:'0652026573350', nome:'Adesivi Prespaziati Personalizzati', categoria:'Adesivi Sagomati',
+    img:'img/adesivi_prespaziati-scaled-450.webp',
+    gallery:['img/adesivi_prespaziati-scaled-450.webp', 'img/oracal-751c-1.webp', 'img/oracal-751c-2.webp', 'img/oracal-751c-3.webp'],
+    intro:'Adesivi Oracal ritagliati su misura, sagomatura precisa e consegna in 24 ore.',
+    features:['Sagomatura di precisione millimetrica','Materiale Oracal lucido o opaco, vari colori','Sagomatura semplice, prespaziato semplice o complesso'],
+    specs:{},
+    // Reconstructed 1:1 from the real APF config for this product (Materiale → Colore, Base × Altezza × Copie × Lavorazioni).
+    pricing:{ type:'adesiviPrespaziati',
+      materialeChoices: ['Lucido', 'Opaco'],
+      coloreByMateriale: [
+        [...ORACAL_LABELS, 'Altro'],
+        ['010 Bianco', '070 Nero'],
+      ],
+      base: { min:5, max:300, default:14 },
+      altezza: { min:5, max:52, default:6 },
+      copie: { min:1, default:1 },
+      lavorazioni: [
+        { label: 'Sagomatura semplice', image: 'img/semplice.webp', mult: 1 },
+        { label: 'Prespaziato semplice', image: 'img/prespaziato-semplice.webp', mult: 1.2 },
+        { label: 'Prespaziato complesso', image: 'img/prespaziato-complesso.webp', mult: 1.3 },
+      ],
+    } },
+  { id:'209', ean:'0652026573367', nome:'2 Adesivi Jeep Renegade Fango', categoria:'Adesivi Sagomati',
+    img:'img/jeep-renegade6-450-copia.webp',
+    gallery:['img/jeep-renegade6-450-copia.webp'],
+    intro:'2 adesivi in PVC Oracal, taglio diretto ad alta precisione, 170×50 cm.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:49 } },
+  { id:'210', ean:'0652026573374', nome:'1 Paio di 2 Woodpecker Adesivi Prespaziati', categoria:'Adesivi Sagomati',
+    img:'img/woodpecker-763-ac-500-copia.webp',
+    gallery:['img/woodpecker-763-ac-500-copia.webp'],
+    intro:'2 adesivi Woodpecker in PVC Oracal 751, 42×42 cm, uso esterno.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:32 } },
+  { id:'212', ean:'0652026573381', nome:'Wall Stickers Sky Line Città Vinile', categoria:'Adesivi Sagomati',
+    img:'img/B09LZBXHNW.MAIN_.webp',
+    gallery:['img/B09LZBXHNW.MAIN_.webp','img/skyline-roma-hero-1.webp','img/skyline-roma-hero-2.webp','img/skyline-londra-hero-1.webp','img/skyline-londra-hero-2.webp','img/skyline-newyork-hero-1.webp','img/skyline-newyork-hero-2.webp','img/skyline-amsterdam-hero-1.webp','img/skyline-amsterdam-hero-2.webp','img/skyline-parigi-hero-1.webp','img/skyline-parigi-hero-2.webp'],
+    intro:'Wall sticker skyline (Dubai, Parigi, Londra, Roma...) in vinile Oracal di alta qualità.',
+    features:['Formato 50×25 cm o 100×50 cm','7 città disponibili: Roma, Londra, Dubai, Sydney, New York, Amsterdam, Parigi','Vinile Oracal di alta qualità, per interno o esterno'],
+    specs:{'Formati':'50×25 cm, 100×50 cm','Materiale':'Vinile Oracal'},
+    pricing:{type:'quote', basePrice:0, hideUpload:true,
+      formula: (sel) => (sel.formato ?? '50 x 25 cm') === '100 x 50 cm' ? 52 : 25,
+      options:[
+      { key:'formato', label:'Formato', choices:['50 x 25 cm','100 x 50 cm'] },
+      { key:'citta', label:'Città', choices:['Roma','Londra','Dubai','Sydney','New York','Amsterdam','Parigi'], images:{
+        'Roma':'img/skyline-roma.webp', 'Londra':'img/skyline-londra.webp', 'Dubai':'img/skyline-dubai.webp',
+        'Sydney':'img/skyline-sydney.webp', 'New York':'img/skyline-newyork.webp', 'Amsterdam':'img/skyline-amsterdam.webp', 'Parigi':'img/skyline-parigi.webp',
+      }, heroImagesBySize:{
+        'Roma':{'50 x 25 cm':'img/skyline-roma-hero-1.webp','100 x 50 cm':'img/skyline-roma-hero-2.webp'},
+        'Londra':{'50 x 25 cm':'img/skyline-londra-hero-2.webp','100 x 50 cm':'img/skyline-londra-hero-1.webp'},
+        'New York':{'50 x 25 cm':'img/skyline-newyork-hero-1.webp','100 x 50 cm':'img/skyline-newyork-hero-2.webp'},
+        'Amsterdam':{'50 x 25 cm':'img/skyline-amsterdam-hero-1.webp','100 x 50 cm':'img/skyline-amsterdam-hero-2.webp'},
+        'Parigi':{'50 x 25 cm':'img/skyline-parigi-hero-2.webp','100 x 50 cm':'img/skyline-parigi-hero-1.webp'},
+        'Sydney':{'50 x 25 cm':'img/skyline-sydney-hero-1.webp','100 x 50 cm':'img/skyline-sydney-hero-2.webp'},
+        'Dubai':{'50 x 25 cm':'img/skyline-dubai-hero-1.webp','100 x 50 cm':'img/skyline-dubai-hero-2.webp'},
+      } },
+    ] } },
+  { id:'213', ean:'0652026573398', nome:'Adesivi frasi romane per decorazione', categoria:'Adesivi Sagomati',
+    img:'img/napoli-copia.webp',
+    gallery:['img/napoli-copia.webp'],
+    intro:'Adesivo decorativo con frasi romane, vinile Oracal per uso esterno, 58×30 cm.',
+    features:['Scegli la frase/design tra le varianti disponibili','Vinile Oracal di alta qualità, 5-7 anni per uso esterno'],
+    specs:{},
+    // Reconstructed 1:1 from the real APF config for this product (image-swatch: scelta del design, prezzo fisso 24€ a soggetto).
+    pricing:{ type:'imageSwatch', price:24,
+      swatches: [
+        { label: 'Mejo', image: 'img/B09MSLBTFN.PT01.webp', hero: 'img/B09MSLBTFN.PT01.webp' },
+        { label: 'Iddio', image: 'img/B09MSLP81T.PT01.webp', hero: 'img/B09MSLP81T.PT01.webp' },
+        { label: 'Tutte le strade', image: 'img/B09MSMCJ9X.PT01.webp', hero: 'img/B09MSMCJ9X.PT01.webp' },
+        { label: 'Omo de Panza', image: 'img/B09MSMFTCP.PT01.webp', hero: 'img/B09MSMFTCP.PT01.webp' },
+        { label: "'ngrassa", image: 'img/B09MSN48JV.PT01.webp', hero: 'img/B09MSN48JV.PT01.webp' },
+        { label: 'Napoli Orto', image: 'img/B09MSNSG3V.PT01.webp', hero: 'img/B09MSNSG3V.PT01.webp' },
+        { label: 'Faccia Tosta', image: 'img/B09MSNWRDF.PT01.webp', hero: 'img/B09MSNWRDF.PT01.webp' },
+        { label: 'A chi tocca', image: 'img/B09MSP2JQQ.PT01.webp', hero: 'img/B09MSP2JQQ.PT01.webp' },
+      ] } },
+  { id:'214', ean:'0652026573404', nome:'Decalcomania Hollywood Sticker', categoria:'Adesivi Sagomati',
+    img:'img/hollywood500x500-copia.webp',
+    gallery:['img/hollywood500x500-copia.webp'],
+    intro:'Adesivo vinilico decalcomania ispirato a icone Hollywood, 50×50 cm, facile da applicare e rimuovere.',
+    features:['Scegli il volto tra le icone disponibili','Vinile di alta qualità, facile applicazione senza residui'],
+    specs:{},
+    // Reconstructed 1:1 from the real APF config for this product (image-swatch: scelta del design, prezzo €24 × quantità).
+    pricing:{ type:'imageSwatchQty', pricePerUnit:24, defaultSwatchIdx:2,
+      swatches: [
+        { label: 'James Dean', image: 'img/B09WNF4VDX.MAIN_-150x150.webp' },
+        { label: 'Madonna', image: 'img/B09WNDYYNS.MAIN_-150x150.webp' },
+        { label: 'Marilyn', image: 'img/B09WNDVT36.MAIN_-300x300.webp' },
+        { label: 'Audrey', image: 'img/B09WNCR9NJ.MAIN_-150x150.webp' },
+        { label: 'Swift', image: 'img/taylor-150x150.webp' },
+      ] } },
+  { id:'215', ean:'0652026573411', nome:'Struttura Personalizzata per Eventi', categoria:'Eventi',
+    img:'img/struttura-eventi-backdrop-acutis.webp',
+    gallery:['img/struttura-eventi-backdrop-acutis.webp','img/insieme-copia.webp','img/struttura-eventi-backdrop-castello.webp','img/struttura-eventi-crown-u.webp','img/struttura-eventi-telaio.webp','img/struttura-eventi-crown-modelli.webp','img/struttura-eventi-crown-modelli-quadrato.webp','img/struttura-eventi-crown-piccolo.webp','img/struttura-eventi-crown-fiera.webp','img/struttura-eventi-piede.webp'],
+    intro:'Fondale su misura per eventi e conferenze: traliccio in alluminio e stampa PVC ad alta definizione, montaggio incluso.',
+    features:['Dimensioni su misura, adattate al tuo spazio (100–400 cm altezza, 100–600 cm larghezza)','Traliccio in alluminio certificato + telo in PVC ignifugo, robusto e riutilizzabile','Stampa ad alta definizione','Consegna, installazione, messa in bolla e smontaggio a cura del nostro team','Richiesta caparra confirmatoria del 50%, restituita dopo ispezione senza danni','Servizio disponibile solo a Roma: scegli montaggio e smontaggio nel calendario'],
+    specs:{'Altezza':'100 – 400 cm','Larghezza':'100 – 600 cm','Materiale':'Alluminio certificato + PVC ignifugo'},
+    pricing:{type:'quote',
+      formula: (sel) => {
+        const [h, w] = struttura215cm(sel);
+        return w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
+      },
+      depositNote: (sel, p) => {
+        const [h, w] = struttura215cm(sel);
+        const base = w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
+        return `Prezzo prodotto € ${fmtEUR(base)} + caparra confirmatoria 50% (€ ${fmtEUR(base/2)}), restituita dopo ispezione senza danni.`;
+      },
+      options:[
+      { key:'altezza', label:'Altezza', type:'slider', row:true, unitSuffix:'', choicesByUnit:{
+        CM:['100','400'], INCH:['40','160'], FEET:['4','15'],
+      } },
+      { key:'larghezza', label:'Larghezza', type:'slider', row:true, unitSuffix:'', choicesByUnit:{
+        CM:['100','600'], INCH:['40','240'], FEET:['4','20'],
+      } },
+      { key:'unit', label:'Unità di misura', choices:['CM','INCH','FEET'] },
+    ] } },
+  { id:'220', ean:'0652026573428', nome:'2 Adesivi Jeep Renegade Stella Graffiata', categoria:'Adesivi Sagomati',
+    img:'img/jeep-renegade2-450-copia.webp',
+    gallery:['img/jeep-renegade2-450-copia.webp'],
+    intro:'2 adesivi in PVC Oracal, taglio diretto ad alta precisione, ø 42 cm.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:23 } },
+  { id:'221', ean:'0652026573435', nome:'2 Adesivi Jeep Renegade Stella e Teschio', categoria:'Adesivi Sagomati',
+    img:'img/jeep-renegade3-450-copia.webp',
+    gallery:['img/jeep-renegade3-450-copia.webp'],
+    intro:'2 adesivi in PVC Oracal, taglio diretto ad alta precisione, ø 42 cm.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:23 } },
+  { id:'223', ean:'0652026573442', nome:'2 Adesivi Jeep Renegade Logo', categoria:'Adesivi Sagomati',
+    img:'img/jeep-renegade5-copia.webp',
+    gallery:['img/jeep-renegade5-copia.webp'],
+    intro:'2 adesivi in PVC Oracal, taglio diretto ad alta precisione, 120×52 cm.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:49 } },
+  { id:'224', ean:'0652026573459', nome:'2 Adesivi Jeep Renegade Logo + Montagna', categoria:'Adesivi Sagomati',
+    img:'img/jeep-renegade8-450-copia.webp',
+    gallery:['img/jeep-renegade8-450-copia.webp'],
+    intro:'2 adesivi in PVC Oracal, logo 120×52 cm + montagna 99×20 cm.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:52 } },
+  { id:'225', ean:'0652026573466', nome:'2 Adesivi Prespaziati Jeep Renegade Crossfit', categoria:'Adesivi Sagomati',
+    img:'img/jeep-renegade9-450-copia.webp',
+    gallery:['img/jeep-renegade9-450-copia.webp'],
+    intro:'2 adesivi in PVC Oracal, 100×10,5 cm, taglio diretto ad alta precisione.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:32 } },
+  { id:'226', ean:'0652026573473', nome:'2 Adesivi Prespaziati Jeep Renegade Cavalli', categoria:'Adesivi Sagomati',
+    img:'img/horses-copia.webp',
+    gallery:['img/horses-copia.webp'],
+    intro:'2 adesivi in PVC Oracal resistenti alle intemperie, applicazione facile senza residui.',
+    features:['Prodotto pronto all\'acquisto immediato','Consegna secondo tempi di produzione standard'],
+    specs:{},
+    pricing:{ type:'flat', price:32 } },
+  { id:'227', ean:'0652026573480', nome:'Stampa Quadro Van Gogh Autoritratto', categoria:'Quadri',
+    img:'img/AdobeStock_423899670-ac-z-sito-mio-grande.webp',
+    gallery:['img/AdobeStock_423899670-ac-z-sito-mio-grande.webp'],
+    intro:'Van Gogh Self Portrait su tela canvas, realizzato da artigiani italiani, Made in Italy.',
+    features:['2 formati: 50×40 cm o 70×50 cm','Spessore telaio 2 cm o 4 cm','Realizzato da artigiani italiani, Made in Italy'],
+    specs:{'Formati':'50×40 cm, 70×50 cm','Spessore telaio':'2 cm, 4 cm'},
+    pricing:{ type:'size', unit:'cadauno', hideUpload:true, variants:[
+      { label: '50×40 cm', price: 48 },
+      { label: '70×50 cm', price: 67 },
+    ] } },
+  { id:'250', ean:'0652026573497', nome:'Locandine Stampate a Roma Eur 24H', categoria:'Locandine e Manifesti',
+    templatePdfs:[{'label':'35×50 cm','path':'template/formato-35x50.pdf'},{'label':'50×70 cm','path':'template/formato-50x70.pdf'},{'label':'70×100 cm','path':'template/formato-70x100.pdf'}],
+    img:'img/locandina-a3-7-1-2016.webp',
+    gallery:['img/locandina-a3-7-1-2016.webp'],
+    intro:'Locandine e manifesti stampati in 24H a Roma EUR, 7 formati disponibili, carta usomano o sintetica.',
+    features:['7 formati: 35×50, 50×70, 70×100 cm, A3, A2, A1, A0','Carta Usomano gr. 80, Usomano gr. 180 o Sintetica gr. 160','Stampa in 24 ore'],
+    specs:{'Formati':'35×50, 50×70, 70×100 cm, A3, A2, A1, A0','Carta':'Usomano gr. 80/180, Sintetica gr. 160'},
+    // Reconstructed 1:1 from the real Advanced Product Fields config for this product (Formato × Quantità × Carta).
+    pricing:{ type:'locandine250',
+      formatChoices:['35 x 50 cm','50 x 70 cm','70 x 100 cm','A3','A2','A1','A0'],
+      formatRates:[2.8,5.3,8.3,2.8,5.3,8,10],
+      cartaChoices:['Usomano gr 80','Usomano gr 180','Carta Sintetica gr 160'],
+      cartaMultiplier:[0.8,1.1,1.4],
+      qty:{min:1,max:500,default:1},
+    } },
+  { id:'5849', ean:'0652026573503', nome:'Quadro Pop Art Personalizzato Warhol', categoria:'Quadri',
+    img:'img/marilyn-AdobeStock_561626566-copia-scaled-copiakl.webp',
+    gallery:['img/marilyn-AdobeStock_561626566-copia-scaled-copiakl.webp'],
+    intro:'Trasforma la tua foto in un\'opera pop art stile Warhol su tela, telaio incluso, realizzata su misura.',
+    features:['Lato lungo da 30 a 200 cm, lato corto da 21 a 80 cm','Spessore telaio 2 cm o 4 cm','Effetto Warhol creato da noi oppure carica tu il file già elaborato'],
+    specs:{'Lato lungo':'30 – 200 cm','Lato corto':'21 – 80 cm','Spessore telaio':'2 cm, 4 cm'},
+    pricing:{type:'quote', basePrice:28,
+      formula: (sel) => {
+        const pannelliIdx = ['1','2','3','4'].indexOf(sel.pannelli ?? '1');
+        const pannelliMult = [1,1.8,2.7,3.6][pannelliIdx === -1 ? 0 : pannelliIdx];
+        const ll = Number(sel.lato_lungo ?? 30), lc = Number(sel.lato_corto ?? 21);
+        const creazionePrice = (sel.creazione ?? "Sì, crea me il file") === "No, il file ce l'ho io" ? -2 : 30;
+        return 1.3 * pannelliMult * ll * lc / 100 + 22 + creazionePrice;
+      },
+      options:[
+      { key:'lato_lungo', label:'Lato lungo (cm)', type:'slider', choices:['30','50','70','100','120','150','180','200'] },
+      { key:'lato_corto', label:'Lato corto (cm)', type:'slider', choices:['21','30','40','50','60','70','80'] },
+      { key:'spessore', label:'Spessore Telaio', choices:['2 cm','4 cm'] },
+      { key:'creazione', label:'Creazione file Effetto Warhol', choices:['Sì, crea me il file',"No, il file ce l'ho io"] },
+    ] } },
+  { id:'211', ean:'0652026573510', nome:'Adesivi per uso interno 24H', categoria:'Adesivi',
+    img:'img/1ec36cc04fea49b884cf58a3171a7617.pngtplv-6bxrjdptv7-image.webp',
+    gallery:['img/1ec36cc04fea49b884cf58a3171a7617.pngtplv-6bxrjdptv7-image.webp'],
+    intro:'Adesivi per uso interno stampati in giornata su carta adesiva gr. 170, formato e sagomatura personalizzabili.',
+    features:['Larghezza 5–31 cm, altezza 5–44 cm','Quantità da 50 a 2.000 pezzi','Forma a sagoma disponibile','Stampa in giornata'],
+    specs:{},
+    // Reconstructed 1:1 from the real APF config for this product (Larghezza × Altezza × Quantità × Forma a Sagoma).
+    pricing:{ type:'adesivoInterno',
+      larghezza: { min:5, max:31, default:21 },
+      altezza: { min:5, max:44, default:15 },
+      qty: { min:50, max:2000, default:50 },
+      sagomaChoices: ['No', 'Si'],
+      sagomaMultiplier: [1, 1.4],
+    } },
+  { id:'216', ean:'0652026573527', nome:'Scatola Gioielli + stampa Oro/Argento', categoria:'Gadget',
+    img:'img/IMG_2058-copia.webp',
+    gallery:['img/IMG_2058-copia.webp'],
+    intro:'Scatola di carta nera con stampa oro, argento o bianco opaco, disponibile in 6 misure, anche in piccole quantità.',
+    features:['6 misure disponibili: da 5×5×3 cm a 17×17×3 cm','Stampa oro lucido, argento lucido o bianco opaco','Quantità da 1 a 1.000 pezzi'],
+    specs:{'Misure':'5×5×3, 7×7×3, 9×9×3, 23×4,5×2,4, 8×8×8, 17×17×3 cm','Colore stampa':'Oro Lucido, Argento Lucido, Bianco Opaco'},
+    // Reconstructed 1:1 from the real APF config for this product: total = qty*rate*2 + qty*3 + 8.
+    pricing:{ type:'scatolaGioielli',
+      qty:{ min:1, max:1000, default:10 },
+      misuraChoices:['5x5x3cm','7x7x3cm','9x9x3cm','23x4,5x2,4cm','8x8x8cm','17x17x3cm'],
+      misuraRate:[1.6, 1.8, 2.25, 2.4, 3.95, 4.35],
+      coloreChoices:['Oro Lucido','Argento Lucido','Bianco Opaco'],
+    } },
+  { id:'218', ean:'0652026573534', nome:'Biglietti da visita 24H', categoria:'Biglietti da Visita',
+    templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
+    img:'img/100-bv-IMG_2664-ac-copia-2.webp',
+    gallery:['img/100-bv-IMG_2664-ac-copia-2.webp'],
+    intro:'Biglietti da visita stampati in giornata, 1 o 2 lati, a partire da 50 esemplari, carta gr. 300/350/400. Stampa digitale.',
+    warning:'Nota: la resa cromatica della stampa digitale non ha la stessa qualità della stampa offset, ideale però per tirature rapide e piccole quantità.',
+    features:['Stampa digitale in 24H, 1 o 2 lati','Formato personalizzabile da 5,5×5,5 a 10,5×14,8 cm','Fino a 10 soggetti diversi nello stesso ordine'],
+    specs:{},
+    // Reconstructed 1:1 from the real APF config for this product (Larghezza × Altezza × Quantità × Lati × Carta × Soggetti diversi).
+    pricing:{ type:'bv24h',
+      larghezza: { min:5.5, max:10.5, default:5.5 },
+      altezza: { min:5.5, max:14.8, default:8.5 },
+      qty: { min:50, max:1000, default:100 },
+      latiChoices: ['1 lato', '2 lati'],
+      latiMultiplier: [1, 1.5],
+      cartaChoices: ['300', '350', '400'],
+      cartaMultiplier: [1, 1.5, 1.9],
+      soggettiChoices: [1,2,3,4,5,6,7,8,9,10],
+      soggettiMultiplier: [1,1.9,2.8,3.7,4.6,5.5,6.4,7.3,8.2,9.1],
+    } },
+  { id:'284', ean:'0652026573541', nome:'Rilegature a spirale Roma EUR', categoria:'Servizi',
+    img:'img/IMG_5529-copia500.webp',
+    gallery:['img/IMG_5529-copia500.webp'],
+    intro:'Rilegatura a spirale in bianco e nero o a colori, ideale per presentazioni aziendali e portfolio.',
+    features:['Quantità di rilegature da 1 a 200','Pagine a colori e/o bianco e nero configurabili','Stampa su 1 lato o 2 lati','Grammatura carta da gr. 80 a gr. 400'],
+    specs:{'Quantità':'1 – 200 rilegature','Carta':'gr. 80 – gr. 400'},
+    // Reconstructed 1:1 from the real APF config for this product (qty × pagine colori/BN × carta × lati).
+    pricing:{ type:'rilegature',
+      qty:{ min:1, max:200, default:1 },
+      pagCol:{ min:0, max:200, default:0 },
+      pagBn:{ min:0, max:200, default:20 },
+      latiChoices:['1 lato','2 lati'],
+      cartaChoices:['gr. 80','gr. 100','gr. 200','gr. 300','gr. 350','gr. 400'],
+      cartaRate:[0.042, 0.065, 0.125, 0.185, 0.215, 0.245],
+    } },
+  { id:'5047', ean:'0652026573558', nome:'Stampa Badge Personalizzati', categoria:'Eventi',
+    altLang:'custom-printed-badges-en.html',
+    img:'img/ID-badge-close-up-in-professional-settinglandscape.webp',
+    gallery:['img/ID-badge-close-up-in-professional-settinglandscape.webp','img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'],
+    intro:'Badge personalizzati per eventi e aziende, con o senza portabadge in plastica, stampa in giornata. Quantità da 35 a 1.000 pezzi.',
+    features:['Con o senza portabadge in plastica','Stampa fronte o fronte/retro, a colori o B/N','Laccio colorato opzionale (11 colori disponibili), con o senza porta badge','Quantità da 35 a 1.000 pezzi'],
+    specs:{'Quantità':'35 – 1.000 pz','Formati':'8,5×5,5, 10×15, 7,5×10 cm (con porta badge) o su misura','Tempi':'In giornata'},
+    // Reconstructed 1:1 from the real APF config for this product (con/senza porta badge, formato/misura, stampa, carta, plastificazione, cordino).
+    pricing:{type:'quote', basePrice:0,
+      formula: (sel) => {
+        const q = Number(sel.qty ?? 35);
+        const holder = sel.holder ?? 'Senza';
+        const formato = sel.formato ?? '8,5×5,5 cm Landscape';
+        const stampaRate = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato a colori + 1 lato bianco nero':0.47 }[sel.stampa] ?? 0.4;
+        const excelRate = sel.creazione_file === 'Si, create voi il file da stampa' ? 0.5 : 0;
+        if (holder === 'Senza' || formato === 'Su misura (senza porta badge)') {
+          const w = Number(sel.larghezza ?? 5), h = Number(sel.altezza ?? 8);
+          const vol = { 'gr. 80':0.10, 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 350':0.43, 'gr. 400':0.49 }[sel.carta] ?? 0.68;
+          const plastRate = sel.plastificazione === 'Si' ? 0.2 : 0;
+          const lanyardRateNo = sel.cordino === 'Si' ? 0.21 : 0;
+          return 2*((vol+stampaRate)*q*(w*10+20)*(h*10+20)/440/320 + 10) + plastRate*3*q*(w*10+20)*(h*10+20)/440/320 + q*excelRate + q*lanyardRateNo;
+        }
+        const dims = { '8,5×5,5 cm Landscape':[85,55,0.85], '8,5×5,5 cm Portrait':[55,85,0.85], '10×15 cm Portrait':[100,150,1.36], '7,5×10 cm Portrait':[75,100,1.10] };
+        const [w,h,holderRate] = dims[formato] || [85,55,0.85]; // mm + costo porta badge (Amazon ×2)
+        const lanyardRate = sel.cordino === 'Si' ? 0.21 : 0;
+        return 2*((0.37+stampaRate)*q*(w+20)*(h+20)/440/320 + 10) + q*holderRate*(1.25 - 0.25*Math.min(1, Math.max(0, (q-100)/100))) + q*lanyardRate + q*excelRate;
+      },
+      options:[
+      { key:'qty', label:'Quantità (35–1.000)', type:'slider', unitSuffix:'pz', choices:['35','100','200','300','500','750','1000'] },
+      { key:'holder', label:'Porta Badge', choices:['Senza','Con'] },
+      { key:'formato', label:'Formato Biglietto', noDefaultActive:true, heroImages:{'8,5×5,5 cm Landscape':'img/Close-up-of-employee-ID-badge-copia700-bvlandscape-copia.webp','8,5×5,5 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-bvportrait-copia.webp','10×15 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-10x15-copia.webp','7,5×10 cm Portrait':'img/Close-up-of-employee-ID-badge-copia700-7-5x10-copia.webp'}, choices:['8,5×5,5 cm Landscape','8,5×5,5 cm Portrait','7,5×10 cm Portrait','10×15 cm Portrait','Su misura (senza porta badge)'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
+      { key:'larghezza', label:'Larghezza solo su misura', type:'slider', step:0.1, choices:['5','8','12','16','21','26','32'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'altezza', label:'Altezza solo su misura', type:'slider', step:0.1, choices:['8','12','16','21','29','35','42'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'stampa', label:'Stampa su 1 lato o 2', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato a colori + 1 lato bianco nero'] },
+      { key:'carta', label:'Grammatura carta', choices:['gr. 300'], showIf: (sel) => (sel.holder ?? 'Senza') !== 'Senza' },
+      { key:'carta', label:'Grammatura carta (solo su misura)', choices:['gr. 300','gr. 80','gr. 100','gr. 200','gr. 350','gr. 400'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'plastificazione', label:'Plastificare (solo su misura)', choices:['No grazie','Si'], showIf: (sel) => (sel.holder ?? 'Senza') === 'Senza' },
+      { key:'cordino', label:'Cordino', choices:['No grazie','Si'] },
+      { key:'colore_cordino', label:'Colore cordino', noDefaultActive:true, heroImages:{'01 Bianco':'img/cordino-01.webp','02 Nero':'img/cordino-02.webp','03 Giallo':'img/cordino-03.webp','05 Blue Royal':'img/cordino-05.webp','31 Arancione':'img/cordino-31.webp','48 Fucsia':'img/cordino-48.webp','55 Blue Navy':'img/cordino-55.webp','60 Rosso':'img/cordino-60.webp','71 Porpora':'img/cordino-71.webp','226 Verde Felce':'img/cordino-226.webp','242 Royal Chiaro':'img/cordino-242.webp'}, choices:['01 Bianco','02 Nero','03 Giallo','05 Blue Royal','31 Arancione','48 Fucsia','55 Blue Navy','60 Rosso','71 Porpora','226 Verde Felce','242 Royal Chiaro'], showIf: (sel) => sel.cordino === 'Si' },
+      { key:'creazione_file', label:'Creazione file da stampa dal modello e file excel', choices:['No, vi forniamo noi','Si, create voi il file da stampa'] },
+    ] } },
+  { id:'5805', ean:'0652026573565', nome:'Libretti Chiesa Personalizzati', categoria:'Servizi',
+    img:'img/libretti-chiesa-personalizzati-stampa-700.webp',
+    gallery:['img/libretti-chiesa-personalizzati-stampa-700.webp'],
+    intro:'Libretti per cerimonie religiose, copertina a colori su carta pregiata, interno bianco/nero.',
+    features:['Formato A5 chiuso','Copertina in carta martellata, stampa a colori esterna','Interno gr. 80, stampato bianco e nero fronte/retro','Quantità da 1 a 200 rilegature, pagine multiplo di 4'],
+    specs:{'Formato':'A5 chiuso','Copertina':'Carta martellata, stampa a colori','Interno':'gr. 80, B/N fronte/retro'},
+    pricing:{type:'quote',
+      formula: (sel) => Number(sel.quantita ?? 1) * (1.5 + Number(sel.facciate ?? 12) * 0.1) + 7,
+      options:[
+      { key:'quantita', label:'Quantità di Rilegature', type:'slider', unitSuffix:'rilegature', choices:['1','200'] },
+      { key:'facciate', label:"Facciate A5 interno B/N", type:'slider', unitSuffix:'facciate', step:4, choices:['12','100'] },
+    ] } },
+  { id:'5851', ean:'0652026573619', nome:'Volantini e Pieghevoli Personalizzati', categoria:'Volantini',
+    img:'img/volantini-pieghevoli-personalizzati.png',
+    gallery:['img/volantini-pieghevoli-personalizzati.png'],
+    intro:'Volantini e pieghevoli su misura: scegli formato libero, materiale, stampa, perforazione e pieghe. Prezzo calcolato sulla superficie reale della carta.',
+    features:['Formato libero da 5×5 a 32×44 cm','Carta da gr. 100 a gr. 400, anche martellata gr. 280','Stampa 1 o 2 lati, a colori o B/N','Perforazione e fino a 3 pieghe','Quantità da 25 a 1.000 pezzi'],
+    specs:{'Quantità':'25 – 1.000 pz','Formato':'da 5×5 a 32×44 cm','Carta':'gr. 100 – gr. 400, martellata gr. 280'},
+    // Ricostruito 1:1 dalla formula Studio Wombat fornita dal titolare (superficie carta su foglio 440×320 mm).
+    pricing:{type:'quote', basePrice:0,
+      formula: (sel) => {
+        const q = Number(sel.qty ?? 25);
+        const w = Number(sel.larghezza ?? 5) * 10, h = Number(sel.altezza ?? 5) * 10; // cm → mm
+        const carta = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[sel.materiale] ?? 0.13;
+        const stampa = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.47 }[sel.stampa] ?? 0.4;
+        const perf = sel.perforazione === 'Si' ? 0.05 : 0;
+        const pieghe = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[sel.pieghe] ?? 0;
+        return ((carta + stampa) * q * (w+20) * (h+20) / 440 / 320 + perf*q + pieghe*q + 10) * 1.6; // ricarico ×1,6
+      },
+      options:[
+      { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', row:true, choices:['25','1000'] },
+      { key:'larghezza', label:'Larghezza (5–32)', type:'slider', unitSuffix:'cm', row:true, choices:['5','32'] },
+      { key:'altezza', label:'Altezza (5–44)', type:'slider', unitSuffix:'cm', row:true, choices:['5','44'] },
+      { key:'materiale', label:'Materiale', choices:['gr. 100','gr. 200','gr. 300','gr. 400','gr. 280 martellata'] },
+      { key:'stampa', label:'Stampa', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato bianco nero + 1 a colori'] },
+      { key:'perforazione', label:'Perforazione', choices:['No grazie','Si'] },
+      { key:'pieghe', label:'Pieghe', choices:['Nessuna','1 piega','2 pieghe','3 pieghe'] },
+    ] } },
+  { id:'202', ean:'0652026573572', nome:'Biglietti da visita a rilievo', categoria:'Biglietti da Visita',
+    templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'5,5×8,5 cm','path':'template/formato-5-5x8-5.pdf'},{'label':'9×5 cm','path':'template/formato-9x5.pdf'},{'label':'5×9 cm','path':'template/formato-5x9.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
+    img:'img/bv-rilievo-hero.webp',
+    gallery:['img/bv-rilievo-hero.webp','img/bv-rilievo.webp'],
+    intro:'Biglietti da visita a rilievo prezzi strategici. Il rilievo è un inchiostro trasparente che si gonfia lasciando la carta al lato apposto liscia. La stampa del rilievo viene applicato su 1 lato, a 4 colori fronte/retro.',
+    features:['Rilievo su 1 lato, stampa f/r a 4 colori','8,5×5,5 e 5,5×8,5: patinata opaca gr. 300, 400, 500 o cartoncino SBS gr. 350','9×5, 5×9 e quadrato 5,5×5,5: offset gr. 350','A partire da 100 esemplari (250 per l\'offset gr. 350)','Tempi di realizzazione: 7–9 giorni lavorativi (offset gr. 350: 10–12)','Assistenza tecnica per la realizzazione del rilievo compresa nel prezzo'],
+    specs:{'Tecnica':'Rilievo 1 lato','Stampa':'F/R 4 colori','Tempi':'7–9 gg lavorativi (offset 10–12)'},
+    // Reconstructed 1:1 from the real APF config for this product (conditional Formato → Carta → Quantità chain).
+    pricing:{ type:'businessCardRilievo', readyDays: [[8,8]], unit:'copie',
+      formats: [
+        { label: 'Orizzontale 8,5×5,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
+          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
+          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+          { label: 'gr. 350 cartoncino SBS opaco', readyDays:[7,9], tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
+        ] },
+        { label: 'Verticale 5,5×8,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
+          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
+          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+          { label: 'gr. 350 cartoncino SBS opaco', readyDays:[7,9], tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
+        ] },
+        { label: 'Orizzontale 9×5 cm', papers: [
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+        ] },
+        { label: 'Verticale 5×9 cm', papers: [
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+        ] },
+        { label: 'Quadrato 5,5×5,5 cm', papers: [
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+        ] },
+      ],
+    } },
+  { id:'205', ean:'0652026573589', nome:'Biglietti da visita con oro/argento lucido', categoria:'Biglietti da Visita',
+    templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'9×5 cm','path':'template/formato-9x5.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
+    img:'img/bv-oro-argento-lucido.webp',
+    gallery:['img/bv-oro-argento-lucido.webp'],
+    intro:'Biglietti da visita con stampa a caldo oro o argento lucido: un tocco di eleganza per il tuo brand, su carta patinata opaca gr. 300 o gr. 400.',
+    features:['Stampa a caldo oro o argento lucido','Carta patinata opaca gr. 300 o gr. 400','3 formati disponibili: 5,5×5,5 cm, 8,5×5,5 cm, 9×5 cm','Da 100 a 10.000 copie','Tempi di realizzazione: 8 giorni lavorativi'],
+    specs:{'Tecnica':'Stampa a caldo oro/argento','Carta':'gr. 300 · gr. 400','Tempi':'8 giorni lavorativi'},
+    pricing:{ type:'businessCardRilievo', readyDays: [[8,8]], unit:'copie', colorChoices:['Oro Lucido','Argento Lucido'],
+      formats: [
+        { label: 'Quadrato 5,5×5,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:68},{qty:250,price:94},{qty:500,price:116},{qty:1000,price:125},{qty:2500,price:132},{qty:5000,price:196},{qty:7500,price:271},{qty:10000,price:347}] },
+          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:75},{qty:250,price:102},{qty:500,price:122},{qty:1000,price:142},{qty:2500,price:132},{qty:5000,price:173},{qty:7500,price:226},{qty:10000,price:281}] },
+        ] },
+        { label: 'Orizzontale 8,5×5,5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:86},{qty:250,price:115},{qty:500,price:142},{qty:1000,price:156},{qty:2500,price:176},{qty:5000,price:279},{qty:7500,price:396},{qty:10000,price:511}] },
+          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:94},{qty:250,price:125},{qty:500,price:151},{qty:1000,price:179},{qty:2500,price:176},{qty:5000,price:241},{qty:7500,price:326},{qty:10000,price:410}] },
+        ] },
+        { label: 'Orizzontale 9×5 cm', papers: [
+          { label: 'gr. 300 patinata opaca', tiers: [{qty:100,price:84},{qty:250,price:113},{qty:500,price:139},{qty:1000,price:153},{qty:2500,price:171},{qty:5000,price:271},{qty:7500,price:383},{qty:10000,price:494}] },
+          { label: 'gr. 400 patinata opaca', tiers: [{qty:100,price:92},{qty:250,price:122},{qty:500,price:148},{qty:1000,price:175},{qty:2500,price:173},{qty:5000,price:233},{qty:7500,price:316},{qty:10000,price:397}] },
+        ] },
+      ],
+    } },
+  { id:'217', ean:'0652026573596', nome:'Forex PVC Stampato', categoria:'Forex',
+    templatePdfs:[{'label':'30×40 cm','path':'template/formato-30x40.pdf'},{'label':'40×60 cm','path':'template/formato-40x60.pdf'},{'label':'50×70 cm','path':'template/formato-50x70.pdf'},{'label':'70×100 cm','path':'template/formato-70x100.pdf'}],
+    img:'img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp',
+    gallery:['img/Foam-boards-with-diverse-designs-and-themes-ac-copia.webp'],
+    intro:'Pannello Forex PVC rigido, stampa diretta ad alta definizione, ideale per insegne, espositori e pannelli decorativi.',
+    features:['Spessore 2 mm o 5 mm','Stampa 4/0 colori (solo fronte)','Consegna Standard 4–6 gg, Express 2–3 gg o Overnight 1 gg','12 formati da A4 a 200×100 cm','Formato personalizzato su misura (da 20×20 cm, spessore 2 o 5 mm)','Da 1 a 18 pezzi (Overnight fino a 10)'],
+    specs:{'Materiale':'PVC espanso (Forex)','Spessori':'2 mm · 5 mm','Uso':'Interni ed esterni'},
+    // Reconstructed 1:1 from the real APF config for this product (Spessore × Stampa × Consegna → Formato, quantità con sconto a scaglioni).
+    pricing:{ type:'forexPvc',
+      formats: ['A4 (21×29,7 cm)', 'A3 (29,7×42 cm)', '30×40 cm', '40×60 cm', 'A2 (42×59,4 cm)', '50×70 cm', '50×100 cm', 'A1 (59,4×84 cm)', '60×90 cm', '70×100 cm', 'A0 (84×118,8 cm)', '200×100 cm'],
+      spessoreChoices: ['2 mm', '5 mm'],
+      stampaChoices: ['1 lato'],
+      consegnaChoices: ['Standard 4–6 gg', 'Express 2–3 gg', 'Overnight 1 gg'],
+      readyDays: [[4,6], [2,3], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      // Prezzo = (totale Flyeralarm per la quantità × 1,7) + 15 € gestione. Listino FA 22/10/2026, stampa 4/0.
+      // fa[spessoreIdx][consegnaIdx][formatIdx][qty-1] = totale fornitore; la lunghezza dell'array = quantità massima.
+      markup: 1.7, handling: 15,
+      // Formato personalizzato (Pixart 3 mm venduto come '2 mm', 4/0): prezzo = (m² × quantità × tariffa) × 1,7 + spedizione Pixart 15 € (senza ricarico) + 15 € gestione.
+      custom: { label: 'Formato personalizzato', spessoreChoices: ['2 mm', '5 mm'], minShort: 20, minLong: 20, maxShort: 190, maxLong: 290, maxQty: 100, cutoffHour: 9, minAreaPerPiece: 0.25,
+        consegnaChoices: ['Standard 9 gg', 'Express 2–3 gg', 'Overnight 1 gg'], rates: [[18, 26, 30], [21, 30.2, 35]], readyDays: [[9,9], [2,3], [1,1]], shipping: 15 },
+      fa: [
+        [ // 2 mm
+          [ // Standard
+            [11.98,13.32,14.21,15.45,16.75,17.92,19.03,20.15,21.27,22.38,23.5,24.62,25.73,26.84,27.98,29.09,30.2,31.31], // A4 (21×29,7 cm)
+            [13.17,14.93,17.07,18.97,20.84,22.7,24.6,26.47,28.33,30.21,32.09,33.96,35.84,37.69,39.58,41.46,43.33,45.21], // A3 (29,7×42 cm)
+            [13.08,14.76,16.84,18.69,20.5,22.32,24.13,25.92,27.73,29.53,31.35,33.14,34.95,36.77,38.56,40.36,42.17,43.99], // 30×40 cm
+            [15.49,18.98,22.25,25.54,28.8,32.08,35.36,38.62,41.9,45.18,48.45,51.91,55.18,58.45,61.74,65,68.28,71.56], // 40×60 cm
+            [15.42,18.9,22.13,25.36,28.59,31.81,35.04,38.28,41.51,44.74,48.15,51.38,54.6,57.83,61.08,64.3,67.54,70.76], // A2 (42×59,4 cm)
+            [20.5,27.14,33.77,40.41,47.06,53.71,60.34,67.16,85.23,91.88,98.51,104.48,111.41,118,124.6,131.19,151.93,158.52], // 50×70 cm
+            [27.87,38.01,48.21,58.36,68.52,78.68,88.84,99,118.87,129.01,138.82,148.61,158.42,168.22,178.51,188.33,216.42,226.24], // 50×100 cm
+            [21.15,28.47,35.77,43.06,50.36,57.84,65.15,72.46,91.19,98.83,105.45,112.7,119.95,127.2,134.94,142.18,163.83,171.07], // A1 (59,4×84 cm)
+            [22.76,31.69,40.6,49.51,58.43,67.51,76.43,85.35,105.36,114.21,123.06,131.91,140.76,150.09,158.93,167.8,191.04,199.89], // 60×90 cm
+            [30.3,42.88,55.42,68.01,80.57,93.16,104.55,116.98,140.15,152.29,164.9,177.03,189.16,201.28,213.43,226.28,257.08], // 70×100 cm
+            [32,46.31,60.62,74.91,89.21,102.37,116.49,130.58,155.59,169.4,183.93,197.7,211.5,225.29,239.08,252.88,285.69,299.87], // A0 (84×118,8 cm)
+            [118.34,150.33,180.97,212.55,330.34,361.93,393.52,425.09,542.9,574.48,606.05,637.63,755.44,787.02,818.6,812.43,927.28], // 200×100 cm
+          ],
+          [ // Express
+            [33.35,34.47,35.59,36.69,37.81,38.93,40.04,41.16,42.28,43.39,44.51,45.64,46.74,47.85,48.99,50.1,51.21,52.32], // A4 (21×29,7 cm)
+            [34.36,36.23,38.09,39.98,41.84,43.71,45.6,47.47,49.34,51.22,53.1,55.02,56.95,58.85,60.81,62.74,64.67,66.59], // A3 (29,7×42 cm)
+            [34.28,36.09,37.89,39.7,41.51,43.32,45.14,46.94,48.74,50.54,52.36,54.19,56.04,57.91,59.75,61.61,63.47,65.34], // 30×40 cm
+            [36.71,39.99,43.26,46.54,49.81,53.09,56.47,59.82,63.21,66.56,69.94,73.32,76.68,80.05,83.44,86.79,90.17,93.55], // 40×60 cm
+            [36.67,39.9,43.14,46.37,49.6,52.83,56.13,59.47,62.78,66.12,69.45,72.77,76.08,79.41,82.76,86.07,89.4,92.71], // A2 (42×59,4 cm)
+            [41.51,48.14,54.84,61.67,68.5,75.35,82.16,89.01,121.71,128.37,134.99,140.96,147.95,154.54,161.13,167.72,203.96,210.55], // 50×70 cm
+            [50.26,60.4,70.58,80.75,90.91,101.08,111.22,121.38,155.36,165.55,175.36,185.14,194.96,204.76,215.09,224.89,268.5,278.31], // 50×100 cm
+            [42.15,49.48,56.89,64.37,71.9,79.42,86.95,94.47,127.68,135.36,141.98,149.24,156.49,163.73,171.5,178.75,215.91,223.14], // A1 (59,4×84 cm)
+            [43.77,52.69,61.86,71.04,80.2,89.38,98.54,107.72,141.9,150.75,159.6,168.44,177.3,186.65,195.5,204.36,243.11,251.96], // 60×90 cm
+            [52.68,65.26,77.82,90.4,102.96,115.54,126.94,139.37,176.68,188.83,201.46,213.59,225.72,237.85,250.26,262.86,309.19], // 70×100 cm
+            [54.39,68.69,83.01,97.3,111.6,124.75,138.88,152.98,192.16,205.97,220.52,234.3,248.09,261.88,275.78,289.89,337.84,352.01], // A0 (84×118,8 cm)
+            [140.74,172.72,203.36,234.93,367.8,399.39,430.97,462.55,595.44,627.03,658.59,690.17,823.06,854.64,886.21,880.04,1009.98], // 200×100 cm
+          ],
+          [ // Overnight
+            [47.4,48.56,49.71,50.83,52,53.14,54.29,55.43,56.57,57.73], // A4 (21×29,7 cm)
+            [48.43,50.37,52.28,54.23,56.14,58.07,60.02,61.93,63.85,65.8], // A3 (29,7×42 cm)
+            [48.36,50.22,52.07,53.93,55.8,57.67,59.54,61.39,63.23,65.1], // 30×40 cm
+            [50.86,54.24,57.59,60.97,64.34,67.71,71.1,74.44,77.82,81.19], // 40×60 cm
+            [50.81,54.14,57.47,60.79,64.11,67.44,70.75,74.09,77.4,80.74], // A2 (42×59,4 cm)
+            [55.8,62.63,69.46,76.29,83.12,89.97,96.78,103.63,138.35,145.01], // 50×70 cm
+            [64.88,75.02,85.2,95.37,105.53,115.69,125.85,136,172,182.18], // 50×100 cm
+            [56.45,64,71.51,79,86.52,94.04,101.57,109.09,144.32,152], // A1 (59,4×84 cm)
+            [58.13,67.3,76.49,85.66,94.82,104,113.16,122.34,158.53,167.39], // 60×90 cm
+            [67.29,79.89,92.44,105.02,117.58,130.16,141.56,153.99,193.32,205.47], // 70×100 cm
+            [69.01,83.32,97.63,111.91,126.22,139.38,153.5,167.6,208.8,222.61], // A0 (84×118,8 cm)
+            [155.36,187.34,217.97,249.54,383.34,414.93,446.51,478.09,611.88,643.48], // 200×100 cm
+          ],
+        ],
+        [ // 5 mm
+          [ // Standard
+            [12.4,14.5,16.26,18.15,20.19,22.19,24.03,25.89,27.74,29.61,38.66,40.8,42.88,45,47.11,48.88,50.44,52.01], // A4 (21×29,7 cm)
+            [14.04,16.97,20.33,23.52,26.58,29.63,32.7,35.75,38.82,42.06,52.6,55.95,59.32,62.65,66.03,69.27,72.67,75.75], // A3 (29,7×42 cm)
+            [13.92,16.75,19.99,23.08,26.06,29.01,31.96,34.92,37.88,41.01,51.63,54.55,57.78,61.04,64.3,67.54], // 30×40 cm
+            [17,22.69,27.96,33.19,38.63,43.89,49.15,54.4,59.65,65.09,80.27,85.53,90.8,96.54,101.12,106.32,111.54,116.74], // 40×60 cm
+            [17.21,23.05,28.51,33.96,39.59,45.02,50.47,55.92,61.37,66.98,82.36,87.8,93.74,98.52,103.93,109.33,114.73,120.13], // A2 (42×59,4 cm)
+            [23.52,33.52,43.55,53.73,63.75,73.77,95.2,104.5,114.43,124.85,134.79,144.73,169.81,179.75,189.68,199.62,209.55,219.49], // 50×70 cm
+            [32.2,47.06,62.1,76.97,91.99,106.1,133.81,148.55,163.3,178.78,193.52,208.26,241.25,256.34,271.08,286.21,301.3,316.03], // 50×100 cm
+            [26.3,39.11,52.08,64.9,77.85,90.01,114.42,127.11,139.82,153.25,165.94,178.64,205.76,218.81,231.51,244.6,257.64,270.35], // A1 (59,4×84 cm)
+            [27.1,40.72,54.49,68.09,81.87,94.78,119.99,133.48,147.7,161.21,174.69,188.19,216.45,229.94,243.82,257.68,271.17,285.01], // 60×90 cm
+            [36.05,52.22,68.22,84.38,100.39,137.26,153.99,170,186,201.99,239.72,256.06,272.07,288.42,304.78,342.87,358.85,374.86], // 70×100 cm
+            [41.45,65.74,90.02,113.56,137.48,161.78,198.8,222.95,247.35,271.51,295.66,319.83,362.7,386.63,410.55,434.47,458.39], // A0 (84×118,8 cm)
+            [125.49,164.61,289.37,329.17,453.95,493.77,618.54,658.34,783.12,822.91,909.44,946.18,1067.15,1103.91,1224.86,1261.61,1382.55,1385.53], // 200×100 cm
+          ],
+          [ // Express
+            [33.9,35.76,37.62,39.47,41.33,43.2,45.04,46.9,48.76,50.62,76.37,78.24,80.46,82.33,84.18,86.05,87.89,89.76], // A4 (21×29,7 cm)
+            [35.35,38.4,41.46,44.53,47.59,50.64,53.71,56.77,59.82,63.08,90.46,93.52,96.59,99.64,102.7,105.76,109.21,112.29], // A3 (29,7×42 cm)
+            [35.24,38.2,41.15,44.09,47.06,50.02,52.97,55.94,58.89,62.03,89.3,92.25,95.21,98.17,101.12,104.07], // 30×40 cm
+            [38.44,43.7,48.97,54.19,59.64,64.9,70.16,75.42,80.67,86.14,116.8,122.07,127.33,133.11,137.68,142.88,148.1,153.31], // 40×60 cm
+            [38.63,44.06,49.52,54.97,60.6,66.04,71.49,76.95,82.39,88.03,118.9,124.34,130.31,135.09,140.49,145.89,151.3,156.69], // A2 (42×59,4 cm)
+            [44.53,54.54,64.56,74.75,84.77,94.79,131.75,141.04,150.97,161.42,171.36,181.3,221.91,231.86,241.78,251.72,261.65,271.6], // 50×70 cm
+            [53.98,68.59,83.21,97.99,113.04,127.14,170.38,185.12,199.87,215.37,230.11,244.85,293.36,308.49,323.22,338.35,353.45,368.18], // 50×100 cm
+            [47.31,60.12,73.1,85.92,98.9,111.06,150.99,163.68,176.38,189.84,202.53,215.22,257.87,270.96,283.66,296.74,309.8,322.5], // A1 (59,4×84 cm)
+            [48.11,61.73,75.5,89.11,102.91,115.82,156.56,170.05,184.29,197.79,211.28,224.78,268.59,282.09,295.95,309.82,323.32,337.2], // 60×90 cm
+            [58.42,73.24,89.24,105.42,121.43,173.83,190.58,206.58,222.59,238.57,291.86,308.23,324.22,340.62,356.99,410.69,426.67,442.69], // 70×100 cm
+            [63.07,86.79,111.07,134.62,158.54,182.85,235.38,259.56,283.97,308.15,332.32,356.51,414.96,438.89,462.81,486.73,510.65], // A0 (84×118,8 cm)
+            [147.87,187,326.84,366.63,506.49,546.3,686.16,725.96,865.82,905.61,1007.21,1043.96,1180,1216.76,1352.79,1389.53,1525.56,1528.53], // 200×100 cm
+          ],
+          [ // Overnight
+            [47.76,49.59,51.41,53.24,55.07,56.91,58.72,60.53,62.37,64.22], // A4 (21×29,7 cm)
+            [49.19,52.18,55.2,58.21,61.24,64.24,67.3,70.37,73.43,76.68], // A3 (29,7×42 cm)
+            [49.08,52,54.89,57.78,60.71,63.62,66.57,69.53,72.48,75.62], // 30×40 cm
+            [52.22,57.41,62.6,67.79,73.25,78.51,83.77,89.03,94.27,99.74], // 40×60 cm
+            [52.41,57.75,63.13,68.57,74.2,79.64,85.09,90.55,95.99,101.62], // A2 (42×59,4 cm)
+            [58.21,68.13,78.16,88.35,98.37,108.39,148.38,157.68,167.61,178.06], // 50×70 cm
+            [68.6,83.21,97.83,112.47,127.08,143.23,187.02,201.75,216.5,232.01], // 50×100 cm
+            [60.95,73.73,86.7,99.52,112.5,124.66,167.62,180.32,193.02,206.47], // A1 (59,4×84 cm)
+            [61.74,75.33,89.1,102.71,116.51,129.42,173.2,186.68,200.93,214.43], // 60×90 cm
+            [73.05,87.74,102.84,119.02,137.53,190.47,207.22,223.22,239.22,255.22], // 70×100 cm
+            [77.7,101.41,125.14,150.72,174.64,198.95,252.02,276.2,300.61,324.79], // A0 (84×118,8 cm)
+            [162.5,201.62,342.37,382.17,522.93,562.75,703.51,743.31,884.09,923.88], // 200×100 cm
+          ],
+        ],
+      ],
+    } },
+  { id:'5515', ean:'0652026573602', nome:'Biglietti da Visita Prezzi Strategici', categoria:'Biglietti da Visita',
+    templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'5,5×8,5 cm','path':'template/formato-5-5x8-5.pdf'},{'label':'9×5 cm','path':'template/formato-9x5.pdf'},{'label':'5×9 cm','path':'template/formato-5x9.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
+    img:'img/bv-2025-ac-copia700.webp',
+    gallery:['img/bv-2025-ac-copia700.webp'],
+    intro:'Biglietti da visita prezzi strategici. Carta patinata gr. 300, 400 o 500. Stampa fronte/retro a 4 colori. A partire da 500 esemplari.',
+    features:['Stampa f/r a 4 colori','Carta patinata gr. 300, gr. 400 o gr. 500 secondo formato','A partire da 500 esemplari','Tempi di realizzazione: Budget 4–6 gg lavorativi oppure Express 2 gg (dove disponibile)'],
+    specs:{'Stampa':'F/R 4 colori','Carta':'gr. 300 · 400 · 500','Tempi':'Budget 4–6 gg · Express 2 gg'},
+    // Reconstructed 1:1 from the real APF config for this product (conditional Formato → Carta → Consegna → Quantità chain).
+    pricing:{ type:'businessCardStrategici',
+      qtyLabels: [500,1000,2500,5000,10000,15000,20000],
+      formats: [
+        { label: 'Orizzontale 5,5×8,5 cm', papers: [
+          { label: 'gr. 300 (classico)', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [40,45,54,71,105,136,165] },
+            { label: 'Express 2 gg', prices: [73,78,87,104,137,169,198] },
+          ] },
+          { label: 'gr. 400', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [45,49,58,78,116,153,203] },
+            { label: 'Express 2 gg', prices: [79,82,90,111,149,185,262] },
+          ] },
+          { label: 'gr. 500', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] },
+          ] },
+        ] },
+        { label: 'Verticale 5,5×8,5 cm', papers: [
+          { label: 'gr. 300 (classico)', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [40,45,54,71,105,136,165] },
+            { label: 'Express 2 gg', prices: [73,78,87,104,137,169,198] },
+          ] },
+          { label: 'gr. 400', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [45,49,58,78,116,153,203] },
+            { label: 'Express 2 gg', prices: [79,82,90,111,149,185,262] },
+          ] },
+          { label: 'gr. 500', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] },
+          ] },
+        ] },
+        { label: 'Orizzontale 9×5 cm', papers: [
+          { label: 'gr. 300 (classico)', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [43,46,52,67,98,124,149] },
+            { label: 'Express 2 gg', prices: [76,79,85,100,131,157,182] },
+          ] },
+          { label: 'gr. 400', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [45,48,57,76,113,150,200] },
+          ] },
+          { label: 'gr. 500', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] },
+          ] },
+        ] },
+        { label: 'Verticale 5×9 cm', papers: [
+          { label: 'gr. 300 (classico)', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [43,46,52,67,98,124,149] },
+            { label: 'Express 2 gg', prices: [76,79,85,100,131,157,182] },
+          ] },
+          { label: 'gr. 400', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [45,48,57,76,113,150,200] },
+          ] },
+          { label: 'gr. 500', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] },
+          ] },
+        ] },
+        { label: 'Quadrato 5,5×5,5 cm', papers: [
+          { label: 'gr. 300 (classico)', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [41,41,45,56,78,97,114] },
+            { label: 'Express 2 gg', prices: [75,73,78,89,110,129,147] },
+          ] },
+          { label: 'gr. 400', deliveries: [
+            { label: 'Budget 1 Settimana', prices: [41,43,49,62,89,115,138] },
+          ] },
+          { label: 'gr. 500', deliveries: [
+            { label: '1 Settimana', prices: [44,48,56,73,109,142,176] },
+          ] },
+        ] },
+      ],
+    } },
+  { id:'6003', ean:'', variantOf:'6001', nome:'Buste a Sacco in Cartone', categoria:'Buste',
+    img:'img/buste-sacco-cartone-hero.webp',
+    gallery:['img/buste-sacco-cartone-hero.webp'],
+    intro:'Buste a sacco in cartone con chiusura a nastro a strappo. Stampa a 4 colori sul fronte. Cartoncino SBS opaco gr. 450 (formati A3 plus, B4, B5, B6) oppure offset bianca gr. 350 (DIN lungo). A partire da 10 pezzi.',
+    features:['Chiusura con nastro a strappo','Stampa 4/0 colori','Cartoncino SBS opaco gr. 450 o offset bianca gr. 350 (DIN lungo)','Formati A3 plus, B4, B5, B6 e DIN lungo','A partire da 10 pezzi (secondo formato)'],
+    specs:{'Stampa':'4/0 colori','Carta':'SBS gr. 450 · offset gr. 350','Chiusura':'Nastro a strappo'},
+    // Costo Flyeralarm × 1,6. Scaglioni per formato. Niente angoli/plastificazione.
+    pricing:{ type:'businessCardStrategici', noFinish:true,
+      formats: [
+        { label: 'A3 plus · 32,9×47 cm (orizzontale)', qtyLabels: [50,100,250,500,750,1000,2000,2500,3000,4000,5000,6000,7000,7500,8000,9000,10000,15000], papers: [
+          { label: 'gr. 450 cartoncino SBS opaco', deliveries: [
+            { label: 'Standard 8 gg', readyDays: [8,8], prices: [925.06,942.88,1183.94,1608.26,1999.84,2371.62,3861.52,4738.98,5515.33,7089.44,8663.55,10237.62,11811.74,12609.49,13385.86,14959.97,16534.05,24404.56] },
+            { label: 'Express 5–6 gg', readyDays: [5,6], prices: [958.74,976.58,1242.64,1691.87,2108.37,2505.04,4119.5,5077.28,5904.32,7605.12,9305.94,11006.7,12707.54,13581.28,14408.32,16109.15,17809.92] },
+          ] },
+        ] },
+        { label: 'B4 · 34,6×24,8 cm (orizzontale)', qtyLabels: [10,20,30,40,50,75,100,250,500,750,1000,2000,2500,3000,4000,5000,6000], papers: [
+          { label: 'gr. 450 cartoncino SBS opaco', deliveries: [
+            { label: 'Standard 8 gg', readyDays: [8,8], prices: [171.98,299.39,408.45,536.14,698.5,704.29,707.28,894.53,1217.14,1498.67,1801.89,3032.37,3605.06,4222.32,5416.85,6701.2,7908.43] },
+            { label: 'Express 5–6 gg', readyDays: [5,6], prices: [205.58,333.01,442.06,569.76,732.13,737.95,740.94,953.12,1325.65,1632.11,1985.14,3365.09,4019.38,4712.66,6059.22,7520.98,8880.24] },
+          ] },
+        ] },
+        { label: 'B5 · 17,5×24,5 cm (verticale)', qtyLabels: [10,20,30,40,50,75,100,250,500,750,1000,2000,2500,3000,4000,5000,6000], papers: [
+          { label: 'gr. 450 cartoncino SBS opaco', deliveries: [
+            { label: 'Standard 8 gg', readyDays: [8,8], prices: [136.24,171.9,193.46,228.74,266.29,350.22,472.7,596.24,793.23,989.06,1178.54,1975.47,2344.5,2729.12,3496.21,4200.86,4975.62] },
+            { label: 'Express 5–6 gg', readyDays: [5,6], prices: [171.1,205.52,227.07,262.34,299.89,383.86,506.32,654.75,876.74,1097.57,1311.98,2233.46,2657.47,3092.75,3986.56,4792.56,5694.02] },
+          ] },
+        ] },
+        { label: 'B6 · 12,5×17,6 cm (verticale)', qtyLabels: [10,20,30,40,50,75,100,250,500,750,1000,2000,2500,3000,4000,5000,6000,7000,7500], papers: [
+          { label: 'gr. 450 cartoncino SBS opaco', deliveries: [
+            { label: 'Standard 8 gg', readyDays: [8,8], prices: [129.46,152.14,180.64,203.87,230.94,292.82,376.4,453.54,601.25,751.7,903.28,1479.23,1778.86,2056.88,2635.23,3208.32,3755.92,4286.18,4556.11] },
+            { label: 'Express 5–6 gg', readyDays: [5,6], prices: [165.25,186.43,214.26,237.47,264.58,326.43,410.02,487.17,659.76,835.07,1011.58,1662.48,2015.81,2319.17,2998.88,3647.97,4271.6,4903.22,5198.48] },
+          ] },
+        ] },
+        { label: 'DIN lungo · 11×22 cm (verticale)', qtyLabels: [50,75,100,250,500,1000,1250,2500,5000,7500,10000,20000,25000,50000], papers: [
+          { label: 'gr. 350 offset bianca', deliveries: [
+            { label: 'Standard 9 gg', readyDays: [9,9], prices: [512.1,516.86,520.05,615.46,781.81,1125.04,1284.16,2097.79,3620.86,5184.35,6773.57,12936.46,16068.14,31726.54] },
+            { label: 'Express 5–6 gg', readyDays: [5,6], prices: [545.71,550.48,553.66,649.07,815.5,1183.62,1367.7,2233.36,3883.14,5573.33,7289.25] },
+          ] },
+        ] },
+      ],
+    } },
+  { id:'6002', ean:'', variantOf:'6001', nome:'Buste da Lettera senza Finestra non Stampate', categoria:'Buste',
+    img:'img/buste-senza-finestra-hero.webp',
+    gallery:['img/buste-senza-finestra-hero.webp'],
+    intro:'Buste da lettera bianche senza finestra, non stampate. Carta offset bianca gr. 80 o 90. Formati DIN lungo, C6, C5 e C4 per fogli A4. A partire da 250 pezzi.',
+    features:['Senza finestra','Non stampate, bianche','Carta offset bianca gr. 80 o 90 secondo formato','A partire da 250 pezzi (secondo formato)','Consegna Standard, Express o Overnight'],
+    specs:{'Stampa':'Nessuna','Carta':'Offset bianca gr. 80 · 90','Finestra':'No'},
+    // Costo Flyeralarm × 1,6. Non stampate: niente grafica, file, motivi, angoli, plastificazione.
+    pricing:{ type:'businessCardStrategici', noFinish:true, noPrint:true,
+      formats: [
+        { label: 'DIN lungo 22×11 cm', qtyLabels: [1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,20000,30000,40000,50000], papers: [
+          { label: 'gr. 80 offset bianca', deliveries: [
+            { label: 'Standard 4 gg', readyDays: [4,4], prices: [55.58,109.92,162.69,210.48,258,314.21,356.27,418.94,471.09,523.41,1035.82,1543.06,2057.38,2571.74] },
+            { label: 'Express 2 gg', readyDays: [2,2], prices: [89.87,168.45,247.34,322.5,399.36,478.75,544.3,635.38,712.94,791.17,1567.84,2341.87,3118.58,3894.98] },
+            { label: 'Overnight 1 g', readyDays: [1,1], prices: [116.93,193.22,279.12,355.14,434.99,515.26,581.66,673.6,752.05,833.26,1620.69,2409.78,3200.32,3995.2] },
+          ] },
+        ] },
+        { label: 'DIN C6 16,2×11,4 cm', qtyLabels: [1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,20000,30000,40000,50000], papers: [
+          { label: 'gr. 80 offset bianca', deliveries: [
+            { label: 'Standard 4 gg', readyDays: [4,4], prices: [68.98,134.67,195.86,258.54,320.66,384.78,443.66,511.39,571.55,635.07,1264.29,1887.84,2517.12,3146.4] },
+            { label: 'Express 2 gg', readyDays: [2,2], prices: [103.66,193.17,280.51,368.91,459.58,552.22,629.25,732.46,820.94,911.17,1810.37,2703.87,3602.21,4478.61] },
+            { label: 'Overnight 1 g', readyDays: [1,1], prices: [130.72,221.94,312.29,401.54,495.25,588.74,666.62,770.69,860.02,953.26,1863.23,2771.78,3683.01,4576.61] },
+          ] },
+        ] },
+        { label: 'DIN C5 22,9×16,2 cm', qtyLabels: [500,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,20000,30000,40000,50000], papers: [
+          { label: 'gr. 90 offset bianca', deliveries: [
+            { label: 'Standard 4 gg', readyDays: [4,4], prices: [51.6,102.21,198.27,293.94,389.09,484.91,581.87,659.23,767.82,863.79,959.79,1906.62,2859.92,3766.21,4657.79] },
+            { label: 'Express 2 gg', readyDays: [2,2], prices: [85.63,160.67,306.74,457.71,607.62,756.56,906.08,1036.38,1201.07,1350.1,1499.04,2972.45,4452.13,5886.22,7306.08] },
+            { label: 'Overnight 1 g', readyDays: [1,1], prices: [109.01,185.47,337.22,492.08,643.7,796.5,947.76,1079.78,1246.19,1396.93,1549.82,3052.83,4563.41,6047.86,7529.1] },
+          ] },
+        ] },
+        { label: 'DIN C4 22,9×32,4 cm (A4)', qtyLabels: [250,500,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,20000,30000,40000,50000], papers: [
+          { label: 'gr. 90 offset bianca', deliveries: [
+            { label: 'Standard 4 gg', readyDays: [4,4], prices: [41.76,84.64,165.17,312.43,465.5,618.96,769.36,919.57,1072.85,1226.08,1379.36,1532.61,3046.1,4516.98,5841.79,7302.22] },
+            { label: 'Express 2 gg', readyDays: [2,2], prices: [75.39,143.17,274.91,531.62,797.66,1057.52,1314.43,1571.17,1830.85,2090.51,2350.21,2609.89,5188.16,7725.12,10120.51,12647.34] },
+            { label: 'Overnight 1 g', readyDays: [1,1], prices: [98.78,165.78,305.41,568.54,840.56,1107.18,1374.4,1639.36,1905.89,2172.42,2438.94,2707.62,5363.82,7978.4,10447.31,13055.84] },
+          ] },
+        ] },
+      ],
+    } },
+  { id:'6001', ean:'', nome:'Buste da Lettera con Finestra a Destra', categoria:'Buste',
+    img:'img/buste-finestra-hero-v2.webp',
+    gallery:['img/buste-finestra-hero-v2.webp'],
+    intro:'Buste da lettera con finestra a destra, carta offset bianca. Stampa a 4 colori sul fronte, intera superficie. Formati DIN lungo, lettershop e DIN C4 per fogli A4. A partire da 10 pezzi.',
+    features:['Finestra a destra','Stampa 4/0 colori, intera superficie','Carta offset bianca gr. 75, 80 o 90 secondo formato','A partire da 10 pezzi','Consegna Standard, Express o Overnight (dove disponibile)'],
+    specs:{'Stampa':'4/0 colori','Carta':'Offset bianca gr. 75 · 80 · 90','Finestra':'A destra'},
+    // Costo Flyeralarm × 1,6. Scaglioni per formato (format.qtyLabels). Niente angoli/plastificazione.
+    pricing:{ type:'businessCardStrategici', noFinish:true,
+      formats: [
+        { label: 'DIN lungo 22×11 cm', qtyLabels: [10,25,50,75,100,250,500,750,1000,2000,2500,3000,4000,5000,6000,7000,7500,8000], papers: [
+          { label: 'gr. 80 offset bianca', deliveries: [
+            { label: 'Standard 5 gg', readyDays: [5,5], prices: [44.86,45.74,47.25,48.74,50.26,67.58,79.58,85.34,99.34,144.19,171.71,200.26,254.69,299.97,349.01,413.36,438,460.03] },
+            { label: 'Express 2–3 gg', readyDays: [2,3], prices: [79.79,80.77,82.42,84.05,85.71,103.38,115.41,121.18,135.17,177.89,205.84,234.4,314.13,359.41,408.58,498.27,522.9,544.93] },
+            { label: 'Overnight 1 g', readyDays: [1,1], prices: [103.18,104.16,105.81,107.44,109.12,126.78,138.8,144.58,162.21,201.81,235.89] },
+          ] },
+        ] },
+        { label: 'Lettershop 22,9 × 11,4 cm', qtyLabels: [10,25,50,75,100,250,500,750,1000,2000,2500,3000,4000,5000,6000,7000], papers: [
+          { label: 'gr. 75 offset bianca', deliveries: [
+            { label: 'Standard 7 gg', readyDays: [7,7], prices: [70.8,71.82,73.57,75.28,77.01,86.51,102.64,118,133.18,195.78,232.35,264.5,344.51,409.34,475.09,554.96] },
+          ] },
+        ] },
+        { label: 'DIN C4 22,9×32,4 cm (A4)', qtyLabels: [10,25,50,75,100,250,500,1000,2500,5000,7500,10000,15000,20000,25000], papers: [
+          { label: 'gr. 90 offset bianca', deliveries: [
+            { label: 'Standard 5 gg', readyDays: [5,5], prices: [113.79,116.32,118.75,122.88,127.04,147.23,183.04,251.65,495.92,886.96,1290.24,1680.91,2458.83,3250.32,3956.69] },
+            { label: 'Express 2–3 gg', readyDays: [2,3], prices: [149.6,152.13,154.58,158.7,162.85,181.86,216.72,285.36,580.82,1022.54,1501.84,1943.2] },
+            { label: 'Overnight 1 g', readyDays: [1,1], prices: [172.99,175.52,177.95,182.08,186.24,205.25,242.48,313.26] },
+          ] },
+        ] },
+      ],
+    } },
+];
+
+// Two merchandising collections: "Prezzi Strategici" (the current catalog) and "Su Misura" (new configurable products added going forward).
+const SU_MISURA_IDS = ['197', '5833', '5850', '198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
+// Terza collezione: le decalcomanie/adesivi sagomati pronti, scorporati da "Su Misura".
+const DECALC_IDS = ['209', '210', '212', '213', '214', '220', '221', '223', '224', '225', '226'];
+// Quarta collezione: i quadri su tela, scorporati da "Su Misura".
+const QUADRI_IDS = ['198', '199', '200', '201', '227', '5849'];
+PRODUCTS.forEach(p => {
+  p.collection = DECALC_IDS.includes(p.id) ? 'decalc'
+    : QUADRI_IDS.includes(p.id) ? 'quadri'
+    : (SU_MISURA_IDS.includes(p.id) ? 'misura' : 'strategici');
+});
+
+// Sempre due decimali (82 → 82,00). L'addebito Stripe coincide sempre al centesimo.
+function fmtQty(n){ return Math.round(Number(n)).toLocaleString('it-IT'); }
+function fmtUnit(n){ const v = Number(n); const d = v >= 1 ? 2 : 3; return v.toLocaleString('it-IT', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+function fmtEUR(n){ const v = Math.round(Number(n)*100)/100; return v.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function priceFrom(p){
+  if (p.pricing.type === 'tiers') return p.pricing.tiers[0].price;
+  if (p.pricing.type === 'tiersDelivery') return Math.min(...p.pricing.tiersByDelivery.map(t => t[0].price));
+  if (p.pricing.type === 'size') return Math.min(...p.pricing.variants.map(v=>v.price));
+  if (p.pricing.type === 'businessCardRilievo') return Math.min(...p.pricing.formats.flatMap(f => f.papers.flatMap(pp => pp.tiers.map(t => t.price))));
+  if (p.pricing.type === 'forexPvc') return Math.round((Math.min(...p.pricing.fa.flat(3)) * p.pricing.markup + p.pricing.handling) * 100) / 100;
+  if (p.pricing.type === 'striscioniPvc') return Math.min(...p.pricing.ratesSettimanaSenza, ...p.pricing.ratesSettimanaCon, ...p.pricing.rates2gg) * 1.22 * 1.3;
+  if (p.pricing.type === 'businessCardStrategici') return Math.min(...p.pricing.formats.flatMap(f => f.papers.flatMap(pp => pp.deliveries.flatMap(d => d.prices))));
+  if (p.pricing.type === 'flat') return p.pricing.price;
+  if (p.pricing.type === 'imageSwatch') return p.pricing.price;
+  if (p.pricing.type === 'imageSwatchQty') return p.pricing.pricePerUnit;
+  if (p.pricing.type === 'adesivoInterno') {
+    const { larghezza, altezza, qty } = p.pricing;
+    return Math.round((10 + 1 * ((larghezza.default+2)*(altezza.default+2)/44/32) * qty.default * 1.22 * 2) * 100) / 100;
+  }
+  if (p.pricing.type === 'adesiviPrespaziati') {
+    const { base, altezza, copie } = p.pricing;
+    return Math.round((15 + 1 * 5.5 * 1.22 * 5 * ((base.default+2.5)*(altezza.default+2.5)/6200) * copie.default) * 100) / 100;
+  }
+  if (p.pricing.type === 'bv24h') {
+    const { larghezza, altezza, qty } = p.pricing;
+    return Math.round((20 + 1 * 1 * 1 * qty.default * (larghezza.default*10+20)*(altezza.default*10+40)/440/320) * 100) / 100;
+  }
+  if (p.pricing.type === 'formula') {
+    const minStruttura = Math.min(...p.pricing.strutturaChoices.map(c => c.rate));
+    return 1 * (p.pricing.rollupRate(1) + minStruttura);
+  }
+  if (p.pricing.type === 'locandine250') return p.pricing.formatRates[0] * 1 * p.pricing.cartaMultiplier[0] * 1.22 + 5;
+  if (p.pricing.type === 'scatolaGioielli') return Math.min(...p.pricing.misuraRate.map(r => p.pricing.qty.default * r * 2 + p.pricing.qty.default * 3 + 8));
+  if (p.pricing.type === 'rilegature') return Math.min(...p.pricing.cartaRate.map(r => p.pricing.qty.default*p.pricing.pagCol.default*0.27 + p.pricing.qty.default*5 + p.pricing.qty.default*p.pricing.pagCol.default*r));
+  // basePrice:0 significa "nessun minimo imposto", non "gratis": va sempre preferita la formula,
+  // altrimenti la card del catalogo mostra "da € 0" (era il caso di Badge, Wall Stickers e Volantini).
+  if (p.pricing.type === 'quote' && p.pricing.formula) return Math.max(p.pricing.formula({}), p.pricing.basePrice ?? 0);
+  if (p.pricing.type === 'quote' && p.pricing.basePrice != null) return p.pricing.basePrice;
+  return null;
+}
+function priceLabelFor(p, group){
+  if (group) {
+    // Card di categoria: prezzo minimo tra tutte le misure della famiglia.
+    const vals = PRODUCTS.filter(x => x.id === p.id || x.variantOf === p.id).map(priceFrom).filter(v => typeof v === 'number' && isFinite(v) && v > 0);
+    if (vals.length) return 'da € ' + fmtEUR(Math.min(...vals));
+  }
+  if (p.pricing.type === 'quote' && p.pricing.basePrice == null && !p.pricing.formula) return 'Preventivo';
+  const v = priceFrom(p);
+  if (!(typeof v === 'number' && isFinite(v) && v > 0)) return 'Preventivo';
+  return 'da € ' + fmtEUR(v);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Calendario prenotazione Struttura per Eventi (215): montaggio → smontaggio. Regole allineate
+// con api/_bookings.js: preavviso, durata massima, niente montaggi/smontaggi la domenica e nei festivi
+// (nazionali + Pasquetta + 29/06 patrono di Roma). Le date già pagate arrivano da /api/event-bookings.
+const EVENT_NOTICE_DAYS = 5, EVENT_MAX_SPAN = 30;
+function isoDay(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function isoAdd(iso, n){ const [y,m,d] = iso.split('-').map(Number); return isoDay(new Date(y, m-1, d+n)); }
+function eventDateRange(){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const min = new Date(t); min.setDate(min.getDate() + EVENT_NOTICE_DAYS);
+  const max = new Date(t); max.setFullYear(max.getFullYear() + 1);
+  return { min: isoDay(min), max: isoDay(max) };
+}
+function easterIso(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+  return isoDay(new Date(y, Math.floor((h+l-7*m+114)/31)-1, ((h+l-7*m+114)%31)+1));
+}
+function eventNoInstall(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  if (new Date(y, m-1, d).getDay() === 0) return true;
+  if (['01-01','01-06','04-25','05-01','06-02','06-29','08-15','11-01','12-08','12-25','12-26'].includes(iso.slice(5))) return true;
+  return isoAdd(easterIso(y), 1) === iso;
+}
+function fmtEventDate(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return '';
+  return m[3] + '/' + m[2] + '/' + m[1];
+}
+function eventBooked(){
+  if (!state.evBookedLoaded){
+    state.evBookedLoaded = 'loading';
+    fetch('/api/event-bookings').then(r => r.json()).then(j => { state.evBooked = j.booked || []; })
+      .catch(() => {}).finally(() => { state.evBookedLoaded = true; if (document.getElementById('eventCalendar')) renderDetail(); });
+  }
+  return state.evBooked || [];
+}
+function eventRangeHasBooked(a, b){ return eventBooked().some(d => d >= a && d <= b); }
+const EVENT_TIMES = Array.from({ length: 31 }, (_, i) => String(7 + Math.floor(i/2)).padStart(2,'0') + (i % 2 ? ':30' : ':00'));
+function eventCalendarHtml(p, sel){
+  const en = window.tpLang === 'en';
+  const { min, max } = eventDateRange();
+  const booked = eventBooked();
+  const s = sel.ev_start || '', e = sel.ev_end || '';
+  const ym = state.calMonthById[p.id] || (s || min).slice(0, 7);
+  const [y, mo] = ym.split('-').map(Number);
+  const first = new Date(y, mo - 1, 1);
+  const days = new Date(y, mo, 0).getDate();
+  const lead = (first.getDay() + 6) % 7;
+  const monthName = first.toLocaleDateString(en ? 'en-GB' : 'it-IT', { month: 'long', year: 'numeric' });
+  const wd = en ? ['Mo','Tu','We','Th','Fr','Sa','Su'] : ['Lu','Ma','Me','Gi','Ve','Sa','Do'];
+  const canPrev = ym > min.slice(0, 7), canNext = ym < max.slice(0, 7);
+  const G = 'oklch(0.42 0.12 155)', TINT = 'oklch(0.93 0.04 155)';
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<span></span>');
+  for (let d = 1; d <= days; d++){
+    const iso = ym + '-' + String(d).padStart(2, '0');
+    const isBooked = booked.includes(iso);
+    const off = iso < min || iso > max || isBooked || eventNoInstall(iso);
+    const edge = iso === s || iso === e;
+    const inRange = s && e && iso > s && iso < e;
+    const base = 'height:38px; border-radius:8px; font-size:13.5px; font-family:inherit; display:flex; align-items:center; justify-content:center;';
+    if (off) cells.push(`<span title="${isBooked ? (en ? 'Booked' : 'Già prenotato') : ''}" style="${base} color:oklch(0.78 0.005 90); background:${inRange ? TINT : 'transparent'};${isBooked ? ' text-decoration:line-through;' : ''}">${d}</span>`);
+    else cells.push(`<button type="button" data-cal-day="${iso}" aria-pressed="${edge}" style="${base} cursor:pointer; border:1.5px solid ${edge ? G : (inRange ? TINT : 'oklch(0.9 0.005 90)')}; background:${edge ? G : (inRange ? TINT : '#fff')}; color:${edge ? '#fff' : 'inherit'}; font-weight:${edge ? 700 : 500};">${d}</button>`);
+  }
+  const navBtn = (dir, ok, label) => `<button type="button" ${ok ? `data-cal-nav="${dir}"` : 'disabled'} aria-label="${label}" style="width:36px; height:36px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); background:#fff; font-size:16px; cursor:${ok ? 'pointer' : 'default'}; opacity:${ok ? 1 : .35};">${dir < 0 ? '‹' : '›'}</button>`;
+  const lab = 'font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;';
+  const field = 'width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit; background:#fff;';
+  const timeSel = (key, val) => `<select data-ev-field="${key}" style="${field}"><option value="">${en ? 'Time' : 'Ora'}</option>${EVENT_TIMES.map(t => `<option ${t === val ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  const hint = state.evMsg ? `<span style="color:#b3261e;">${esc(state.evMsg)}</span>`
+    : !s ? (en ? `Pick the installation day (at least ${EVENT_NOTICE_DAYS} days from today).` : `Scegli il giorno di montaggio (almeno ${EVENT_NOTICE_DAYS} giorni da oggi).`)
+    : !e ? (en ? 'Now pick the dismantling day (can be the same day).' : 'Ora scegli il giorno di smontaggio (anche lo stesso giorno).')
+    : (en ? 'Click a day to start over.' : 'Clicca un giorno per ricominciare.');
+  return `<div id="eventCalendar" data-no-i18n style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+    <div>
+      <div style="${lab}">${en ? 'Installation and dismantling' : 'Montaggio e smontaggio'} <span style="opacity:.7;">(${en ? 'Rome only' : 'solo Roma'})</span></div>
+      <div style="border:1.5px solid oklch(0.9 0.005 90); border-radius:10px; padding:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+          ${navBtn(-1, canPrev, en ? 'Previous month' : 'Mese precedente')}
+          <div style="font-size:14px; font-weight:700; text-transform:capitalize;">${esc(monthName)}</div>
+          ${navBtn(1, canNext, en ? 'Next month' : 'Mese successivo')}
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; margin-bottom:4px;">${wd.map(w => `<span style="text-align:center; font-size:11px; color:oklch(0.5 0.01 90); text-transform:uppercase; letter-spacing:.04em;">${w}</span>`).join('')}</div>
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px;">${cells.join('')}</div>
+      </div>
+      <div style="font-size:12px; margin-top:8px; color:oklch(0.5 0.01 90); line-height:1.45;">${hint}<br>${en ? 'No installation or dismantling on Sundays and public holidays. Struck-through days are already booked.' : 'Niente montaggi o smontaggi la domenica e nei festivi. I giorni barrati sono già prenotati.'}</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <div style="flex:1 1 0; min-width:0;"><div style="${lab}">${en ? 'Installation' : 'Montaggio'}${s ? ' ' + fmtEventDate(s) : ''}</div>${timeSel('ev_start_time', sel.ev_start_time)}</div>
+      <div style="flex:1 1 0; min-width:0;"><div style="${lab}">${en ? 'Dismantling' : 'Smontaggio'}${e ? ' ' + fmtEventDate(e) : ''}</div>${timeSel('ev_end_time', sel.ev_end_time)}</div>
+    </div>
+    <div>
+      <div style="${lab}">${en ? 'Event address (Rome)' : 'Indirizzo dell\'evento (Roma)'}</div>
+      <input type="text" data-ev-field="ev_address" maxlength="120" value="${esc(sel.ev_address || '')}" placeholder="${en ? 'Street, number, venue' : 'Via, numero civico, location'}" style="${field}">
+    </div>
+  </div>`;
+}
+const QUOTE_LABELS = {
+  copie:'Copie stesso soggetto', base:'Base (cm)', larghezza:'Larghezza (cm)', altezza:'Altezza (cm)',
+  pagCol:'Pagine a colori', pagBn:'Pagine b/n', altroColore:'Altro colore', canva:'Link file / Canva',
+  formato:'Formato', tempi:'Tempi di consegna', carta:'Carta', colore:'Colore', consegna:'Consegna',
+  angoli:'Finitura', unit:'Unità di misura', spessore:'Spessore telaio', citta:'Città', creazione:'Creazione file',
+  lato_lungo:'Lato lungo (cm)', lato_corto:'Lato corto (cm)', holder:'Porta badge',
+  stampa:'Stampa', plastificazione:'Plastificazione', cordino:'Cordino',
+  colore_cordino:'Colore cordino', creazione_file:'Creazione file da stampa',
+  materiale:'Materiale', perforazione:'Perforazione', pieghe:'Pieghe',
+};
+const QUOTE_IDX = {
+  strutturaIdx:['Struttura','strutturaChoices'],
+  spessoreIdx:['Spessore','spessoreChoices'],
+  stampaIdx:['Stampa','stampaChoices'],
+  consegnaIdx:['Consegna','consegnaChoices'],
+  formatIdx:['Formato', (p) => p.pricing.formatChoices || p.pricing.formats || p.pricing.variants],
+  occhielliIdx:['Occhielli','occhielliChoices'],
+  sagomaIdx:['Sagomatura','sagomaChoices'],
+  materialeIdx:['Finitura','materialeChoices'],
+  lavorazioneIdx:['Lavorazione','lavorazioni'],
+  latiIdx:['Stampa','latiChoices'],
+  cartaIdx:['Carta','cartaChoices'],
+  soggettiIdx:['Soggetti diversi','soggettiChoices'],
+  misuraIdx:['Misura','misuraChoices'],
+  swatchIdx:['Soggetto','swatches'],
+  coloreIdx:['Colore', (p,f) => p.pricing.coloreByMateriale ? p.pricing.coloreByMateriale[f.materialeIdx || 0] : p.pricing.coloreChoices],
+  paperIdx:['Carta','papers'],
+  deliveryIdx:['Consegna','deliveryChoices'],
+};
+function quoteVariantLabel(p, idx){
+  const pr = p.pricing;
+  if (idx == null) return '';
+  if (pr.variants && pr.variants[idx]) return 'Formato: ' + pr.variants[idx].label;
+  if (pr.swatches && pr.swatches[idx]) return 'Soggetto: ' + pr.swatches[idx].label;
+  if (pr.tiers && pr.tiers[idx]) return 'Quantità: ' + pr.tiers[idx].qty + ' ' + (pr.unit || 'pz');
+  return '';
+}
+function quoteConfigText(p, f, selectionIdx){
+  const parts = [];
+  if (f && typeof f === 'object'){
+    const opts = p.pricing.options || [];
+    for (const [k, v] of Object.entries(f)){
+      if (k === 'qty') continue;
+      if (QUOTE_IDX[k]){
+        const [lab, src] = QUOTE_IDX[k];
+        const list = typeof src === 'function' ? src(p, f) : p.pricing[src];
+        const item = list && list[v];
+        const txt = (item && typeof item === 'object') ? item.label : item;
+        if (txt !== undefined && txt !== null && txt !== ''){
+          if (k === 'coloreIdx' && txt === 'Altro'){
+            const altro = (f.altroColore || '').trim();
+            parts.push(lab + ': ' + (altro ? 'Altro – ' + altro : 'Altro (da specificare)'));
+          } else {
+            parts.push(lab + ': ' + txt);
+          }
+        }
+        continue;
+      }
+      if (k === 'altroColore') continue;
+      if (typeof v !== 'string' && typeof v !== 'number') continue;
+      if (v === '' || v === 0) continue;
+      if (k === 'ev_start'){ parts.push('Montaggio: ' + fmtEventDate(v) + (f.ev_start_time ? ' ore ' + f.ev_start_time : '')); continue; }
+      if (k === 'ev_end'){ parts.push('Smontaggio: ' + fmtEventDate(v) + (f.ev_end_time ? ' ore ' + f.ev_end_time : '')); continue; }
+      if (k === 'ev_address'){ parts.push('Indirizzo evento: ' + v + ' (Roma)'); continue; }
+      if (k === 'ev_start_time' || k === 'ev_end_time') continue;
+      const opt = opts.find(o => o.key === k);
+      // Misure con unità (CM/INCH/FEET): unità accanto al valore, niente riga "Unità di misura" a parte.
+      if (k === 'unit' && opts.some(o => o.choicesByUnit)) continue;
+      if (opt && opt.choicesByUnit){ parts.push(opt.label + ': ' + v + ' ' + String(f.unit || Object.keys(opt.choicesByUnit)[0]).toLowerCase()); continue; }
+      parts.push(((opt && opt.label) || QUOTE_LABELS[k] || k) + ': ' + v);
+    }
+  }
+  if (!parts.length){
+    const vl = quoteVariantLabel(p, selectionIdx);
+    if (vl) parts.push(vl);
+  }
+  return parts.join(' · ');
+}
+function quoteHref(p, price, selectionIdx, formula){
+  const cfg = quoteConfigText(p, formula, selectionIdx);
+  // Se il cliente non ha toccato la quantità, sul preventivo va comunque la quantità
+  // di default (quella con cui il prezzo è stato calcolato), non un trattino.
+  const qtyOpt = (p.pricing.options || []).find(o => o.key === 'qty');
+  const qtyVal = (formula && formula.qty) || (qtyOpt && qtyOpt.choices && qtyOpt.choices[0]) || '';
+  const qty = qtyVal ? `${qtyVal} ${p.pricing.unit || 'pz'}` : '';
+  return 'preventivo.html?prodotto=' + encodeURIComponent(p.nome)
+    + (cfg ? '&config=' + encodeURIComponent(cfg) : '')
+    + (qty ? '&quantita=' + encodeURIComponent(qty) : '')
+    + '&prezzo=' + (Math.round(price * 100) / 100).toFixed(2)
+    + '&pid=' + encodeURIComponent(p.id)
+    + (p.ean ? '&ean=' + encodeURIComponent(p.ean) : '')
+    + '&collection=' + encodeURIComponent(['strategici','decalc','quadri'].includes(p.collection) ? p.collection : 'misura');
+}
+function paymentBlockHtml(p, price, selectionIdx, formula){
+  const quoteHrefStr = quoteHref(p, price, selectionIdx, formula);
+  return `
+    <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90); display:flex; flex-direction:column; gap:10px;">
+      <button class="pay-stripe" data-product-id="${p.id}" data-idx="${selectionIdx}" data-pricing-type="${p.pricing.type}" data-name="${esc(p.nome)}" data-price="${Math.round(price*100)/100}" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; background:#635bff; color:#fff; font-size:14.5px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer;">
+        Aggiungi al carrello
+      </button>
+      <div class="stripe-error" style="display:none; font-size:12px; color:#b3261e; text-align:center;"></div>
+      <a id="preventivo-link-${p.id}" href="${quoteHrefStr}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; border:1.5px solid oklch(0.88 0.005 90); background:transparent; color:var(--color-text); font-size:14px; font-weight:600; padding:12px; border-radius:10px; text-decoration:none;">
+        Richiedi un preventivo ufficiale
+      </a>
+    </div>`;
+}
+
+async function startStripeCheckout(btn){
+  const productId = btn.dataset.productId;
+  const idx = parseInt(btn.dataset.idx, 10) || 0;
+  const pricingType = btn.dataset.pricingType;
+  const errorEl = btn.parentElement.querySelector('.stripe-error');
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Attendere…';
+  try {
+    const body = { productId };
+    let human = null;
+    if (pricingType === 'tiers') body.tierIndex = idx;
+    if (pricingType === 'tiersDelivery') {
+      const cur = state.deliveryIdxById[productId] || deliveryDefault(PRODUCTS.find(x => x.id === productId));
+      body.deliveryIndex = cur.deliveryIdx;
+      body.tierIndex = cur.qtyIdx;
+      const pp = PRODUCTS.find(x => x.id === productId);
+      if (pp && pp.pricing.legaturaChoices) {
+        const t = pp.pricing.tiersByDelivery[cur.deliveryIdx][cur.qtyIdx];
+        human = { 'Formato': pp.specs['Formato'], 'Legatura': pp.pricing.legaturaChoices[(state.legaturaById || {})[productId] ?? 0].label, 'Quantità': t.qty + ' pz', 'Consegna': pp.pricing.deliveryChoices[cur.deliveryIdx] };
+      }
+    }
+    if (pricingType === 'size') body.sizeIndex = idx;
+    if (pricingType === 'imageSwatch') body.sizeIndex = idx;
+    if (pricingType === 'imageSwatchQty') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = swatchQtyState(p);
+      body.formula = { swatchIdx: f.swatchIdx, qty: f.qty };
+      human = { 'Design': p.pricing.swatches[f.swatchIdx].label, 'Quantità': f.qty };
+    }
+    if (pricingType === 'adesivoInterno') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = adesivoState(p);
+      body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, sagomaIdx: f.sagomaIdx };
+      human = { 'Larghezza': f.larghezza + ' cm', 'Altezza': f.altezza + ' cm', 'Quantità': f.qty, 'Sagoma': p.pricing.sagomaChoices[f.sagomaIdx] };
+    }
+    if (pricingType === 'adesiviPrespaziati') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = prespaziatiState(p);
+      body.formula = { base: f.base, altezza: f.altezza, copie: f.copie, lavorazioneIdx: f.lavorazioneIdx, coloreIdx: f.coloreIdx, materialeIdx: f.materialeIdx, altroColore: f.altroColore };
+      const colOptions = p.pricing.coloreByMateriale[f.materialeIdx === 1 ? 1 : 0];
+      human = { 'Base': f.base + ' cm', 'Altezza': f.altezza + ' cm', 'Copie': f.copie, 'Lavorazione': p.pricing.lavorazioni[f.lavorazioneIdx].label, 'Materiale': p.pricing.materialeChoices[f.materialeIdx === 1 ? 1 : 0], 'Colore': colOptions[f.coloreIdx] === 'Altro' ? (f.altroColore || 'Altro') : colOptions[f.coloreIdx] };
+    }
+    if (pricingType === 'bv24h') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = bv24hState(p);
+      const angoliOn = !!state.angoliById[productId];
+      body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx, angoliArrotondati: angoliOn };
+      human = { 'Larghezza': f.larghezza + ' cm', 'Altezza': f.altezza + ' cm', 'Quantità': f.qty, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': 'gr. ' + p.pricing.cartaChoices[f.cartaIdx], 'Soggetti diversi': p.pricing.soggettiChoices[f.soggettiIdx], ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
+    }
+    if (pricingType === 'locandine250') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = locandineState(p);
+      body.formula = { formatIdx: f.formatIdx, cartaIdx: f.cartaIdx, qty: f.qty };
+      human = { 'Formato': p.pricing.formatChoices[f.formatIdx], 'Carta': p.pricing.cartaChoices[f.cartaIdx], 'Quantità': f.qty };
+    }
+    if (pricingType === 'scatolaGioielli') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = scatolaState(p);
+      body.formula = { misuraIdx: f.misuraIdx, coloreIdx: f.coloreIdx, qty: f.qty };
+      human = { 'Misura': p.pricing.misuraChoices[f.misuraIdx], 'Colore': p.pricing.coloreChoices[f.coloreIdx], 'Quantità': f.qty };
+    }
+    if (pricingType === 'rilegature') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = rilegatureState(p);
+      body.formula = { qty: f.qty, pagCol: f.pagCol, pagBn: f.pagBn, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx };
+      human = { 'Quantità': f.qty, 'Pagine a colori': f.pagCol, 'Pagine B/N': f.pagBn, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': p.pricing.cartaChoices[f.cartaIdx] };
+    }
+    if (pricingType === 'quote' && productId === '215') {
+      const sel = state.quoteSelById[productId] || {};
+      const en = window.tpLang === 'en';
+      const { min: dMin, max: dMax } = eventDateRange();
+      const evErr = !sel.ev_start || !sel.ev_end || sel.ev_start < dMin || sel.ev_start > dMax
+          ? (en ? 'pick the installation and dismantling days in the calendar first.' : 'scegli prima i giorni di montaggio e smontaggio nel calendario.')
+        : (eventRangeHasBooked(sel.ev_start, sel.ev_end) ? (en ? 'some of the chosen days are already booked.' : 'alcuni dei giorni scelti sono già prenotati.')
+        : (!sel.ev_start_time || !sel.ev_end_time ? (en ? 'choose the installation and dismantling times.' : "scegli l'ora di montaggio e di smontaggio.")
+        : ((sel.ev_address || '').trim().length < 5 ? (en ? 'enter the event address in Rome.' : "inserisci l'indirizzo dell'evento a Roma.") : '')));
+      if (evErr) throw new Error(evErr);
+      const ev = { ev_start: sel.ev_start, ev_end: sel.ev_end, ev_start_time: sel.ev_start_time, ev_end_time: sel.ev_end_time, ev_address: sel.ev_address.trim() };
+      body.formula = { unit: sel.unit || 'CM', altezza: sel.altezza || '100', larghezza: sel.larghezza || '100', ...ev };
+      const u215 = (sel.unit || 'CM').toLowerCase();
+      human = { 'Altezza': (sel.altezza || '100') + ' ' + u215, 'Larghezza': (sel.larghezza || '100') + ' ' + u215,
+        'Montaggio': fmtEventDate(ev.ev_start) + ' ore ' + ev.ev_start_time, 'Smontaggio': fmtEventDate(ev.ev_end) + ' ore ' + ev.ev_end_time, 'Indirizzo evento': ev.ev_address + ' (Roma)' };
+    }
+    if (pricingType === 'quote' && productId === '198') {
+      const sel = state.quoteSelById[productId] || {};
+      const tipo = sel.tipo || 'Tela su telaio';
+      body.formula = { lato_lungo: sel.lato_lungo || '30', lato_corto: sel.lato_corto || '21', tipo, ...(tipo !== 'Tela solo' ? { spessore: sel.spessore || '2 cm' } : {}), qty: sel.qty || '1' };
+    }
+    if (pricingType === 'quote' && productId === '5805') {
+      const sel = state.quoteSelById[productId] || {};
+      body.formula = { quantita: sel.quantita || '1', facciate: sel.facciate || '12' };
+    }
+    if (pricingType === 'quote' && productId === '5849') {
+      const sel = state.quoteSelById[productId] || {};
+      body.formula = { lato_lungo: sel.lato_lungo || '30', lato_corto: sel.lato_corto || '21', pannelli: sel.pannelli || '1', creazione: sel.creazione || 'Sì, crea me il file' };
+    }
+    if (pricingType === 'quote' && productId === '5851') {
+      const sel = state.quoteSelById[productId] || {};
+      body.formula = { qty: sel.qty || '25', larghezza: sel.larghezza || '5', altezza: sel.altezza || '5', materiale: sel.materiale || 'gr. 100', stampa: sel.stampa || '1 lato a colori', perforazione: sel.perforazione || 'No grazie', pieghe: sel.pieghe || 'Nessuna' };
+    }
+    if (pricingType === 'quote' && productId === '5047') {
+      const sel = state.quoteSelById[productId] || {};
+      body.formula = { qty: sel.qty || '35', holder: sel.holder || 'Senza', formato: sel.formato || '8,5×5,5 cm Landscape', larghezza: sel.larghezza || '5', altezza: sel.altezza || '8', stampa: sel.stampa || '1 lato a colori', carta: sel.carta || 'gr. 300', plastificazione: sel.plastificazione || 'No grazie', cordino: sel.cordino || 'No grazie', colore_cordino: (sel.cordino === 'Si' ? (sel.colore_cordino || '01 Bianco') : ''), creazione_file: sel.creazione_file || 'No, vi forniamo noi' };
+    }
+    if (pricingType === 'quote' && productId === '212') {
+      const sel = state.quoteSelById[productId] || {};
+      body.formula = { formato: sel.formato || '50 x 25 cm' };
+    }
+    if (pricingType === 'businessCardRilievo') {
+      const cur = state.bcrIdxById[productId] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+      const p = PRODUCTS.find(x => x.id === productId);
+      const format = p.pricing.formats[cur.formatIdx];
+      const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
+      const tier = paper.tiers[Math.min(cur.qtyIdx, paper.tiers.length-1)];
+      const angoliOn = !!state.angoliById[productId];
+      const motiviR = Math.min(Math.max(cur.motivi || 1, 1), 10);
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, colorIndex: cur.colorIdx || 0, angoliArrotondati: angoliOn, motivi: motiviR };
+      body.tierIndex = cur.qtyIdx;
+      human = { 'Formato': format.label, 'Carta': paper.label, ...(p.pricing.colorChoices ? { 'Colore': p.pricing.colorChoices[cur.colorIdx||0] } : {}), 'Quantità': tier.qty + (motiviR > 1 ? ' per motivo' : ''), ...(motiviR > 1 ? { 'Motivi': motiviR } : {}), ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
+    }
+    if (pricingType === 'businessCardStrategici') {
+      const cur = state.bcsIdxById[productId] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+      const p = PRODUCTS.find(x => x.id === productId);
+      const format = p.pricing.formats[cur.formatIdx];
+      const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
+      const delivery = paper.deliveries[Math.min(cur.deliveryIdx, paper.deliveries.length-1)];
+      const qty = (format.qtyLabels || p.pricing.qtyLabels)[Math.min(cur.qtyIdx, delivery.prices.length-1)];
+      const angoliOn = !p.pricing.noFinish && !!state.angoliById[productId];
+      const motivi = p.pricing.noPrint ? 1 : Math.min(Math.max(cur.motivi || 1, 1), 10);
+      const plastOn = !p.pricing.noFinish && !!state.plastById[productId];
+      const graficaOn = !p.pricing.noPrint && !!state.graficaById[productId];
+      body.formula = { formatIndex: cur.formatIdx, paperIndex: cur.paperIdx, deliveryIndex: cur.deliveryIdx, angoliArrotondati: angoliOn, plastificata: plastOn, grafica: graficaOn, motivi };
+      body.tierIndex = cur.qtyIdx;
+      human = { 'Formato': format.label, 'Carta': paper.label, 'Consegna': delivery.label, 'Quantità': qty + ' per motivo', 'Motivi': motivi, ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}), ...(plastOn ? { 'Plastificata': 'Sì' } : {}), ...(graficaOn ? { 'Creazione grafica': 'Sì' } : {}) };
+    }
+    if (pricingType === 'forexPvc') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = forexState(p);
+      body.formula = { spessoreIdx: f.spessoreIdx, stampaIdx: f.stampaIdx, consegnaIdx: f.consegnaIdx, formatIdx: f.formatIdx, qty: f.qty, ...(f.custom ? { custom: true, w: f.w, h: f.h } : {}) };
+      if (f.custom) { const cu = p.pricing.custom; human = { 'Formato': `${cu.label} ${f.w}×${f.h} cm`, 'Spessore': cu.spessoreChoices[f.spessoreIdx], 'Stampa': p.pricing.stampaChoices[0], 'Consegna': cu.consegnaChoices[f.consegnaIdx], 'Quantità': f.qty }; }
+      else human = { 'Formato': p.pricing.formats[f.formatIdx], 'Spessore': p.pricing.spessoreChoices[f.spessoreIdx], 'Stampa': p.pricing.stampaChoices[f.stampaIdx], 'Consegna': p.pricing.consegnaChoices[f.consegnaIdx], 'Quantità': f.qty };
+    }
+    if (pricingType === 'striscioniPvc') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = striscioniState(p);
+      body.formula = { consegnaIdx: f.consegnaIdx, occhielliIdx: f.occhielliIdx, formatIdx: f.formatIdx, qty: f.qty };
+    }
+    if (pricingType === 'formula') {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const f = formulaState(p);
+      body.formula = { qty: f.qty, tempi: f.tempi, strutturaIdx: f.strutturaIdx };
+      human = { 'Quantità': f.qty, 'Tempi': f.tempi, 'Struttura': (p.pricing.strutturaChoices || [])[f.strutturaIdx]?.label ?? f.strutturaIdx };
+    }
+    const name = btn.dataset.name || '';
+    const price = btn.dataset.price || '';
+    const p = PRODUCTS.find(x => x.id === productId);
+    const col = p && ['strategici','decalc','quadri'].includes(p.collection) ? p.collection : 'misura';
+    if (human) body.human = human;
+    const details = human
+      ? Object.entries(human).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => ({ label: k, value: String(v) }))
+      : quoteConfigText(p, body.formula, idx).split(' · ').filter(Boolean).map(s => { const i = s.indexOf(': '); return i > 0 ? { label: s.slice(0, i), value: s.slice(i + 2) } : { label: 'Opzione', value: s }; });
+    const ok = window.TPCart && window.TPCart.add({ productId, name, price: parseFloat(price) || 0, col, ean: (p && p.ean) || '', body, details });
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+    updateCartBadge();
+    if (ok) window.TPCart.open('Aggiunto al carrello: ' + name);
+    else { errorEl.textContent = 'Carrello pieno (max 20 articoli).'; errorEl.style.display = 'block'; }
+  } catch (err) {
+    errorEl.textContent = 'Impossibile aggiungere al carrello — ' + err.message;
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+// PayPal non si paga più dalla scheda prodotto: lì l'importo veniva dal browser, senza
+// spedizione né dati cliente. Si paga solo dal checkout, dove l'ordine PayPal nasce sul server.
+function mountPaypalButtons(){}
+
+let state = {
+  category: 'Tutti',
+  categoryPage: null,
+  returnTo: null,
+  selectedId: null,
+  mainImageOverride: null,
+  tierIdxById: {},
+  deliveryIdxById: {},
+  sizeIdxById: {},
+  bcrIdxById: {},
+  angoliById: {},
+  forexById: {},
+  striscioniById: {},
+  graficaById: {},
+  plastById: {},
+  bcsIdxById: {},
+  swatchIdxById: {},
+  swatchQtyById: {},
+  adesivoById: {},
+  prespaziatiById: {},
+  bv24hById: {},
+  locandineById: {},
+  scatolaById: {},
+  rilegatureById: {},
+  quoteSelById: {},
+  calMonthById: {},
+  formulaById: {},
+};
+
+function formulaState(p){
+  const cur = state.formulaById[p.id];
+  if (cur) return cur;
+  const fresh = { qty: 1, formato: p.pricing.formatChoices[0], tempi: p.pricing.tempiChoices[0], strutturaIdx: 0, canva: '' };
+  state.formulaById[p.id] = fresh;
+  return fresh;
+}
+
+function computeFormulaPrice(p, f){
+  const rollup = p.pricing.rollupRate(f.qty);
+  const struttura = p.pricing.strutturaChoices[f.strutturaIdx].rate;
+  const rush = f.tempi === '24H' ? p.pricing.rate24h : 0;
+  return f.qty * (rollup + struttura + rush);
+}
+
+function forexState(p){
+  const cur = state.forexById[p.id];
+  if (cur) return cur;
+  const fresh = { spessoreIdx: 0, stampaIdx: 0, consegnaIdx: 0, formatIdx: 0, qty: 1, canva: '', custom: false, w: 50, h: 70 };
+  state.forexById[p.id] = fresh;
+  return fresh;
+}
+function forexMaxQty(p, f){
+  if (f.custom) return p.pricing.custom.maxQty;
+  return p.pricing.fa[f.spessoreIdx][f.consegnaIdx][f.formatIdx].length;
+}
+function forexClampCustom(cu, f){
+  f.w = Math.max(cu.minShort, Math.min(cu.maxLong, Math.round(Number(f.w) || cu.minShort)));
+  f.h = Math.max(cu.minShort, Math.min(cu.maxLong, Math.round(Number(f.h) || cu.minShort)));
+  if (Math.max(f.w, f.h) < cu.minLong) { if (f.w >= f.h) f.w = cu.minLong; else f.h = cu.minLong; }
+  if (Math.min(f.w, f.h) > cu.maxShort) { if (f.w <= f.h) f.w = cu.maxShort; else f.h = cu.maxShort; }
+}
+function computeForexPrice(p, f){
+  if (f.custom) {
+    const cu = p.pricing.custom;
+    forexClampCustom(cu, f);
+    f.stampaIdx = 0;
+    f.spessoreIdx = f.spessoreIdx === 1 ? 1 : 0;
+    f.consegnaIdx = Math.max(0, Math.min(cu.consegnaChoices.length - 1, f.consegnaIdx));
+    f.qty = Math.max(1, Math.min(cu.maxQty, f.qty));
+    // Area fatturata per pezzo: almeno minAreaPerPiece m².
+    const cost = Math.max(cu.minAreaPerPiece || 0, f.w * f.h / 10000) * f.qty * cu.rates[f.spessoreIdx][f.consegnaIdx];
+    return Math.round((cost * p.pricing.markup + cu.shipping + p.pricing.handling) * 100) / 100;
+  }
+  const tiers = p.pricing.fa[f.spessoreIdx][f.consegnaIdx][f.formatIdx];
+  f.stampaIdx = 0;
+  f.qty = Math.max(1, Math.min(tiers.length, f.qty));
+  return Math.round((tiers[f.qty - 1] * p.pricing.markup + p.pricing.handling) * 100) / 100;
+}
+
+function striscioniState(p){
+  const cur = state.striscioniById[p.id];
+  if (cur) return cur;
+  const fresh = { consegnaIdx: 0, occhielliIdx: 0, formatIdx: 0, qty: 1 };
+  state.striscioniById[p.id] = fresh;
+  return fresh;
+}
+function computeStriscioniPrice(p, f){
+  const rate = f.consegnaIdx === 1
+    ? p.pricing.rates2gg[f.formatIdx]
+    : (f.occhielliIdx === 1 ? p.pricing.ratesSettimanaCon[f.formatIdx] : p.pricing.ratesSettimanaSenza[f.formatIdx]);
+  return Math.round((rate * f.qty * 1.22 * 1.3) * 100) / 100;
+}
+
+function adesivoState(p){
+  const cur = state.adesivoById[p.id];
+  if (cur) return cur;
+  const fresh = { larghezza: p.pricing.larghezza.default, altezza: p.pricing.altezza.default, qty: p.pricing.qty.default, sagomaIdx: 0 };
+  state.adesivoById[p.id] = fresh;
+  return fresh;
+}
+function computeAdesivoPrice(p, f){
+  const mult = p.pricing.sagomaMultiplier[f.sagomaIdx];
+  return Math.round((10 + mult * ((f.larghezza+2)*(f.altezza+2)/44/32) * f.qty * 1.22 * 2) * 100) / 100;
+}
+
+function prespaziatiState(p){
+  const cur = state.prespaziatiById[p.id];
+  if (cur) return cur;
+  const fresh = { materialeIdx: 0, coloreIdx: 0, altroColore: '', base: p.pricing.base.default, altezza: p.pricing.altezza.default, copie: p.pricing.copie.default, lavorazioneIdx: 0 };
+  state.prespaziatiById[p.id] = fresh;
+  return fresh;
+}
+function computePrespaziatiPrice(p, f){
+  const mult = p.pricing.lavorazioni[f.lavorazioneIdx].mult;
+  return Math.round((15 + mult * 5.5 * 1.22 * 5 * ((f.base+2.5)*(f.altezza+2.5)/6200) * f.copie) * 100) / 100;
+}
+
+function swatchQtyState(p){
+  const cur = state.swatchQtyById[p.id];
+  if (cur) return cur;
+  const fresh = { swatchIdx: p.pricing.defaultSwatchIdx ?? 0, qty: 1 };
+  state.swatchQtyById[p.id] = fresh;
+  return fresh;
+}
+
+function bv24hState(p){
+  const cur = state.bv24hById[p.id];
+  if (cur) return cur;
+  const fresh = { larghezza: p.pricing.larghezza.default, altezza: p.pricing.altezza.default, qty: p.pricing.qty.default, latiIdx: 0, cartaIdx: 0, soggettiIdx: 0 };
+  state.bv24hById[p.id] = fresh;
+  return fresh;
+}
+function locandineState(p){
+  const cur = state.locandineById[p.id];
+  if (cur) return cur;
+  const fresh = { formatIdx: 0, cartaIdx: 2, qty: p.pricing.qty.default };
+  state.locandineById[p.id] = fresh;
+  return fresh;
+}
+// Giorni di fermo produzione: festività nazionali italiane + tedesche.
+// IT: 1/1, 6/1, 25/4, 1/5, 2/6, 15/8, 1/11, 8/12, 25/12, 26/12, Pasquetta.
+// DE: 1/1, Venerdì Santo, Pasquetta, 1/5, Ascensione, Lunedì di Pentecoste, 3/10, 25/12, 26/12.
+function easterSunday(y){
+  const a = y%19, b = Math.floor(y/100), c = y%100, dd = Math.floor(b/4), e = b%4,
+    f = Math.floor((b+8)/25), g = Math.floor((b-f+1)/3), hh = (19*a+b-dd-g+15)%30, i = Math.floor(c/4), k = c%4,
+    l = (32+2*e+2*i-hh-k)%7, m = Math.floor((a+11*hh+22*l)/451), month = Math.floor((hh+l-7*m+114)/31), day = ((hh+l-7*m+114)%31)+1;
+  return new Date(y, month-1, day);
+}
+function isItalianHoliday(d){
+  const md = (d.getMonth()+1) + '-' + d.getDate();
+  if (['1-1','1-6','4-25','5-1','6-2','8-15','10-3','11-1','12-8','12-25','12-26'].includes(md)) return true;
+  const es = easterSunday(d.getFullYear());
+  return [-2, 1, 39, 50].some(off => { const x = new Date(es); x.setDate(x.getDate()+off); return x.getMonth() === d.getMonth() && x.getDate() === d.getDate(); });
+}
+function isBusinessDay(d){ return d.getDay() !== 0 && d.getDay() !== 6 && !isItalianHoliday(d); }
+// Ora di Roma; ordine entro cutoff in giorno lavorativo = giorno 0, altrimenti si parte dal giorno lavorativo successivo.
+function readyRange(minDays, maxDays, cutoffHour){
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/Rome', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  let d = new Date(+parts.year, +parts.month-1, +parts.day);
+  if (!isBusinessDay(d) || +parts.hour >= cutoffHour){ do { d.setDate(d.getDate()+1); } while (!isBusinessDay(d)); }
+  const add = n => { const x = new Date(d); let c = 0; while (c < n){ x.setDate(x.getDate()+1); if (isBusinessDay(x)) c++; } return x; };
+  return [add(minDays), add(maxDays)];
+}
+function fmtReadyDate(d){ return d.toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' }); }
+// "Pronto previsto" per i Prezzi Strategici: consegne "2 g…" = 2 gg lavorativi, tutte le altre (1 Settimana / Budget) = 4–6 gg.
+// p.pricing.readyDays[deliveryIdx] ha la precedenza se presente.
+function readyInfoHtml(p, deliveryLabel, deliveryIdx, rdOverride, cutoffOverride){
+  if (p.collection !== 'strategici') return '';
+  let rd = rdOverride ?? p.pricing.readyDays?.[deliveryIdx];
+  if (rd === undefined) rd = /\b2\s*g/i.test(deliveryLabel || '') ? [2,2] : [4,6];
+  if (!rd) return '';
+  const cutoff = cutoffOverride ?? p.pricing.readyCutoffHours?.[deliveryIdx] ?? p.pricing.readyCutoffHour ?? 9;
+  const [a, b] = readyRange(rd[0], rd[1], cutoff);
+  return `<div style="margin-top:10px; font-size:13.5px;">Pronto previsto: <strong>${a.getTime() === b.getTime() ? fmtReadyDate(a) : 'tra ' + fmtReadyDate(a) + ' e ' + fmtReadyDate(b)}</strong> <span style="color:oklch(0.5 0.01 90);">· ordinando entro le ${cutoff}:00</span><div style="margin-top:2px; font-size:12px; color:oklch(0.5 0.01 90);">Data indicativa: può variare per motivi legati al trasporto.</div></div>`;
+}
+function deliveryDefault(p){
+  return { deliveryIdx: 0, qtyIdx: p?.pricing?.defaultQtyIdx ?? 0 };
+}
+function computeLocandinePrice(p, f){
+  return Math.round((p.pricing.formatRates[f.formatIdx] * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
+}
+function scatolaState(p){
+  const cur = state.scatolaById[p.id];
+  if (cur) return cur;
+  const fresh = { qty: p.pricing.qty.default, misuraIdx: 0, coloreIdx: 0 };
+  state.scatolaById[p.id] = fresh;
+  return fresh;
+}
+function computeScatolaPrice(p, f){
+  const rate = p.pricing.misuraRate[f.misuraIdx];
+  return Math.round((f.qty * rate * 2 + f.qty * 3 + 8) * 100) / 100;
+}
+function rilegatureState(p){
+  const cur = state.rilegatureById[p.id];
+  if (cur) return cur;
+  const fresh = { qty: 1, pagCol: 0, pagBn: 20, latiIdx: 0, cartaIdx: 0 };
+  state.rilegatureById[p.id] = fresh;
+  return fresh;
+}
+function computeRilegaturaPrice(p, f){
+  const ril = f.qty > 10 ? 2 : f.qty > 5 ? 3 : f.qty > 1 ? 4 : 5;
+  const colori = f.pagCol > 99 ? 0.137 : f.pagCol > 49 ? 0.16 : f.pagCol > 19 ? 0.2 : 0.27;
+  const bn = f.pagBn > 99 ? 0.05 : f.pagBn > 49 ? 0.07 : f.pagBn > 19 ? 0.09 : 0.1;
+  const cartaRate = p.pricing.cartaRate[f.cartaIdx];
+  const lati = f.latiIdx === 1 ? 2 : 1;
+  const total = f.qty*f.pagCol*colori + f.qty*f.pagBn*bn + f.qty*f.pagCol*cartaRate/lati + f.qty*f.pagBn*cartaRate/lati + f.qty*ril;
+  return Math.round(total * 100) / 100;
+}
+function updateRilTotal(p){
+  const f = rilegatureState(p);
+  const total = computeRilegaturaPrice(p, f);
+  const el = document.getElementById('rilTotal');
+  if (el) el.textContent = '€ ' + fmtEUR(total);
+  const btn = document.querySelector(`.pay-stripe[data-product-id="${p.id}"]`);
+  if (btn) btn.dataset.price = Math.round(total*100)/100;
+  const pp = document.getElementById(`paypal-btn-${p.id}`);
+  if (pp) pp.dataset.price = (Math.round(total*100)/100).toFixed(2);
+  const link = document.getElementById(`preventivo-link-${p.id}`);
+  if (link) link.href = quoteHref(p, total, null, f);
+}
+function computeBv24hPrice(p, f){
+  const bv = p.pricing.cartaMultiplier[f.cartaIdx];
+  const soggetti = p.pricing.soggettiMultiplier[f.soggettiIdx];
+  const lati = p.pricing.latiMultiplier[f.latiIdx];
+  // I campi sono in cm, la formula Studio Wombat lavora in mm: ×10.
+  return Math.round((20 + bv * soggetti * lati * f.qty * (f.larghezza*10+20)*(f.altezza*10+40)/440/320) * 100) / 100;
+}
+
+const app = document.getElementById('app');
+const backBtn = document.getElementById('backBtn');
+// Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
+const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner', '5940': 'Banner 500', '5960': 'Block Notes', '6001': 'Buste' };
+// Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
+const CATALOG_NAMES = { '6001': 'Buste tutti i tipi', '5960': 'Block Notes tutti i formati', '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr senza occhielli tutte le misure', '5940': 'Banner PVC 500gr con occhielli tutte le misure' };
+// Titolo mostrato in cima alla pagina di categoria (solo visuale; il nome interno resta invariato).
+const CATEGORY_TITLES = { 'Block Notes': 'Block Notes 50 fogli', 'Adesivi': 'Adesivo PVC', 'Banner': 'Banner PVC 400gr senza occhielli', 'Banner 500': 'Banner PVC 500gr con occhielli' };
+const CATEGORY_INTROS = { 'Buste': 'Buste da lettera con e senza finestra e buste a sacco in cartone. Scegli il prodotto per configurare formato, quantità e tempi di consegna.', 'Block Notes': 'Block notes da 50 fogli con incollaggio in alto, carta offset bianca 80 g, stampa 4/0 colori. Scegli il formato per configurare quantità e tempi di consegna.', 'Banner 500': 'Banner in PVC 500 g, stampa 4/0 colori, taglio e occhielli lungo tutto il perimetro. Scegli la misura per configurare quantità e tempi di consegna.', 'Banner': 'Banner in PVC 400 g, stampa 4/0 colori, taglio lungo tutto il perimetro, senza occhielli. Per la versione con occhielli scegli il Banner PVC 500gr con occhielli. Scegli la misura per configurare la quantità.', 'Spille': 'Spille tonde personalizzate, stampa 4/0 colori. Scegli il diametro per configurare quantità e tempi di consegna.' };
+// URL indicizzabili: /prodotto/<slug> e /categoria/<slug> (vercel.json li riscrive su index.html).
+// I vecchi link con # (slug o id numerico) continuano a funzionare e vengono convertiti.
+function slugify(s){
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // è → e
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function productSlug(p){ return slugify(p.nome); }
+// Sul sito live (o anteprima Vercel) URL veri; altrove (anteprima locale) ancore # come prima.
+function productPath(p){ return (window.TP_PATHS ? '/prodotto/' : '#') + productSlug(p); }
+function categoryPath(cat){ return (window.TP_PATHS ? '/categoria/' : '#cat-') + (window.TP_PATHS ? slugify(cat) : encodeURIComponent(cat)); }
+function seoPath(path){ return path.replace(/^#cat-(.*)$/, (m, c) => '/categoria/' + slugify(decodeURIComponent(c))).replace(/^#/, '/prodotto/'); }
+function allCategoryPages(){ return [...new Set([...CATEGORIES, ...Object.values(CATEGORY_PAGES)])]; }
+function categoryBySlug(s){ return allCategoryPages().find(c => slugify(c) === s) || null; }
+const SITE = 'https://www.tipografia.online';
+const HOME_SEO = { title: document.title, desc: (document.querySelector('meta[name="description"]') || {}).content || '' };
+function setMeta(sel, attr, val){
+  let el = document.head.querySelector(sel);
+  if (!el) { el = document.createElement(sel.startsWith('link') ? 'link' : 'meta'); const m = sel.match(/\[(\w+(?::\w+)?)="([^"]+)"\]/); el.setAttribute(m[1], m[2]); document.head.appendChild(el); }
+  el.setAttribute(attr, val);
+}
+function setSeo(o){
+  document.title = o.title;
+  setMeta('meta[name="description"]', 'content', o.desc);
+  setMeta('meta[name="robots"]', 'content', o.noindex ? 'noindex, follow' : 'index, follow');
+  o.path = seoPath(o.path);
+  setMeta('link[rel="canonical"]', 'href', SITE + o.path);
+  setMeta('meta[property="og:title"]', 'content', o.title);
+  setMeta('meta[property="og:description"]', 'content', o.desc);
+  setMeta('meta[property="og:url"]', 'content', SITE + o.path);
+  if (o.image) setMeta('meta[property="og:image"]', 'content', SITE + '/' + o.image.replace(/^\//, ''));
+  const ld = document.getElementById('ld-page');
+  if (ld) ld.textContent = o.ld ? JSON.stringify(o.ld) : '';
+  if (window.tpSeoRefresh) window.tpSeoRefresh();
+}
+function cut(s, n){ s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1).replace(/[\s,.;:]+\S*$/, '') + '…' : s; }
+function lowPriceOf(p, group){
+  try { const m = String(priceLabelFor(p, group)).match(/(\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:,\d{2})?)/); return m ? Number(m[1].replace(/\./g, '').replace(',', '.')) : null; } catch (e) { return null; }
+}
+function updateSeo(){
+  const crumbs = (list) => ({ '@context':'https://schema.org', '@type':'BreadcrumbList', itemListElement: list.map((c, i) => ({ '@type':'ListItem', position:i+1, name:c[0], item: SITE + seoPath(c[1]) })) });
+  if (state.selectedId) {
+    const p = PRODUCTS.find(x => x.id === state.selectedId);
+    if (!p) return;
+    const path = productPath(p);
+    const price = lowPriceOf(p, false);
+    const product = { '@context':'https://schema.org', '@type':'Product', name:p.nome, sku:p.id, image:[SITE + '/' + p.img], description:cut(p.intro, 500), brand:{ '@type':'Brand', name:'Tipografia Online' }, url: SITE + seoPath(path) };
+    if (p.ean) product.gtin13 = p.ean.replace(/^0/, '');
+    if (price) product.offers = { '@type':'Offer', price: price.toFixed(2), priceCurrency:'EUR', availability:'https://schema.org/InStock', url: SITE + seoPath(path), seller:{ '@id': SITE + '/#business' } };
+    const parentCat = CATEGORY_PAGES[p.variantOf || p.id] || p.categoria;
+    setSeo({ path, noindex: !!p.hidden, image: p.img,
+      title: cut(p.nome + ' | Tipografia Online Roma EUR', 70),
+      desc: cut((p.intro || p.nome) + (price ? ' Da € ' + price.toFixed(2).replace('.', ',') + ' IVA inclusa.' : ''), 158),
+      ld: [product, crumbs([['Catalogo', '/'], [CATEGORY_TITLES[parentCat] || parentCat, categoryPath(parentCat)], [p.nome, path]])] });
+  } else if (state.categoryPage) {
+    const cat = state.categoryPage, name = CATEGORY_TITLES[cat] || cat, path = categoryPath(cat);
+    setSeo({ path, title: cut(name + ' | Stampa Online Roma EUR', 70),
+      desc: cut(CATEGORY_INTROS[cat] || (name + ': stampa online con prezzi IVA inclusa, stampa in 24H e consegna in Italia e UE.'), 158),
+      ld: [crumbs([['Catalogo', '/'], [name, path]])] });
+  } else {
+    setSeo({ path: '/', title: HOME_SEO.title, desc: HOME_SEO.desc, image: 'img/rollup-1024x1024.webp', ld: null });
+  }
+}
+function productByHash(hash){
+  return PRODUCTS.find(p => p.id === hash || productSlug(p) === hash) || null;
+}
+function openProduct(id, push, from){
+  state.selectedId = id;
+  state.categoryPage = null;
+  state.returnTo = from || null;
+  state.mainImageOverride = null;
+  const prod = id ? PRODUCTS.find(p => p.id === id) : null;
+  if (push !== false) history.pushState({ productId: id, returnTo: state.returnTo }, '', prod ? productPath(prod) : (window.TP_PATHS ? '/' : location.pathname));
+  render();
+}
+function openCategoryPage(cat, push){
+  state.selectedId = null;
+  state.categoryPage = cat;
+  state.returnTo = null;
+  state.mainImageOverride = null;
+  if (push !== false) history.pushState({ catPage: cat }, '', categoryPath(cat));
+  render();
+}
+function closeProduct(push){
+  state.selectedId = null;
+  state.categoryPage = null;
+  state.returnTo = null;
+  if (push !== false) history.pushState({}, '', window.TP_PATHS ? '/' : location.pathname);
+  render();
+}
+function goBack(){
+  if (state.selectedId && state.returnTo) openCategoryPage(state.returnTo);
+  else closeProduct();
+}
+document.getElementById('logoHome').addEventListener('click', () => closeProduct());
+backBtn.addEventListener('click', () => goBack());
+window.addEventListener('popstate', (e) => {
+  const id = e.state && e.state.productId;
+  state.selectedId = id || null;
+  state.categoryPage = (e.state && e.state.catPage) || null;
+  state.returnTo = (e.state && e.state.returnTo) || null;
+  state.mainImageOverride = null;
+  render();
+});
+{
+  const qs = location.search;
+  const pm = location.pathname.match(/^\/(prodotto|categoria)\/([^\/]+)\/?$/);
+  const initialHash = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+  if (pm && pm[1] === 'prodotto') {
+    const prod = productByHash(decodeURIComponent(pm[2]));
+    if (prod) { state.selectedId = prod.id; history.replaceState({ productId: prod.id }, '', productPath(prod) + qs); }
+    else history.replaceState({}, '', '/' + qs);
+  } else if (pm && pm[1] === 'categoria') {
+    const cat = categoryBySlug(decodeURIComponent(pm[2]));
+    if (cat) { state.categoryPage = cat; history.replaceState({ catPage: cat }, '', categoryPath(cat) + qs); }
+    else history.replaceState({}, '', '/' + qs);
+  } else if (initialHash === 'prezzi-strategici') {
+    state.onlyStrategici = true;
+  } else if (initialHash && initialHash.indexOf('cat-') === 0 && allCategoryPages().includes(initialHash.slice(4))) {
+    state.categoryPage = initialHash.slice(4);
+    history.replaceState({ catPage: state.categoryPage }, '', categoryPath(state.categoryPage) + qs);
+  } else {
+    const prod = initialHash ? productByHash(initialHash) : null;
+    if (prod) {
+      state.selectedId = prod.id;
+      history.replaceState({ productId: prod.id }, '', productPath(prod) + qs);
+    }
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  if (location.hash !== '#prezzi-strategici') return;
+  state.onlyStrategici = true; state.category = 'Tutti'; state.selectedId = null; state.categoryPage = null;
+  render();
+});
+function render(){
+  productCardHtml.n = 0;
+  backBtn.style.display = (state.selectedId || state.categoryPage) ? 'block' : 'none';
+  if (state.selectedId) renderDetail();
+  else if (state.categoryPage) renderCategoryPage();
+  else renderGrid();
+  updateSeo();
+  window.scrollTo(0,0);
+}
+
+function imgBadgeHtml(p){
+  const t = /^Banner PVC 500gr con occhielli/.test(p.nome) ? 'CON OCCHIELLI' : /^Banner PVC 400gr/.test(p.nome) ? 'SENZA OCCHIELLI' : '';
+  return t ? `<span style="position:absolute; top:12px; left:12px; background:#c0392b; color:#fff; font-size:13px; font-weight:800; letter-spacing:.06em; padding:6px 10px; line-height:1;">${t}</span>` : '';
+}
+function productCardHtml(p, nameOverride){
+  const nome = nameOverride || p.nome;
+  const eager = (productCardHtml.n = (productCardHtml.n || 0) + 1) <= 4;
+  return `
+    <div class="card" data-open="${p.id}">
+      <div style="position:relative; aspect-ratio:1/1; background:oklch(0.95 0.005 90); overflow:hidden;">
+        <img src="${p.img}" alt="${esc(nome)}" width="600" height="600" ${eager ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} style="width:100%; height:100%; object-fit:cover; display:block;">${imgBadgeHtml(p)}
+      </div>
+      <div style="padding:16px 18px 18px; display:flex; flex-direction:column; gap:8px; flex:1;">
+        <a href="${CATEGORY_PAGES[p.id] && nameOverride === CATALOG_NAMES[p.id] ? categoryPath(CATEGORY_PAGES[p.id]) : productPath(p)}" onclick="event.preventDefault()" style="font-size:15.5px; font-weight:650; line-height:1.3; color:inherit; text-decoration:none;">${esc(nome)}</a>
+        <div style="flex:1;"></div>
+        <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+          <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">${esc(priceLabelFor(p, !!CATALOG_NAMES[p.id] && nameOverride === CATALOG_NAMES[p.id]))}</span>
+          <span style="font-size:12px; color:oklch(0.5 0.01 90);">Configura →</span>
+          ${p.templatePdf && nameOverride !== CATALOG_NAMES[p.id] ? `<a href="${p.templatePdf}" download onclick="event.stopPropagation()" style="font-size:12px; font-weight:650; color:#c0392b; text-decoration:underline;">Scarica template PDF</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCategoryPage(){
+  const cat = state.categoryPage;
+  const parentId = Object.keys(CATEGORY_PAGES).find(id => CATEGORY_PAGES[id] === cat);
+  // Prima i formati DIN (A8 … A4), poi gli altri rettangolari/quadrati per superficie, poi i tondi per diametro (ø2 … ø14).
+  const num = s => parseFloat(s.replace(',', '.'));
+  const sizeOf = p => {
+    const r = /([\d,.]+)\s*×\s*([\d,.]+)/.exec(p.nome);
+    if (cat === 'Block Notes') { const a = / A(\d) /.exec(p.nome); return a ? -Number(a[1]) : 0; } // A6, A5, A4
+    if (r && /^Banner/.test(cat)) return num(r[1]) * 1e4 + num(r[2]); // banner: per prima misura, poi seconda
+    if (r) return num(r[1]) * num(r[2]) - (/ A\d /.test(p.nome) ? 2e6 : 1e6);
+    const m = /ø\s*([\d,.]+)/.exec(p.nome);
+    return m ? num(m[1]) : -1;
+  };
+  // Senza parentId (categoria non in CATEGORY_PAGES, es. #cat-Servizi) si mostrano i prodotti della categoria.
+  const items = PRODUCTS.filter(p => !p.hidden && (parentId ? (p.id === parentId || p.variantOf === parentId) : (p.categoria === cat && !p.variantOf)))
+    .sort((a,b) => sizeOf(a) - sizeOf(b) || a.nome.localeCompare(b.nome, 'it'));
+  app.innerHTML = `
+    <div class="p-cat" style="max-width:none; margin:0 auto;">
+      <p style="font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:oklch(0.5 0.01 90); margin:0 0 8px; font-family:ui-monospace,monospace;">Catalogo · Categoria</p>
+      <h1 style="font-size:44px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; display:flex; align-items:baseline; gap:12px;">
+        ${esc(CATEGORY_TITLES[cat] || cat)}
+        <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
+      </h1>
+      <p style="font-size:15px; color:color-mix(in srgb, var(--color-text) 78%, transparent); margin:0 0 6px; max-width:62ch; line-height:1.6;">${esc(CATEGORY_INTROS[cat] || 'Adesivi stampati su vinile e carta adesiva, per interni ed esterni. Scegli il prodotto per configurare formato, quantità e tempi di consegna.')}</p>
+      <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 32px; font-family:ui-monospace,monospace;">${items.length} prodott${items.length === 1 ? 'o' : 'i'} · prezzi all inclusive, IVA compresa.</p>
+      <div class="p-cards">${items.map(p => productCardHtml(p, cat === 'Adesivi' ? p.nome.replace(/^Adesivo PVC\s+/, '') : /^Banner/.test(cat) ? p.nome.replace(/^Banner PVC (400gr|500gr con occhielli)\s+/, '') : cat === 'Block Notes' ? p.nome.replace(/^Block Notes\s+/, '') : null)).join('')}</div>
+      <div style="margin-top:36px;">
+        <button class="chip" data-home="1">← Torna al catalogo</button>
+      </div>
+    </div>`;
+  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openProduct(el.dataset.open, true, cat)));
+  app.querySelectorAll('[data-home]').forEach(el => el.addEventListener('click', () => closeProduct()));
+}
+
+function renderGrid(){
+  const chips = ['Tutti', ...[...CATEGORIES, GARMENT_CAT].sort((a, b) => a.localeCompare(b, 'it'))];
+  const visible = PRODUCTS.filter(p => !p.variantOf && !p.hidden)
+    .filter(p => state.category === 'Tutti' || p.categoria === state.category)
+    .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
+  const strategici = visible.filter(p => p.collection === 'strategici');
+  const suMisura = visible.filter(p => p.collection === 'misura');
+  const decalc = visible.filter(p => p.collection === 'decalc');
+  const quadri = visible.filter(p => p.collection === 'quadri');
+
+  const cardHtml = p => productCardHtml(p, CATALOG_NAMES[p.id]);
+
+  // Categoria filtrata: le sezioni con pochi prodotti si affiancano sulla stessa riga.
+  const compact = state.category !== 'Tutti' && state.category !== GARMENT_CAT;
+  const sectionHtml = (title, subtitle, items) => !items.length ? '' : `
+      <section style="${compact ? `flex:${items.length} 1 ${items.length*280 + 52}px; min-width:0; box-sizing:border-box;` : ''} background:${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.10)' : (title === 'Decalcomanie' ? 'oklch(0.52 0.11 320 / 0.12)' : (title === 'Quadri su Tela' ? 'oklch(0.55 0.09 30 / 0.12)' : 'oklch(0.55 0.09 245 / 0.13)'))}; border:1px solid ${title === 'Prezzi Strategici' ? 'oklch(0.42 0.12 155 / 0.22)' : (title === 'Decalcomanie' ? 'oklch(0.52 0.11 320 / 0.26)' : (title === 'Quadri su Tela' ? 'oklch(0.55 0.09 30 / 0.26)' : 'oklch(0.55 0.09 245 / 0.28)'))}; border-radius:18px; padding:28px 26px 32px; margin-top:${(compact || title === 'Prezzi Strategici') ? '0' : '40px'};">
+      <div style="margin:0 0 20px;">
+        <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
+          ${esc(title)}
+          <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
+        </h2>
+        ${(!compact && title === 'Prezzi Strategici') ? '<p style="font-size:16px; font-weight:650; color:oklch(0.42 0.12 155); margin:0 0 6px;">Prezzi strategici. Qualità professionale. Risultati concreti.</p>' : ''}
+        ${compact ? '' : `<p style="font-size:13.5px; color:oklch(0.5 0.01 90); margin:0;">${esc(subtitle)}</p>`}
+        ${(!compact && title === 'Prezzi Strategici') ? '<p style="font-size:15px; font-weight:650; color:oklch(0.42 0.12 155); margin:10px 0 0; line-height:1.6;">I prezzi scontati di questa sezione sono validi solo per gli acquisti online: per approfittarne, ordina direttamente dal sito.</p>' : ''}
+      </div>
+      <div class="p-cards">
+        ${items.map(cardHtml).join('')}
+      </div>
+      </section>`;
+
+  app.innerHTML = `
+    <div class="p-cat" style="max-width:none; margin:0 auto;">
+      <div class="idx-grid idx-grid-2" style="align-items:center;margin-bottom:calc(var(--space-8) * 1.5);">
+        <div>
+          <h1 style="font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Il nostro catalogo</h1>
+          <p style="font-size:12.5px; color:oklch(0.55 0.01 90); margin:0 0 16px; font-family:ui-monospace,monospace;">Prezzi all inclusive: stampa, gestione &amp; controllo file e IVA.</p>
+        </div>
+      </div>
+      <p style="font-size:15px;color:color-mix(in srgb, var(--color-text) 78%, transparent);margin:calc(var(--space-8) * -1) 0 var(--space-6);">Rollup, biglietti da visita, volantini, abbigliamento personalizzato, quadri su tela e molto altro: tutto pronto in tempi record.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;">
+        ${chips.map(c => `<button class="chip ${(c===state.category && !state.onlyStrategici)?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+      </div>
+      ${compact ? '<div style="display:flex; flex-wrap:wrap; gap:24px; align-items:stretch;">' : ''}
+      ${sectionHtml('Prezzi Strategici', 'Il nostro listino a prezzo fisso: formati e quantità pronti, senza sorprese.', strategici)}
+      ${(state.onlyStrategici || (state.category !== 'Tutti' && state.category !== GARMENT_CAT)) ? '' : `<section style="background:oklch(0.62 0.11 60 / 0.13); border:1px solid oklch(0.62 0.11 60 / 0.28); border-radius:18px; padding:28px 26px 32px; margin-top:40px;">
+        <div style="margin:0 0 20px;">
+          <h2 style="font-size:44px; font-weight:700; letter-spacing:-0.01em; margin:0 0 4px; display:flex; align-items:baseline; gap:10px;">
+            Stampa su indumento
+            <span style="height:1px; flex:1; background:oklch(0.9 0.005 90);"></span>
+          </h2>
+          <p style="font-size:13.5px; color:oklch(0.5 0.01 90); margin:0;">T-shirt, polo e abbigliamento personalizzato: catalogo, taglie e prezzi sul nostro shop dedicato.</p>
+        </div>
+        <div class="p-cards">
+          ${[
+            ['Beagle', 'https://www.tshirt-shop.online/beagle.html', 'img/tshirt-dic-copia.webp', ''],
+            ['Austral Polo', 'https://www.tshirt-shop.online/austral-polo.html', 'img/polo-austral-hero.webp', ''],
+            ['Star Polo', 'https://www.tshirt-shop.online/star-polo.html', 'img/star-polo-hero.webp', ''],
+            ['Maglietta Tecnica Bahrain', 'https://www.tshirt-shop.online/bahrain.html', 'https://www.tshirt-shop.online/img/bahrain-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Maglietta Tecnica Bahrain Donna', 'https://www.tshirt-shop.online/bahrain-donna.html', 'https://www.tshirt-shop.online/img/bahrain-donna-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Maglietta Tecnica Bahrain Bambino', 'https://www.tshirt-shop.online/bahrain-kids.html', 'https://www.tshirt-shop.online/img/bahrain-kids-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Beagle Bambino', 'https://www.tshirt-shop.online/beagle-kids.html', 'https://www.tshirt-shop.online/img/beagle-kids-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Jamaica', 'https://www.tshirt-shop.online/jamaica.html', 'https://www.tshirt-shop.online/img/jamaica-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Jamaica Bambino', 'https://www.tshirt-shop.online/jamaica-kids.html', 'https://www.tshirt-shop.online/img/jamaica-kids-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Nebraska', 'https://www.tshirt-shop.online/nebraska.html', 'https://www.tshirt-shop.online/img/nebraska-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Nebraska Donna', 'https://www.tshirt-shop.online/nebraska-donna.html', 'https://www.tshirt-shop.online/img/nebraska-donna-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Nebraska Bambino', 'https://www.tshirt-shop.online/nebraska-kids.html', 'https://www.tshirt-shop.online/img/nebraska-kids-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Rudolph', 'https://www.tshirt-shop.online/rudolph.html', 'https://www.tshirt-shop.online/img/rudolph-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Star Polo Donna', 'https://www.tshirt-shop.online/star-polo-donna.html', 'https://www.tshirt-shop.online/img/star-polo-donna-hero.webp', 'img/star-polo-hero.webp'],
+            ['Star Polo Bambino', 'https://www.tshirt-shop.online/star-polo-kids.html', 'https://www.tshirt-shop.online/img/star-polo-kids-hero.webp', 'img/star-polo-hero.webp'],
+            ['Cappellino Karin', 'https://www.tshirt-shop.online/cappellini-karin.html', 'https://www.tshirt-shop.online/img/karin-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Cappellino Uranus', 'https://www.tshirt-shop.online/cappellini-uranus.html', 'https://www.tshirt-shop.online/img/uranus-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Cappellino Basica', 'https://www.tshirt-shop.online/cappellini-basica.html', 'https://www.tshirt-shop.online/img/basica-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Alta Visibilità Delta', 'https://www.tshirt-shop.online/hv-delta.html', 'https://www.tshirt-shop.online/img/hv-delta-hv9310.webp', 'img/tshirt-dic-copia.webp'],
+            ['T-Shirt Alta Visibilità Tauri', 'https://www.tshirt-shop.online/hv-tauri.html', 'https://www.tshirt-shop.online/img/hv-tauri-hv9317.webp', 'img/tshirt-dic-copia.webp'],
+            ['Polo Alta Visibilità Vega', 'https://www.tshirt-shop.online/hv-vega.html', 'https://www.tshirt-shop.online/img/hv-vega-hv9315.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Vega L/S', 'https://www.tshirt-shop.online/hv-vega-ls.html', 'https://www.tshirt-shop.online/img/hv-vega-ls-hv9316.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Atrio', 'https://www.tshirt-shop.online/hv-atrio.html', 'https://www.tshirt-shop.online/img/hv-atrio-hv9318.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Atrio L/S', 'https://www.tshirt-shop.online/hv-atrio-ls.html', 'https://www.tshirt-shop.online/img/hv-atrio-ls-hv9319.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Foran', 'https://www.tshirt-shop.online/hv-foran.html', 'https://www.tshirt-shop.online/img/hv-foran-hv9324.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Foran L/S', 'https://www.tshirt-shop.online/hv-foran-ls.html', 'https://www.tshirt-shop.online/img/hv-foran-ls-hv9325.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Uomo Prince', 'https://www.tshirt-shop.online/prince-polo.html', 'https://www.tshirt-shop.online/img/prince-card.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Donna Prince', 'https://www.tshirt-shop.online/prince-donna.html', 'https://www.tshirt-shop.online/img/prince-donna-hero.webp', 'img/polo-austral-hero.webp'],
+            ['Polo Alta Visibilità Polaris', 'https://www.tshirt-shop.online/hv-polaris.html', 'https://www.tshirt-shop.online/img/polaris-221.webp', 'img/polo-austral-hero.webp'],
+            ['Camicia Uomo Aifos Manica Corta', 'https://www.tshirt-shop.online/aifos.html', 'https://www.tshirt-shop.online/img/aifos-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Uomo Aifos Manica Lunga', 'https://www.tshirt-shop.online/aifos-ls.html', 'https://www.tshirt-shop.online/img/aifos-ls-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Uomo Moscu Manica Lunga', 'https://www.tshirt-shop.online/moscu.html', 'https://www.tshirt-shop.online/img/moscu-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Donna Moscu Manica Lunga', 'https://www.tshirt-shop.online/moscu-donna.html', 'https://www.tshirt-shop.online/img/moscu-donna-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Donna Sofia Manica Corta', 'https://www.tshirt-shop.online/sofia.html', 'https://www.tshirt-shop.online/img/sofia-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camicia Donna Sofia Manica Lunga', 'https://www.tshirt-shop.online/sofia-ls.html', 'https://www.tshirt-shop.online/img/sofia-ls-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camice da Laboratorio Vaccine', 'https://www.tshirt-shop.online/vaccine.html', 'https://www.tshirt-shop.online/img/vaccine-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Camice da Laboratorio Vaccine Donna', 'https://www.tshirt-shop.online/vaccine-donna.html', 'https://www.tshirt-shop.online/img/vaccine-donna-hero.webp', 'img/tshirt-dic-copia.webp'],
+            ['Promozione 100 Magliette', 'https://www.tshirt-shop.online/promozione-100-magliette.html', 'img/100-t-shirt-copia600-1.webp', ''],
+          ].map(([nome, url, img, imgFallback]) => `
+            <a href="${url}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; background:#fff; border:1px solid oklch(0.91 0.005 90); border-radius:14px; padding:0 0 16px; overflow:hidden; display:flex; flex-direction:column; gap:8px; transition:transform 0.15s, box-shadow 0.15s;">
+              <div style="aspect-ratio:1/1; background:oklch(0.96 0.004 90); overflow:hidden;">
+                <img src="${img}" data-fallback="${imgFallback || ''}" onerror="if(this.dataset.fallback&amp;&amp;this.src!==this.dataset.fallback){this.src=this.dataset.fallback;}" alt="${esc(nome)}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;">
+              </div>
+              <div style="font-size:16.5px; font-weight:700; letter-spacing:-0.01em; padding:0 18px;">${esc(nome)}</div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace; padding:0 18px;">tshirt-shop.online ↗</div>
+            </a>`).join('')}
+        </div>
+      </section>`}
+      ${state.onlyStrategici ? '' : sectionHtml('Su Misura', 'Prodotti configurabili: scegli formato, finitura e tempi di consegna per il tuo progetto.', suMisura)}
+      ${state.onlyStrategici ? '' : sectionHtml('Quadri su Tela', 'Stampa su tela con telaio in legno: riproduzioni d\'autore e quadri dalle tue foto.', quadri)}
+      ${state.onlyStrategici ? '' : sectionHtml('Decalcomanie', 'Adesivi e decalcomanie pronti: vinile da applicare e rimuovere senza residui.', decalc)}
+      ${compact ? '</div>' : ''}
+    </div>`;
+  app.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => { state.category = el.dataset.cat; if (state.onlyStrategici) { state.onlyStrategici = false; history.replaceState(null, '', location.pathname + location.search); } render(); }));
+  app.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => {
+    const cat = CATEGORY_PAGES[el.dataset.open];
+    if (cat) openCategoryPage(cat); else openProduct(el.dataset.open);
+  }));
+}
+
+// Blocco "materiale da stampare" — identico su tutte le schede prodotto.
+// I file scelti vengono inviati SUBITO a /api/upload-design, che li inoltra al titolare
+// come allegati email con un codice di riferimento. In sessionStorage restano solo il
+// codice, i nomi dei file e l'eventuale link: nessun dato binario, quindi nessun rischio
+// di superare la quota del browser (era la causa dei caricamenti falliti).
+// Limite: il body di una funzione serverless Vercel è ~4,5 MB → max 3 MB reali in totale.
+var TP_MAX_TOTAL = 3 * 1024 * 1024;
+
+function tpDesign(){
+  try { return JSON.parse(sessionStorage.getItem('tp_design') || '{}'); } catch (e) { return {}; }
+}
+function tpSaveDesign(d){
+  try { sessionStorage.setItem('tp_design', JSON.stringify(d)); return true; } catch (e) { return false; }
+}
+function tpRef(){
+  var d = tpDesign();
+  if (!d.ref) {
+    d.ref = 'TP-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    tpSaveDesign(d);
+  }
+  return d.ref;
+}
+function tpStatusEls(input){
+  var wrap = input.closest('[data-upload-block]');
+  return { status: wrap.querySelector('[data-upload-status]'), error: wrap.querySelector('[data-upload-error]') };
+}
+function tpSetLink(input){
+  var d = tpDesign(); d.link = input.value.trim(); tpSaveDesign(d);
+  if (window.TPFiles) window.TPFiles.setLink(d.link);
+  document.querySelectorAll('.file-link').forEach(function(el){ if (el !== input) el.value = input.value; });
+}
+function tpReadFile(f){
+  return new Promise(function(resolve, reject){
+    var r = new FileReader();
+    r.onload = function(){ resolve({ name: f.name, type: f.type, data: String(r.result).split(',')[1] }); };
+    r.onerror = function(){ reject(new Error('Lettura del file non riuscita')); };
+    r.readAsDataURL(f);
+  });
+}
+function tpProductName(){
+  var p = PRODUCTS.find(function(x){ return x.id === state.selectedId; });
+  return p ? (p.nome + ' (' + p.id + ')') : (state.selectedId || '');
+}
+async function tpSelectFiles(input){
+  var els = tpStatusEls(input);
+  var files = Array.prototype.slice.call(input.files || []);
+  els.error.textContent = '';
+  if (!files.length) { els.status.textContent = ''; return; }
+  var total = files.reduce(function(n, f){ return n + f.size; }, 0);
+  if (total > TP_MAX_TOTAL) {
+    input.value = '';
+    els.status.textContent = '';
+    els.error.textContent = 'Totale ' + (total/1048576).toFixed(1) + ' MB: troppo grande. Massimo 3 MB — per file più pesanti usa il campo link qui sotto.';
+    return;
+  }
+  els.status.textContent = 'Caricamento…';
+  try {
+    var encoded = await Promise.all(files.map(tpReadFile));
+    var d = tpDesign();
+    var ref = tpRef();
+    // I file NON partono ora: restano nel browser (IndexedDB) e vengono inviati al titolare
+    // solo quando la pagina "grazie" conferma il pagamento. Vedi tp-files.js.
+    var names = await window.TPFiles.stash({ files: encoded, ref: ref, product: tpProductName(), link: d.link || '' });
+    d = tpDesign();
+    d.names = names;
+    d.ref = ref;
+    tpSaveDesign(d);
+    input.value = '';
+    els.status.textContent = 'Allegato: ' + names.join(', ') + ' — riferimento ' + ref + '. Verrà inviato alla conferma dell\u2019ordine.';
+    document.querySelectorAll('[data-upload-status]').forEach(function(el){ el.textContent = els.status.textContent; });
+  } catch (err) {
+    input.value = '';
+    els.status.textContent = '';
+    els.error.textContent = 'Caricamento non riuscito (' + err.message + '). Riprova con file più leggeri oppure incolla un link qui sotto.';
+  }
+}
+
+function templateLinksHtml(){
+  const p = PRODUCTS.find(x => x.id === state.selectedId);
+  if (!p) return '';
+  const list = p.templatePdfs || (p.templatePdf ? [{ label: 'del formato', path: p.templatePdf }] : []);
+  if (!list.length) return '';
+  return `<div style="display:flex; flex-direction:column; gap:6px; margin:0 0 14px;">
+    <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">Template PDF da usare per il file</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">${list.map(t => `<a href="${t.path}" download style="padding:8px 12px; border:1.5px solid oklch(0.88 0.005 90); border-radius:10px; font-size:13px; font-weight:650; color:#c0392b; text-decoration:none;">Scarica template ${esc(t.label)}</a>`).join('')}</div>
+  </div>`;
+}
+// I file da stampare si caricano nel checkout, per ogni articolo del carrello.
+function uploadBlockHtml(){
+  return templateLinksHtml() + `<div style="font-size:12.5px; color:oklch(0.5 0.01 90);">Il file da stampare lo carichi nel checkout, insieme agli altri articoli del carrello.</div>`;
+}
+function uploadBlockHtmlOld(){
+  const d = tpDesign();
+  const names = (d.names || []).join(', ');
+  const link = (d.link || '').replace(/"/g, '&quot;');
+  return templateLinksHtml() + `
+          <div data-upload-block>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Carica il tuo file</div>
+          <label style="display:block; border:1.5px solid oklch(0.88 0.005 90); border-radius:8px; padding:14px 16px; cursor:pointer; background:oklch(0.99 0.002 90);">
+            <span style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:14px; font-weight:600;">Carica il tuo design</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto; opacity:.65;"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg>
+            </span>
+            <input type="file" class="file-upload" multiple style="display:none;" onchange="tpSelectFiles(this)">
+          </label>
+          <div data-upload-status style="font-size:12px; color:oklch(0.42 0.12 155); font-weight:600; margin-top:6px;">${names ? 'Allegato: ' + names + (d.ref ? ' — riferimento ' + d.ref : '') + '. Verrà inviato alla conferma dell&rsquo;ordine.' : ''}</div>
+          <div data-upload-error style="font-size:12px; color:oklch(0.5 0.19 25); margin-top:6px;"></div>
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:4px;">JPG, PNG, PDF, AI, EPS, ZIP — max 3 MB in totale. File più grandi: usa il link qui sotto.</div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin:14px 0 6px;">Oppure incolla un link al file</div>
+          <input type="text" class="file-link" value="${link}" oninput="tpSetLink(this)" placeholder="Canva, SwissTransfer, WeTransfer, Drive…" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          <div style="font-size:12px; color:oklch(0.55 0.01 90); margin-top:6px;">Canva e Drive: condividi il link già sbloccato, senza password.</div>
+          </div>`;
+}
+
+function renderDetail(){
+  const p = PRODUCTS.find(x => x.id === state.selectedId);
+  const mainImage = state.mainImageOverride
+    || (p.pricing.type === 'imageSwatch' ? (p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].hero || p.pricing.swatches[state.swatchIdxById[p.id] ?? 0].image) : null)
+    || p.img;
+  const specsList = Object.entries(p.specs || {}).concat(p.ean ? [['EAN', p.ean]] : []);
+  const _active = document.activeElement;
+  const _focusId = _active && _active.tagName === 'INPUT' && _active.type !== 'range' && _active.id ? _active.id : null;
+  const _selStart = _focusId ? _active.selectionStart : null;
+  const _selEnd = _focusId ? _active.selectionEnd : null;
+  let pricingHtml = '';
+
+  if (p.pricing.type === 'flat'){
+    pricingHtml = `
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Prezzo</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(p.pricing.price)}</span>
+      </div>
+      ${paymentBlockHtml(p, p.pricing.price, 0)}`;
+  } else if (p.pricing.type === 'imageSwatch'){
+    const idx = state.swatchIdxById[p.id] ?? 0;
+    pricingHtml = `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Scegli il design</div>
+        <div class="p-sw3">
+          ${p.pricing.swatches.map((s,i) => `
+            <div class="swatch ${i===idx?'active':''}" data-swatch="${i}" style="cursor:pointer; border:2px solid ${i===idx?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
+              <img src="${s.image}" alt="${esc(s.label)}" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
+              <div style="font-size:11px; padding:6px 4px; font-weight:600;">${esc(s.label)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Prezzo</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(p.pricing.price)}</span>
+      </div>
+      ${paymentBlockHtml(p, p.pricing.price, idx)}`;
+  } else if (p.pricing.type === 'imageSwatchQty'){
+    const f = swatchQtyState(p);
+    const total = f.qty * p.pricing.pricePerUnit;
+    pricingHtml = `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità</div>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" id="swQtyInput" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Scegli il volto</div>
+        <div class="p-sw5">
+          ${p.pricing.swatches.map((s,i) => `
+            <div class="swatch ${i===f.swatchIdx?'active':''}" data-swqty-swatch="${i}" style="cursor:pointer; border:2px solid ${i===f.swatchIdx?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
+              <img src="${s.image}" alt="${esc(s.label)}" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
+              <div style="font-size:11px; padding:6px 4px; font-weight:600;">${esc(s.label)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'adesivoInterno'){
+    const f = adesivoState(p);
+    const total = computeAdesivoPrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div class="p-two">
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza cm (${p.pricing.larghezza.min}–${p.pricing.larghezza.max})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="adesLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="adesAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="adesQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Forma a sagoma</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.sagomaChoices.map((c,i) => `<button class="pill ${i===f.sagomaIdx?'active':''}" data-ades-sagoma="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'adesiviPrespaziati'){
+    const f = prespaziatiState(p);
+    const total = computePrespaziatiPrice(p, f);
+    const coloreOptions = p.pricing.coloreByMateriale[f.materialeIdx];
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Finitura</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.materialeChoices.map((c,i) => `<button class="pill ${i===f.materialeIdx?'active':''}" data-presp-materiale="${i}">${esc(c)}</button>`).join('')}
+          </div>
+          <div style="font-size:11.5px; color:oklch(0.5 0.01 90); margin-top:6px;">La finitura opaca è disponibile solo in Bianco e Nero.</div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Colore <span style="opacity:.6;">(cartella Oracal 751)</span></div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span style="flex:0 0 auto; width:38px; height:38px; border-radius:8px; border:1.5px solid oklch(0.85 0.005 90); background:${ORACAL_HEX[coloreOptions[f.coloreIdx]] || 'repeating-linear-gradient(45deg, oklch(0.93 0.005 90) 0 6px, oklch(0.85 0.005 90) 6px 12px)'};"></span>
+            <select id="prespColore" style="flex:1 1 auto; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit; background:#fff;">
+              ${coloreOptions.map((c,i) => `<option value="${i}" ${i===f.coloreIdx?'selected':''}>${esc(c)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        ${coloreOptions[f.coloreIdx] === 'Altro' ? `
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altro colore</div>
+          <input type="text" id="prespAltroColore" value="${esc(f.altroColore)}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>` : ''}
+        <div class="p-two">
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Base cm (lato lungo, ${p.pricing.base.min}–${p.pricing.base.max})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.base.min}" max="${p.pricing.base.max}" id="prespBase" value="${f.base}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (lato corto, ${p.pricing.altezza.min}–${p.pricing.altezza.max})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="prespAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Copie stesso soggetto</div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.copie.min}" id="prespCopie" value="${f.copie}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Lavorazioni</div>
+          <div class="p-sw3">
+            ${p.pricing.lavorazioni.map((l,i) => `
+              <div class="swatch ${i===f.lavorazioneIdx?'active':''}" data-presp-lavorazione="${i}" style="cursor:pointer; border:2px solid ${i===f.lavorazioneIdx?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
+                <img src="${l.image}" alt="${esc(l.label)}" style="width:100%; aspect-ratio:1/1; object-fit:contain; background:#fff; display:block;">
+                <div style="font-size:11px; padding:6px 4px; font-weight:600;">${esc(l.label)}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'bv24h'){
+    const f = bv24hState(p);
+    const baseTotal = computeBv24hPrice(p, f);
+    const angoliOn = !!state.angoliById[p.id];
+    const angoliSurcharge = angoliOn ? angoliPrice(f.qty) : 0;
+    const total = baseTotal + angoliSurcharge;
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div class="p-two">
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza cm (${String(p.pricing.larghezza.min).replace('.',',')}–${String(p.pricing.larghezza.max).replace('.',',')})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.larghezza.min}" max="${p.pricing.larghezza.max}" id="bvLarghezza" value="${f.larghezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza cm (${String(p.pricing.altezza.min).replace('.',',')}–${String(p.pricing.altezza.max).replace('.',',')})</div>
+            <input type="text" inputmode="decimal" step="0.1" data-quote-step="0.1" min="${p.pricing.altezza.min}" max="${p.pricing.altezza.max}" id="bvAltezza" value="${f.altezza}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="bvQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Stampa</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.latiChoices.map((c,i) => `<button class="pill ${i===f.latiIdx?'active':''}" data-bv-lati="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta (gr)</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.cartaChoices.map((c,i) => `<button class="pill ${i===f.cartaIdx?'active':''}" data-bv-carta="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Soggetti diversi</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.soggettiChoices.map((c,i) => `<button class="pill ${i===f.soggettiIdx?'active':''}" data-bv-soggetti="${i}">${c}</button>`).join('')}
+          </div>
+        </div>
+        <div>${angoliCheckboxHtml(p, f.qty)}</div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, { ...f, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}) })}`;
+  } else if (p.pricing.type === 'locandine250'){
+    const f = locandineState(p);
+    const total = computeLocandinePrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.formatChoices.map((c,i) => `<button class="pill ${i===f.formatIdx?'active':''}" data-loc-formato="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.cartaChoices.map((c,i) => `<button class="pill ${i===f.cartaIdx?'active':''}" data-loc-carta="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="locQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'scatolaGioielli'){
+    const f = scatolaState(p);
+    const total = computeScatolaPrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="scatolaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Misura Scatola</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.misuraChoices.map((c,i) => `<button class="pill ${i===f.misuraIdx?'active':''}" data-scatola-misura="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Colore stampa</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.coloreChoices.map((c,i) => `<button class="pill ${i===f.coloreIdx?'active':''}" data-scatola-colore="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'rilegature'){
+    const f = rilegatureState(p);
+    const total = computeRilegaturaPrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div class="p-two">
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità di Rilegature (${p.pricing.qty.min}–${p.pricing.qty.max})</div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.qty.min}" max="${p.pricing.qty.max}" id="rilQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine a Colori</div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.pagCol.min}" max="${p.pricing.pagCol.max}" id="rilPagCol" value="${f.pagCol}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Pagine Bianco Nero</div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.pagBn.min}" max="${p.pricing.pagBn.max}" id="rilPagBn" value="${f.pagBn}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Stampa su 1 lato o 2</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.latiChoices.map((c,i) => `<button class="pill ${i===f.latiIdx?'active':''}" data-ril-lati="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Grammatura carta</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.cartaChoices.map((c,i) => `<button class="pill ${i===f.cartaIdx?'active':''}" data-ril-carta="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span id="rilTotal" style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'tiers'){
+    const idx = state.tierIdxById[p.id] ?? 0;
+    const tiers = p.pricing.tiers;
+    const tier = tiers[Math.min(idx, tiers.length-1)];
+    pricingHtml = `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
+        <select class="qty-select" id="tierRange">
+          ${tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtQty(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale stimato</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
+      </div>
+      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-top:4px; text-align:right;">€ ${fmtUnit(tier.price/tier.qty)} cad. · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
+      </div>
+      ${paymentBlockHtml(p, tier.price, idx)}`;
+  } else if (p.pricing.type === 'tiersDelivery'){
+    const deliveryIdx = state.deliveryIdxById[p.id]?.deliveryIdx ?? 0;
+    const idx = state.deliveryIdxById[p.id]?.qtyIdx ?? deliveryDefault(p).qtyIdx;
+    const tiers = p.pricing.tiersByDelivery[deliveryIdx];
+    const tier = tiers[Math.min(idx, tiers.length-1)];
+    const legIdx = (state.legaturaById || {})[p.id] ?? 0;
+    pricingHtml = `
+      ${p.pricing.legaturaChoices ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Legatura</div>
+        <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px;">
+          ${p.pricing.legaturaChoices.map((c,i) => {
+            const w = c.o === 'v' ? 24 : 34, hh = c.o === 'v' ? 32 : 24;
+            const edge = c.e === 'l' ? 'border-left:4px solid oklch(0.45 0.01 90);' : 'border-top:4px solid oklch(0.45 0.01 90);';
+            const on = i === legIdx;
+            return `<button type="button" data-legatura-idx="${i}" aria-pressed="${on}" style="display:flex; align-items:center; gap:10px; padding:10px; text-align:left; font:inherit; font-size:12.5px; line-height:1.3; cursor:pointer; background:${on ? 'color-mix(in srgb, var(--color-accent) 10%, transparent)' : 'transparent'}; border:1px solid ${on ? 'var(--color-accent)' : 'oklch(0.88 0.005 90)'}; color:var(--color-text);">
+              <span style="flex:none; width:36px; height:34px; display:flex; align-items:center; justify-content:center;"><span style="display:block; box-sizing:border-box; width:${w}px; height:${hh}px; background:#fff; border:1px solid oklch(0.7 0.01 90); ${edge}"></span></span>
+              <span>${esc(c.label)}</span>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${p.pricing.deliveryChoices.map((c,i) => `<button class="pill ${i===deliveryIdx?'active':''}" data-delivery-idx="${i}">${esc(c)}</button>`).join('')}
+        </div>
+        ${readyInfoHtml(p, p.pricing.deliveryChoices[deliveryIdx], deliveryIdx)}
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
+        <select class="qty-select" id="deliveryQtyRange">
+          ${tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtQty(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(tier.price)}</span>
+      </div>
+      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-top:4px; text-align:right;">€ ${fmtUnit(tier.price/tier.qty)} cad. · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
+      </div>
+      ${paymentBlockHtml(p, tier.price, idx)}`;
+  } else if (p.pricing.type === 'size'){
+    const idx = state.sizeIdxById[p.id] ?? p.pricing.defaultIndex ?? 0;
+    const variants = p.pricing.variants;
+    const groups = p.pricing.groups;
+    const grp = groups ? (groups.find(g => idx >= g.from && idx < g.to) || groups[0]) : null;
+    pricingHtml = `
+      ${groups ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+        ${groups.map((g,gi) => `<button class="pill ${g===grp?'active':''}" data-size-group="${gi}">${esc(g.label)}</button>`).join('')}
+      </div>` : ''}
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
+        ${variants.map((v,i) => (grp && (i < grp.from || i >= grp.to)) ? '' : `
+          <div class="size-row ${i===idx?'active':''}" data-size="${i}">
+            <span style="font-size:14px; font-weight:600;">${esc(v.size || v.label)}</span>
+            <span style="font-size:14px; font-weight:700; font-family:ui-monospace,monospace;">€ ${fmtEUR(v.price)}</span>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Prezzo</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(variants[idx].price)}</span>
+      </div>
+      <div style="margin-bottom:18px; ${p.pricing.hideUpload ? 'display:none;' : ''}">
+        ${uploadBlockHtml()}
+      </div>
+      ${paymentBlockHtml(p, variants[idx].price, idx)}`;
+  } else if (p.pricing.type === 'businessCardRilievo'){
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+    const format = p.pricing.formats[cur.formatIdx];
+    const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
+    const idx = Math.min(cur.qtyIdx, paper.tiers.length-1);
+    const tier = paper.tiers[idx];
+    const angoliOn = !!state.angoliById[p.id];
+    const angoliSurcharge = angoliOn ? angoliPrice(tier.qty) : 0;
+    // Motivi: il 1° a prezzo pieno, ogni motivo aggiuntivo al 90%. Stessa quantità, carta e formato.
+    const motivi = Math.min(Math.max(cur.motivi || 1, 1), 10);
+    const grandTotal = Math.round((tier.price + angoliSurcharge) * (1 + 0.9 * (motivi - 1)) * 100) / 100;
+    pricingHtml = `
+      ${p.pricing.colorChoices ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Colore</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${p.pricing.colorChoices.map((c,i) => `<button class="pill ${i===(cur.colorIdx||0)?'active':''}" data-bcr-color="${i}">${esc(c)}</button>`).join('')}
+        </div>
+      </div>` : ''}
+      ${formatSplitHtml(p.pricing.formats, cur.formatIdx, 'data-bcr-format')}
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${format.papers.map((pp,i) => `<button class="pill ${i===cur.paperIdx?'active':''}" data-bcr-paper="${i}">${esc(shortPaperLabel(pp.label))}</button>`).join('')}
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px 14px; margin-bottom:6px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (per ogni motivo)</div>
+          <select class="qty-select" id="bcrQtyRange">
+            ${paper.tiers.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtQty(_t.qty) + ' ' + esc(p.pricing.unit)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Soggetti</div>
+          <select class="qty-select" id="bcrMotiviSelect">
+            ${Array.from({length:10}, (_x, i) => i + 1).map(n => `<option value="${n}" ${n===motivi?'selected':''}>${n} ${n===1?'motivo':'motivi'}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-bottom:6px;">Ogni motivo aggiuntivo costa il 90% del primo. ${motivi > 1 ? `Totale ${fmtQty(tier.qty * motivi)} copie (${fmtQty(tier.qty)} per motivo).` : ''}</div>
+      <div style="margin-bottom:14px;">${readyInfoHtml(paper.readyDays ? { ...p, pricing: { ...p.pricing, readyDays: [paper.readyDays] } } : p, '1 Settimana', 0)}</div>
+      ${angoliCheckboxHtml(p, tier.qty)}
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(grandTotal)}</span>
+      </div>
+      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-top:4px; text-align:right;">€ ${fmtUnit(tier.price/tier.qty)} cad. · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${uploadBlockHtml()}
+      </div>
+      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, ...(p.pricing.colorChoices ? { colore: p.pricing.colorChoices[cur.colorIdx||0] } : {}), ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), ...(motivi > 1 ? { motivi: motivi + ' motivi' } : {}), qty: tier.qty })}`;
+  } else if (p.pricing.type === 'businessCardStrategici'){
+    const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    const format = p.pricing.formats[cur.formatIdx];
+    const paper = format.papers[Math.min(cur.paperIdx, format.papers.length-1)];
+    const dIdx = Math.min(cur.deliveryIdx, paper.deliveries.length-1);
+    const delivery = paper.deliveries[dIdx];
+    const idx = Math.min(cur.qtyIdx, delivery.prices.length-1);
+    const price = delivery.prices[idx];
+    const qtyLabels = format.qtyLabels || p.pricing.qtyLabels;
+    const qty = qtyLabels[idx];
+    const angoliOn = !p.pricing.noFinish && !!state.angoliById[p.id];
+    const angoliSurcharge = angoliOn ? angoliPrice(qty) : 0;
+    const plastOn = !p.pricing.noFinish && !!state.plastById[p.id];
+    const plastSurcharge = plastOn ? plastPrice(qty) : 0;
+    const graficaOn = !p.pricing.noPrint && !!state.graficaById[p.id];
+    // Motivi (soggetti diversi): il 1° a prezzo pieno, ogni motivo aggiuntivo al 90%.
+    // La quantità selezionata è per ogni motivo.
+    const motivi = p.pricing.noPrint ? 1 : Math.min(Math.max(cur.motivi || 1, 1), 10);
+    const motiviFactor = 1 + 0.9 * (motivi - 1);
+    const graficaSurcharge = graficaOn ? GRAFICA_PRICE * motivi : 0;
+    const grandTotal = Math.round(((price + angoliSurcharge + plastSurcharge) * motiviFactor + graficaSurcharge) * 100) / 100;
+    const copieTot = qty * motivi;
+    pricingHtml = `
+      ${formatSplitHtml(p.pricing.formats, cur.formatIdx, 'data-bcs-format')}
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${format.papers.map((pp,i) => `<button class="pill ${i===cur.paperIdx?'active':''}" data-bcs-paper="${i}">${esc(pp.label)}</button>`).join('')}
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${paper.deliveries.map((d,i) => `<button class="pill ${i===dIdx?'active':''}" data-bcs-delivery="${i}">${esc(d.label)}</button>`).join('')}
+        </div>
+        ${readyInfoHtml(p, delivery.label, dIdx, delivery.readyDays)}
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px 14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${p.pricing.noPrint ? 'Quantità' : 'Quantità (per ogni motivo)'}</div>
+          <select class="qty-select" id="bcsQtyRange">
+            ${delivery.prices.map((_t, i) => `<option value="${i}" ${i===idx?'selected':''}>${fmtQty(qtyLabels[i]) + ' copie'}</option>`).join('')}
+          </select>
+        </div>
+${p.pricing.noPrint ? '' : `
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Soggetti</div>
+          <select class="qty-select" id="bcsMotiviSelect">
+            ${Array.from({length:10}, (_x, i) => i + 1).map(n => `<option value="${n}" ${n===motivi?'selected':''}>${n} ${n===1?'motivo':'motivi'}</option>`).join('')}
+          </select>
+        </div>
+`}
+      </div>
+${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin:-8px 0 14px;">Ogni motivo aggiuntivo costa il 90% del primo. ${motivi > 1 ? `Totale ${fmtQty(copieTot)} copie (${fmtQty(qty)} per motivo).` : ''}</div>`}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px 18px; margin-bottom:14px;">${p.pricing.noFinish ? '' : angoliCheckboxHtml(p, qty, true) + plastCheckboxHtml(p, qty, true)}${p.pricing.noPrint ? '' : graficaCheckboxHtml(p, true)}</div>      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${grandTotal.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+      </div>
+      <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-top:4px; text-align:right;">€ ${fmtUnit(grandTotal/copieTot)} cad. · IVA inclusa</div>
+      <div style="margin-bottom:18px;">
+        ${p.pricing.noPrint ? '' : uploadBlockHtml()}
+      </div>
+      ${paymentBlockHtml(p, grandTotal, idx, { formato: format.label, carta: paper.label, consegna: delivery.label, ...(angoliOn ? { angoli: 'Angoli arrotondati' } : {}), ...(plastOn ? { plastificata: 'Sì' } : {}), ...(graficaOn ? { grafica: 'Sì' } : {}), qty, motivi })}`;
+  } else if (p.pricing.type === 'forexPvc'){
+    const f = forexState(p);
+    const total = computeForexPrice(p, f);
+    const cu = p.pricing.custom;
+    const fxConsegna = f.custom ? cu.consegnaChoices : p.pricing.consegnaChoices;
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.formats.map((c,i) => `<button class="pill ${!f.custom && i===f.formatIdx?'active':''}" data-forex-formato="${i}">${esc(c)}</button>`).join('')}
+            <button class="pill ${f.custom?'active':''}" data-forex-custom="1">${esc(cu.label)}</button>
+          </div>
+          ${f.custom ? `
+          <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; margin-top:12px;">
+            <div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Base (cm)</div>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" id="forexW" value="${f.w}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza (cm)</div>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" id="forexH" value="${f.h}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+            </div>
+          </div>
+          <div style="margin-top:6px; font-size:12px; color:oklch(0.5 0.01 90);">Minimo ${cu.minShort}×${cu.minLong} cm · massimo ${cu.maxShort}×${cu.maxLong} cm · ${fmtEUR(f.w * f.h / 10000)} m² per pezzo${(f.w * f.h / 10000) < cu.minAreaPerPiece ? ` (fatturato minimo ${fmtEUR(cu.minAreaPerPiece)} m²)` : ''}</div>` : ''}
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Spessore</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${(f.custom ? cu.spessoreChoices : p.pricing.spessoreChoices).map((c,i) => `<button class="pill ${i===f.spessoreIdx?'active':''}" data-forex-spessore="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Stampa</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.stampaChoices.map((c,i) => `<button class="pill ${i===f.stampaIdx?'active':''}" data-forex-stampa="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${fxConsegna.map((c,i) => `<button class="pill ${i===f.consegnaIdx?'active':''}" data-forex-consegna="${i}">${esc(c)}</button>`).join('')}
+          </div>
+          ${readyInfoHtml(p, fxConsegna[f.consegnaIdx], f.consegnaIdx, f.custom ? cu.readyDays[f.consegnaIdx] : undefined, f.custom ? cu.cutoffHour : undefined)}
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità di 1 soggetto <span style="opacity:.6;">(max ${forexMaxQty(p, f)} pz)</span></div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" max="${forexMaxQty(p, f)}" id="forexQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'formula'){
+    const f = formulaState(p);
+    const total = computeFormulaPrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità</div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" id="formulaQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.formatChoices.map(c => `<button class="pill ${c===f.formato?'active':''}" data-formula-formato="${esc(c)}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        ${p.pricing.hideTempi ? '' : `<div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Tempi di stampa</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.tempiChoices.map(c => `<button class="pill ${c===f.tempi?'active':''}" data-formula-tempi="${esc(c)}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>`}
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Con o senza struttura</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.strutturaChoices.map((c,i) => `<button class="pill ${i===f.strutturaIdx?'active':''}" data-formula-struttura="${i}">${esc(c.label)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+        <div>
+          ${uploadBlockHtml()}
+        </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'striscioniPvc'){
+    const f = striscioniState(p);
+    const total = computeStriscioniPrice(p, f);
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px;">
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.consegnaChoices.map((c,i) => `<button class="pill ${i===f.consegnaIdx?'active':''}" data-str-consegna="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        ${f.consegnaIdx === 0 ? `
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Occhielli</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.occhielliChoices.map((c,i) => `<button class="pill ${i===f.occhielliIdx?'active':''}" data-str-occhielli="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>` : ''}
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Formato</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${p.pricing.formats.map((c,i) => `<button class="pill ${i===f.formatIdx?'active':''}" data-str-formato="${i}">${esc(c)}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Quantità <span style="opacity:.6;">(soggetti diversi)</span></div>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" min="1" max="100" id="strQty" value="${f.qty}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+        </div>
+      </div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
+        <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+        <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(total)}</span>
+      </div>
+      ${paymentBlockHtml(p, total, null, f)}`;
+  } else if (p.pricing.type === 'quote'){
+    const sel = state.quoteSelById[p.id] || {};
+    pricingHtml = `
+      <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:6px;">
+        ${(() => { const rendered = p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel)).map(opt => {
+          const unitVal = sel.unit ?? (opt.choicesByUnit ? Object.keys(opt.choicesByUnit)[0] : null);
+          const choices = opt.choicesByUnit ? opt.choicesByUnit[unitVal] : opt.choices;
+          const current = sel[opt.key] ?? choices[0];
+          const activeVal = opt.noDefaultActive ? sel[opt.key] : current;
+          const suffix = opt.choicesByUnit ? unitVal.toLowerCase() : (opt.unitSuffix || 'cm');
+          if (opt.type === 'slider') {
+            const nums = choices.map(Number);
+            const min = nums[0], max = nums[nums.length-1];
+            // Campi dimensione: 1 cifra dopo la virgola; le quantità restano interi.
+            const step = opt.step || (opt.choicesByUnit ? 1 : (['larghezza','altezza','base','lato_lungo','lato_corto'].includes(opt.key) ? 0.1 : 1));
+            // Misure con unità CM/INCH/FEET: +/− a unità intere (cambio unità arrotonda all'intero).
+            const shown = Math.min(Math.max(Number(current) || min, min), max);
+            return `<div style="${opt.row ? 'flex:1 1 0; min-width:0; display:flex; flex-direction:column;' : ''}">
+              <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;${opt.row ? ' flex:1 1 auto;' : ''}">${esc(opt.label.replace(/\s*\([^()]*\)\s*$/, ''))} <span style="opacity:.7; white-space:nowrap;">(${min}–${max} ${esc(suffix)})</span></div>
+              <input type="text" inputmode="${step < 1 ? 'decimal' : 'numeric'}" min="${min}" max="${max}" step="${step}" data-quote-step="${step}" value="${esc(String(shown))}" id="quote_${esc(opt.key)}" data-quote-num="${esc(opt.key)}" data-quote-min="${min}" data-quote-max="${max}" style="width:100%; padding:10px 8px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:15px; font-family:inherit;">
+            </div>`;
+          }
+          return `<div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${esc(opt.label)}</div>
+            ${opt.images ? `
+            <div class="p-sw3">
+              ${choices.map(c => `
+                <div class="swatch ${c===current?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}" style="cursor:pointer; border:2px solid ${c===current?'oklch(0.42 0.12 155)':'oklch(0.9 0.005 90)'}; border-radius:10px; overflow:hidden; text-align:center;">
+                  <img src="${opt.images[c]}" alt="${esc(c)}" style="width:100%; aspect-ratio:2/1; object-fit:contain; background:#fff; display:block; padding:6px;">
+                  <div style="font-size:11px; padding:0 4px 6px; font-weight:600;">${esc(c)}</div>
+                </div>`).join('')}
+            </div>` : `
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${choices.map(c => `<button class="pill ${c===activeVal?'active':''}" data-quote-key="${esc(opt.key)}" data-quote-val="${esc(c)}">${esc(c)}${opt.choicesByUnit ? ' ' + esc(suffix) : ''}</button>`).join('')}
+            </div>`}
+          </div>`;
+        });
+        // Le opzioni marcate `row:true` stanno affiancate; se consecutive hanno lo stesso
+        // `rowGroup`, restano nella stessa riga, altrimenti si spezzano su righe distinte.
+        const opts = p.pricing.options.filter(opt => !opt.showIf || opt.showIf(sel));
+        const out = []; let group = null; let groupKey = null;
+        const flush = () => { if (group) { out.push(`<div style="display:flex; gap:8px; align-items:stretch;">${group.join('')}</div>`); group = null; groupKey = null; } };
+        rendered.forEach((html, i) => {
+          const opt = opts[i];
+          if (opt.row) {
+            const key = opt.rowGroup || 'default';
+            if (group && key !== groupKey) flush();
+            (group = group || []).push(html); groupKey = key;
+            return;
+          }
+          flush();
+          out.push(html);
+        });
+        flush();
+        return out.join('');
+        })()}
+      </div>
+      ${p.id === '215' ? eventCalendarHtml(p, sel) : ''}
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.92 0.005 90);">
+        ${p.id === '215' ? (() => {
+            const base = p.pricing.formula(sel);
+            const row = (l, v, note) => `<div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:6px 0;">
+              <span style="font-size:14px;">${l}${note ? `<span style="display:block; font-size:12px; color:oklch(0.5 0.01 90);">${note}</span>` : ''}</span>
+              <span style="font-size:16px; font-weight:600; font-family:ui-monospace,monospace; white-space:nowrap;">€ ${fmtEUR(v)}</span>
+            </div>`;
+            return `<div style="margin-bottom:10px;">
+              ${row('Noleggio', base, 'Struttura, stampa, montaggio e smontaggio')}
+              ${row('Caparra 50%', base / 2, 'Restituita dopo ispezione senza danni')}
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:6px; padding-top:10px; border-top:1px solid oklch(0.92 0.005 90);">
+                <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale da pagare ora</span>
+                <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(base * 1.5)}</span>
+              </div>
+            </div>`;
+          })() : ''}
+        ${p.pricing.formula && p.id !== '215' ? (() => {
+            const val = Math.max(p.pricing.formula(sel), p.pricing.basePrice ?? 0);
+            return `<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;">
+              <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+              <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">€ ${fmtEUR(val)}</span>
+            </div>`;
+          })()
+          : (p.pricing.basePrice != null ? `<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;">
+              <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
+              <span style="font-size:28px; font-weight:800; font-family:ui-monospace,monospace;">da € ${fmtEUR(p.pricing.basePrice)}</span>
+            </div>` : '')}
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${(p.id === '215' || p.id === '5851') ? 'Totale sopra, IVA inclusa.' : 'Prezzo su richiesta in base alla configurazione selezionata.'}</div>
+        ${p.pricing.depositNote && p.id !== '215' ? `<div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:10px;">${esc(p.pricing.depositNote(sel, p))}</div>` : ''}
+        <div style="margin:16px 0; ${p.pricing.hideUpload ? 'display:none;' : ''}">
+          ${uploadBlockHtml()}
+        </div>
+        ${p.id === '215' ? paymentBlockHtml(p, p.pricing.formula(sel) * 1.5, null, sel)
+          : (p.id === '198' ? paymentBlockHtml(p, Math.max(p.pricing.formula(sel), p.pricing.basePrice ?? 0), null, sel)
+          : (p.id === '5805' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
+          : (p.id === '5849' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
+          : (p.id === '5047' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
+          : (p.id === '212' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
+          : (p.id === '5851' ? paymentBlockHtml(p, p.pricing.formula(sel), null, sel)
+          : `<button style="width:100%; border:none; background:oklch(0.42 0.12 155); color:#fff; font-size:14.5px; font-weight:700; padding:14px; border-radius:10px; cursor:pointer;">Richiedi preventivo →</button>`))))))}
+      </div>`;
+  }
+
+  // Ridisegno senza sobbalzi: blocco l'altezza e la posizione di scorrimento durante lo scambio.
+  const _scrollY = window.scrollY;
+  app.style.minHeight = app.offsetHeight + 'px';
+  const _detailHtml = `
+    <div class="p-page" style="max-width:1200px; margin:0 auto;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); font-family:ui-monospace,monospace;">${esc(p.categoria)} / ${esc(p.nome)}</div>
+        ${p.altLang ? `<span style="display:inline-flex; border:1px solid oklch(0.88 0.005 90); border-radius:7px; overflow:hidden; font-family:ui-monospace,monospace; font-size:11.5px; letter-spacing:.04em;"><span style="padding:4px 9px; background:oklch(0.42 0.12 155); color:#fff; font-weight:700;">IT</span><a href="${p.altLang}" title="English version" style="padding:4px 9px; color:oklch(0.42 0.01 90); text-decoration:none; font-weight:600;">EN</a></span>` : ''}
+      </div>
+      <div class="p-detail">
+        <div class="p-media">
+          <div style="position:relative; aspect-ratio:1/1; background:oklch(0.95 0.005 90); border-radius:16px; overflow:hidden; margin-bottom:12px;">
+            <img src="${mainImage}" alt="${esc(p.nome)}" fetchpriority="high" style="width:100%; height:100%; object-fit:cover; display:block;">${imgBadgeHtml(p)}
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            ${(p.gallery||[]).map(url => `<div class="thumb ${mainImage===url?'active':''}" data-thumb="${esc(url)}"><img src="${url}"></div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <h1 style="font-size:30px; font-weight:700; letter-spacing:-0.02em; margin:0 0 14px; line-height:1.15;">${esc(p.nome)}</h1>
+          <p style="font-size:15px; line-height:1.6; color:oklch(0.35 0.01 90); margin:0 0 22px;">${esc(p.intro)}</p>
+          ${p.warning ? `<p style="font-size:13.5px; line-height:1.5; color:#b3261e; font-weight:600; margin:-14px 0 22px;">${esc(p.warning)}</p>` : ''}
+          <div style="display:flex; flex-direction:column; gap:9px; margin-bottom:26px;">
+            ${p.features.map(f => `<div style="display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.5;"><span style="color:oklch(0.42 0.12 155); font-weight:700; margin-top:1px;">✓</span><span>${esc(f)}</span></div>`).join('')}
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:14px; padding:16px; background:oklch(0.965 0.004 90); border-radius:12px; margin-bottom:28px;">
+            ${specsList.map(([k,v]) => `<div><div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:oklch(0.5 0.01 90); margin-bottom:3px;">${esc(k)}</div><div style="font-size:13.5px; font-weight:600;">${esc(v)}</div></div>`).join('')}
+          </div>
+          <div style="border:1px solid oklch(0.9 0.005 90); border-radius:14px; padding:22px;">
+            <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:oklch(0.5 0.01 90); margin-bottom:16px;">Configura il tuo ordine</div>
+            <div id="pConfig" data-pid="${esc(p.id)}" data-img="${esc(mainImage)}">${pricingHtml}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  // Stesso prodotto e stessa immagine: aggiorno solo il pannello "Configura il tuo ordine".
+  // Ridisegnare tutta la pagina ricaricava foto e miniature e la faceva sobbalzare (iPhone).
+  const _cfg = document.getElementById('pConfig');
+  if (_cfg && _cfg.dataset.pid === String(p.id) && _cfg.dataset.img === String(mainImage)) {
+    const _tpl = document.createElement('template');
+    _tpl.innerHTML = _detailHtml;
+    _cfg.innerHTML = _tpl.content.getElementById('pConfig').innerHTML;
+  } else {
+    app.innerHTML = _detailHtml;
+  }
+  window.scrollTo(0, _scrollY);
+  requestAnimationFrame(() => requestAnimationFrame(() => { app.style.minHeight = ''; }));
+
+  if (_focusId) {
+    const _el = document.getElementById(_focusId);
+    if (_el) {
+      _el.focus();
+      // On type="number" the browser reports selectionStart as null. Passing that to
+      // setSelectionRange is read as 0 and parks the caret at the start of the field, so
+      // typing "100" jumped back before every digit. With no caret info, plain focus()
+      // already leaves the caret at the end — which is what we want.
+      if (_selStart !== null && _selEnd !== null) {
+        try { _el.setSelectionRange(_selStart, _selEnd); } catch(e){}
+      }
+    }
+  }
+
+  // Campi numerici: nessun clamp mentre si digita (altrimenti il primo carattere
+  // viene subito riscritto col minimo). Il minimo si applica solo su blur.
+  function bindNum(id, min, max, apply, after) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Campi con step decimale (es. badge su misura): 1 cifra dopo la virgola.
+    const stepAttr = parseFloat(el.dataset.quoteStep || '1');
+    const dec = stepAttr > 0 && stepAttr < 1;
+    const parseVal = (s) => dec ? Math.round(parseFloat(String(s).replace(',', '.')) * 10) / 10 : parseInt(s, 10);
+    const done = after || renderDetail;
+    // Pulsanti − / + ai lati del campo (lo stesso campo resta digitabile).
+    const step = dec ? stepAttr : 1;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:flex;align-items:stretch;width:100%;';
+    el.parentNode.insertBefore(wrap, el);
+    const mkBtn = (label, aria, delta) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.tabIndex = -1; b.textContent = label; b.setAttribute('aria-label', aria);
+      b.style.cssText = 'touch-action:manipulation;-webkit-user-select:none;user-select:none;position:absolute;top:5px;bottom:5px;' + (delta < 0 ? 'left:5px;' : 'right:5px;') + 'width:32px;padding:0;border-radius:6px;border:none;background:oklch(0.95 0.005 90);color:oklch(0.25 0.01 90);font-family:inherit;font-size:16px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;';
+      b.addEventListener('click', () => {
+        let n = parseVal(el.value);
+        if (isNaN(n)) n = min != null ? min : 1;
+        n = dec ? Math.round((n + delta * step) * 10) / 10 : n + delta * step;
+        if (min != null && n < min) n = min;
+        if (max != null && n > max) n = max;
+        el.value = String(n);
+        apply(n); done();
+      });
+      return b;
+    };
+    wrap.appendChild(mkBtn('−', 'Diminuisci', -1));
+    wrap.appendChild(el);
+    wrap.appendChild(mkBtn('+', 'Aumenta', 1));
+    el.style.flex = '1 1 auto'; el.style.minWidth = '0'; el.style.textAlign = 'center'; el.style.paddingLeft = '44px'; el.style.paddingRight = '44px';
+    el.addEventListener('input', (e) => {
+      const raw = e.target.value.trim();
+      const caret = e.target.selectionStart;
+      if (raw === '') return;
+      if (dec && /[.,]$/.test(raw)) return; // separatore appena digitato: aspetta il decimale
+      let n = parseVal(raw);
+      if (isNaN(n)) return;
+      if (max != null && n > max) { n = max; e.target.value = String(n); }
+      if (min != null && n < min) return; // sta ancora digitando
+      apply(n); done();
+      // Il re-render sostituisce l'input: rimetti il focus, il testo digitato (virgola o punto)
+      // e il cursore dopo le cifre.
+      const again = document.getElementById(id);
+      if (again) { if (dec) again.value = raw; again.focus(); try { const L = again.value.length, P = caret == null ? L : Math.min(caret, L); again.setSelectionRange(P, P); } catch (err) {} }
+    });
+    el.addEventListener('blur', (e) => {
+      // Re-rendering detaches the focused input, and removing a focused element fires blur on
+      // the DETACHED node. Acting on that would clamp + renderDetail() again, which detaches
+      // the next one, and so on — an infinite loop that froze the page. Ignore dead nodes.
+      if (!e.target.isConnected) return;
+      const raw = e.target.value.trim();
+      let n = parseVal(raw);
+      if (isNaN(n) || (min != null && n < min)) n = (min != null ? min : 1);
+      if (max != null && n > max) n = max;
+      if (String(n) === raw) return;
+      if (dec && parseVal(raw) === n) return; // "8,5" e "8.5" sono lo stesso valore // valore gia' valido: nessun re-render
+      e.target.value = String(n);
+      apply(n); done();
+    });
+  }
+
+  const range = document.getElementById('tierRange');
+  if (range) range.addEventListener('input', (e) => { state.tierIdxById[p.id] = parseInt(e.target.value,10); renderDetail(); });
+  const deliveryRange = document.getElementById('deliveryQtyRange');
+  if (deliveryRange) deliveryRange.addEventListener('input', (e) => {
+    const cur = state.deliveryIdxById[p.id] || deliveryDefault(p);
+    state.deliveryIdxById[p.id] = { ...cur, qtyIdx: parseInt(e.target.value,10) };
+    renderDetail();
+  });
+  app.querySelectorAll('[data-legatura-idx]').forEach(el => el.addEventListener('click', () => { (state.legaturaById = state.legaturaById || {})[p.id] = parseInt(el.dataset.legaturaIdx,10); renderDetail(); }));
+  app.querySelectorAll('[data-delivery-idx]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.deliveryIdxById[p.id] || deliveryDefault(p);
+    const dNew = parseInt(el.dataset.deliveryIdx,10);
+    const maxQ = p.pricing.tiersByDelivery[dNew].length - 1;
+    // Mantiene la stessa quantità (non lo stesso indice): se nella nuova consegna non esiste, prende la più vicina inferiore.
+    const curQty = p.pricing.tiersByDelivery[cur.deliveryIdx]?.[cur.qtyIdx]?.qty;
+    const newTiers = p.pricing.tiersByDelivery[dNew];
+    let q = newTiers.findIndex(t => t.qty === curQty);
+    if (q < 0) { q = 0; newTiers.forEach((t, i) => { if (curQty != null && t.qty <= curQty) q = i; }); }
+    state.deliveryIdxById[p.id] = { deliveryIdx: dNew, qtyIdx: Math.min(q, maxQ) };
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
+  app.querySelectorAll('[data-size-group]').forEach(el => el.addEventListener('click', () => {
+    const gs = p.pricing.groups; const g = gs[parseInt(el.dataset.sizeGroup,10)];
+    const cur = state.sizeIdxById[p.id] ?? p.pricing.defaultIndex ?? 0;
+    const cg = gs.find(x => cur >= x.from && cur < x.to) || gs[0];
+    state.sizeIdxById[p.id] = Math.min(g.from + (cur - cg.from), g.to - 1); renderDetail();
+  }));
+  app.querySelectorAll('[data-swatch]').forEach(el => el.addEventListener('click', () => { state.swatchIdxById[p.id] = parseInt(el.dataset.swatch,10); state.mainImageOverride = null; renderDetail(); }));
+  bindNum('swQtyInput', 1, null, (n) => { swatchQtyState(p).qty = n; });
+  app.querySelectorAll('[data-swqty-swatch]').forEach(el => el.addEventListener('click', () => { swatchQtyState(p).swatchIdx = parseInt(el.dataset.swqtySwatch,10); renderDetail(); }));
+  if (p.pricing && p.pricing.larghezza) bindNum('adesLarghezza', p.pricing.larghezza.min, p.pricing.larghezza.max, (n) => { adesivoState(p).larghezza = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('adesAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { adesivoState(p).altezza = n; });
+  if (p.pricing && p.pricing.qty) bindNum('adesQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { adesivoState(p).qty = n; });
+  app.querySelectorAll('[data-ades-sagoma]').forEach(el => el.addEventListener('click', () => { adesivoState(p).sagomaIdx = parseInt(el.dataset.adesSagoma,10); renderDetail(); }));
+  app.querySelectorAll('[data-presp-materiale]').forEach(el => el.addEventListener('click', () => { const f = prespaziatiState(p); f.materialeIdx = parseInt(el.dataset.prespMateriale,10); f.coloreIdx = 0; renderDetail(); }));
+  const prespColore = document.getElementById('prespColore');
+  if (prespColore) prespColore.addEventListener('change', (e) => { prespaziatiState(p).coloreIdx = parseInt(e.target.value,10); renderDetail(); });
+  const prespAltroColore = document.getElementById('prespAltroColore');
+  if (prespAltroColore) prespAltroColore.addEventListener('input', (e) => { prespaziatiState(p).altroColore = e.target.value; });
+  if (p.pricing && p.pricing.base) bindNum('prespBase', p.pricing.base.min, p.pricing.base.max, (n) => { prespaziatiState(p).base = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('prespAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { prespaziatiState(p).altezza = n; });
+  if (p.pricing && p.pricing.copie) bindNum('prespCopie', p.pricing.copie.min, null, (n) => { prespaziatiState(p).copie = n; });
+  app.querySelectorAll('[data-presp-lavorazione]').forEach(el => el.addEventListener('click', () => { prespaziatiState(p).lavorazioneIdx = parseInt(el.dataset.prespLavorazione,10); renderDetail(); }));
+  if (p.pricing && p.pricing.larghezza) bindNum('bvLarghezza', p.pricing.larghezza.min, p.pricing.larghezza.max, (n) => { bv24hState(p).larghezza = n; });
+  if (p.pricing && p.pricing.altezza) bindNum('bvAltezza', p.pricing.altezza.min, p.pricing.altezza.max, (n) => { bv24hState(p).altezza = n; });
+  if (p.pricing && p.pricing.qty) bindNum('bvQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { bv24hState(p).qty = n; });
+  app.querySelectorAll('[data-bv-lati]').forEach(el => el.addEventListener('click', () => { bv24hState(p).latiIdx = parseInt(el.dataset.bvLati,10); renderDetail(); }));
+  app.querySelectorAll('[data-bv-carta]').forEach(el => el.addEventListener('click', () => { bv24hState(p).cartaIdx = parseInt(el.dataset.bvCarta,10); renderDetail(); }));
+  app.querySelectorAll('[data-bv-soggetti]').forEach(el => el.addEventListener('click', () => { bv24hState(p).soggettiIdx = parseInt(el.dataset.bvSoggetti,10); renderDetail(); }));
+  app.querySelectorAll('[data-angoli-toggle]').forEach(el => el.addEventListener('change', () => { state.angoliById[el.dataset.angoliToggle] = el.checked; renderDetail(); }));
+  app.querySelectorAll('[data-plast-toggle]').forEach(el => el.addEventListener('change', () => { state.plastById[el.dataset.plastToggle] = el.checked; renderDetail(); }));
+  app.querySelectorAll('[data-grafica-toggle]').forEach(el => el.addEventListener('change', () => { state.graficaById[el.dataset.graficaToggle] = el.checked; renderDetail(); }));
+  if (p.pricing && p.pricing.qty) bindNum('locQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { locandineState(p).qty = n; });
+  app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));
+  app.querySelectorAll('[data-loc-carta]').forEach(el => el.addEventListener('click', () => { locandineState(p).cartaIdx = parseInt(el.dataset.locCarta,10); renderDetail(); }));
+  if (p.pricing && p.pricing.qty) bindNum('scatolaQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { scatolaState(p).qty = n; });
+  app.querySelectorAll('[data-scatola-misura]').forEach(el => el.addEventListener('click', () => { scatolaState(p).misuraIdx = parseInt(el.dataset.scatolaMisura,10); renderDetail(); }));
+  app.querySelectorAll('[data-scatola-colore]').forEach(el => el.addEventListener('click', () => { scatolaState(p).coloreIdx = parseInt(el.dataset.scatolaColore,10); renderDetail(); }));
+  const rilUpdate = () => updateRilTotal(p);
+  if (p.pricing && p.pricing.qty) bindNum('rilQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { rilegatureState(p).qty = n; }, rilUpdate);
+  if (p.pricing && p.pricing.pagCol) bindNum('rilPagCol', p.pricing.pagCol.min, p.pricing.pagCol.max, (n) => { rilegatureState(p).pagCol = n; }, rilUpdate);
+  if (p.pricing && p.pricing.pagBn) bindNum('rilPagBn', p.pricing.pagBn.min, p.pricing.pagBn.max, (n) => { rilegatureState(p).pagBn = n; }, rilUpdate);
+  app.querySelectorAll('[data-ril-lati]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).latiIdx = parseInt(el.dataset.rilLati,10); renderDetail(); }));
+  app.querySelectorAll('[data-ril-carta]').forEach(el => el.addEventListener('click', () => { rilegatureState(p).cartaIdx = parseInt(el.dataset.rilCarta,10); renderDetail(); }));
+  const bcrRange = document.getElementById('bcrQtyRange');
+  if (bcrRange) bcrRange.addEventListener('input', (e) => {
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0 };
+    state.bcrIdxById[p.id] = { ...cur, qtyIdx: parseInt(e.target.value,10) };
+    renderDetail();
+  });
+  app.querySelectorAll('[data-bcr-format]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcrIdxById[p.id] || {};
+    state.bcrIdxById[p.id] = { formatIdx: parseInt(el.dataset.bcrFormat,10), paperIdx: 0, qtyIdx: 0, colorIdx: cur.colorIdx || 0, motivi: cur.motivi || 1 };
+    renderDetail();
+  }));
+  const bcrMotivi = document.getElementById('bcrMotiviSelect');
+  if (bcrMotivi) bcrMotivi.addEventListener('change', (e) => {
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+    state.bcrIdxById[p.id] = { ...cur, motivi: parseInt(e.target.value,10) };
+    renderDetail();
+  });
+  app.querySelectorAll('[data-bcr-paper]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+    state.bcrIdxById[p.id] = { ...cur, paperIdx: parseInt(el.dataset.bcrPaper,10), qtyIdx: 0 };
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-bcr-color]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcrIdxById[p.id] || { formatIdx: 0, paperIdx: 0, qtyIdx: 0, colorIdx: 0 };
+    state.bcrIdxById[p.id] = { ...cur, colorIdx: parseInt(el.dataset.bcrColor,10) };
+    renderDetail();
+  }));
+  const bcsRange = document.getElementById('bcsQtyRange');
+  if (bcsRange) bcsRange.addEventListener('input', (e) => {
+    const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, qtyIdx: parseInt(e.target.value,10) };
+    renderDetail();
+  });
+  const bcsMotivi = document.getElementById('bcsMotiviSelect');
+  if (bcsMotivi) bcsMotivi.addEventListener('change', (e) => {
+    const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, motivi: parseInt(e.target.value,10) };
+    renderDetail();
+  });
+  app.querySelectorAll('[data-bcs-format]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcsIdxById[p.id] || {};
+    state.bcsIdxById[p.id] = { formatIdx: parseInt(el.dataset.bcsFormat,10), paperIdx: 0, deliveryIdx: 0, qtyIdx: cur.qtyIdx || 0, motivi: cur.motivi || 1 };
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-bcs-paper]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, paperIdx: parseInt(el.dataset.bcsPaper,10), deliveryIdx: 0 };
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-bcs-delivery]').forEach(el => el.addEventListener('click', () => {
+    const cur = state.bcsIdxById[p.id] || { formatIdx: 0, paperIdx: 0, deliveryIdx: 0, qtyIdx: 0 };
+    state.bcsIdxById[p.id] = { ...cur, deliveryIdx: parseInt(el.dataset.bcsDelivery,10) };
+    renderDetail();
+  }));
+  if (p.pricing.type === 'forexPvc') bindNum('forexQty', 1, forexMaxQty(p, forexState(p)), (n) => { forexState(p).qty = n; });
+  const forexCanvaInput = document.getElementById('forexCanva');
+  if (forexCanvaInput) forexCanvaInput.addEventListener('input', (e) => { forexState(p).canva = e.target.value; });
+  app.querySelectorAll('[data-forex-spessore]').forEach(el => el.addEventListener('click', () => { forexState(p).spessoreIdx = parseInt(el.dataset.forexSpessore,10); renderDetail(); }));
+  app.querySelectorAll('[data-forex-stampa]').forEach(el => el.addEventListener('click', () => { forexState(p).stampaIdx = parseInt(el.dataset.forexStampa,10); renderDetail(); }));
+  app.querySelectorAll('[data-forex-consegna]').forEach(el => el.addEventListener('click', () => { forexState(p).consegnaIdx = parseInt(el.dataset.forexConsegna,10); renderDetail(); }));
+  app.querySelectorAll('[data-forex-formato]').forEach(el => el.addEventListener('click', () => { const s = forexState(p); s.custom = false; s.formatIdx = parseInt(el.dataset.forexFormato,10); renderDetail(); }));
+  app.querySelectorAll('[data-forex-custom]').forEach(el => el.addEventListener('click', () => { forexState(p).custom = true; renderDetail(); }));
+  if (p.pricing.type === 'forexPvc' && forexState(p).custom) {
+    const cu = p.pricing.custom;
+    bindNum('forexW', cu.minShort, cu.maxLong, (n) => { forexState(p).w = n; });
+    bindNum('forexH', cu.minShort, cu.maxLong, (n) => { forexState(p).h = n; });
+  }
+  bindNum('strQty', 1, 100, (n) => { striscioniState(p).qty = n; });
+  app.querySelectorAll('[data-str-consegna]').forEach(el => el.addEventListener('click', () => { striscioniState(p).consegnaIdx = parseInt(el.dataset.strConsegna,10); renderDetail(); }));
+  app.querySelectorAll('[data-str-occhielli]').forEach(el => el.addEventListener('click', () => { striscioniState(p).occhielliIdx = parseInt(el.dataset.strOcchielli,10); renderDetail(); }));
+  app.querySelectorAll('[data-str-formato]').forEach(el => el.addEventListener('click', () => { striscioniState(p).formatIdx = parseInt(el.dataset.strFormato,10); renderDetail(); }));
+  app.querySelectorAll('[data-thumb]:not([data-bound])').forEach(el => { el.dataset.bound = '1'; el.addEventListener('click', () => { state.mainImageOverride = el.dataset.thumb; renderDetail(); }); });
+  app.querySelectorAll('[data-quote-key][data-quote-val]').forEach(el => el.addEventListener('click', () => {
+    const prevUnit = (state.quoteSelById[p.id]||{}).unit || 'CM';
+    state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.quoteKey]: el.dataset.quoteVal };
+    const sel2 = state.quoteSelById[p.id];
+    const cittaOpt = (p.pricing.options||[]).find(o => o.key === 'citta' && o.heroImagesBySize);
+    if (cittaOpt && sel2.citta) {
+      const bySize = cittaOpt.heroImagesBySize[sel2.citta];
+      const formatoVal = sel2.formato || '50 x 25 cm';
+      if (bySize && bySize[formatoVal]) state.mainImageOverride = bySize[formatoVal];
+    }
+    const heroOpt = (p.pricing.options||[]).find(o => o.key === el.dataset.quoteKey && o.heroImages);
+    if (heroOpt && heroOpt.heroImages[el.dataset.quoteVal]) state.mainImageOverride = heroOpt.heroImages[el.dataset.quoteVal];
+    // Cambiando unità di misura riporto le misure salvate dentro il nuovo intervallo: campo, prezzo mostrato e importo Stripe restano allineati.
+    if (el.dataset.quoteKey === 'unit') {
+      const kOld = STRUTTURA_TO_CM[String(prevUnit || 'CM').toUpperCase()] || 1;
+      const kNew = STRUTTURA_TO_CM[String(sel2.unit || 'CM').toUpperCase()] || 1;
+      (p.pricing.options||[]).forEach(o => {
+        if (!o.choicesByUnit) return;
+        const v = Number(sel2[o.key]);
+        if (!isNaN(v) && kOld !== kNew) sel2[o.key] = String(Math.round(v * kOld / kNew));
+      });
+      (p.pricing.options||[]).forEach(o => {
+        if (!o.choicesByUnit) return;
+        const range = o.choicesByUnit[sel2.unit];
+        if (!range) return;
+        const lo = Number(range[0]), hi = Number(range[range.length-1]);
+        const cur = Number(sel2[o.key]);
+        sel2[o.key] = String(isNaN(cur) ? lo : Math.min(Math.max(cur, lo), hi));
+      });
+    }
+    renderDetail();
+  }));
+  app.querySelectorAll('input[data-quote-num]').forEach(el => {
+    const key = el.dataset.quoteNum;
+    bindNum(el.id, parseFloat(el.dataset.quoteMin), parseFloat(el.dataset.quoteMax), (n) => {
+      state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [key]: String(n) };
+    });
+  });
+  app.querySelectorAll('[data-cal-day]').forEach(el => el.addEventListener('click', () => {
+    const cur = { ...(state.quoteSelById[p.id]||{}) };
+    const d = el.dataset.calDay;
+    state.evMsg = '';
+    if (!cur.ev_start || cur.ev_end || d < cur.ev_start) { cur.ev_start = d; cur.ev_end = ''; }
+    else if (eventRangeHasBooked(cur.ev_start, d)) state.evMsg = window.tpLang === 'en' ? 'Some days in this range are already booked.' : 'Alcuni giorni in questo intervallo sono già prenotati.';
+    else if ((new Date(d) - new Date(cur.ev_start)) / 864e5 + 1 > EVENT_MAX_SPAN) state.evMsg = (window.tpLang === 'en' ? 'Maximum ' : 'Durata massima ') + EVENT_MAX_SPAN + (window.tpLang === 'en' ? ' days.' : ' giorni.');
+    else cur.ev_end = d;
+    state.quoteSelById[p.id] = cur;
+    renderDetail();
+  }));
+  app.querySelectorAll('[data-ev-field]').forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    state.quoteSelById[p.id] = { ...(state.quoteSelById[p.id]||{}), [el.dataset.evField]: el.value };
+  }));
+  app.querySelectorAll('[data-cal-nav]').forEach(el => el.addEventListener('click', () => {
+    const sel = state.quoteSelById[p.id] || {};
+    const cur = state.calMonthById[p.id] || (sel.ev_start || eventDateRange().min).slice(0, 7);
+    const [y, m] = cur.split('-').map(Number);
+    const d = new Date(y, m - 1 + Number(el.dataset.calNav), 1);
+    state.calMonthById[p.id] = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    renderDetail();
+  }));
+  bindNum('formulaQty', 1, null, (n) => { formulaState(p).qty = n; });
+  const canvaInput = document.getElementById('formulaCanva');
+  if (canvaInput) canvaInput.addEventListener('input', (e) => { formulaState(p).canva = e.target.value; });
+  app.querySelectorAll('[data-formula-formato]').forEach(el => el.addEventListener('click', () => { formulaState(p).formato = el.dataset.formulaFormato; renderDetail(); }));
+  app.querySelectorAll('[data-formula-tempi]').forEach(el => el.addEventListener('click', () => { formulaState(p).tempi = el.dataset.formulaTempi; renderDetail(); }));
+  app.querySelectorAll('[data-formula-struttura]').forEach(el => el.addEventListener('click', () => { formulaState(p).strutturaIdx = parseInt(el.dataset.formulaStruttura,10); renderDetail(); }));
+  mountPaypalButtons();
+  const stripeBtn = app.querySelector('.pay-stripe');
+  if (stripeBtn) stripeBtn.addEventListener('click', () => startStripeCheckout(stripeBtn));
+}
+
+function updateCartBadge(){
+  const el = document.getElementById('cartCount');
+  if (!el || !window.TPCart) return;
+  const n = window.TPCart.count();
+  el.textContent = String(n);
+  el.style.display = n ? 'block' : 'none';
+}
+if (window.TPCart) window.TPCart.onChange(updateCartBadge);
+updateCartBadge();
+render();
