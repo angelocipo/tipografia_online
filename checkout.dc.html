@@ -91,23 +91,15 @@
           <button type="button" class="btn btn-ghost" onClick="{{ it.onRemove }}" style="align-self:flex-start;padding-left:0;">Rimuovi dal carrello</button>
         </div>
       </sc-for>
-      <div style="display:flex;flex-direction:column;gap:6px;padding-top:var(--space-4);font-size:14px;">
-        <div style="display:flex;justify-content:space-between;"><span>Prodotti</span><span>€ {{ productPriceFmt }}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>Spedizione</span><span>{{ shippingLabel }}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;">Totale</span><span style="font-family:var(--font-heading);font-size:28px;">€ {{ orderTotal }}</span></div>
-        <sc-if value="{{ isMultiItem }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12px;color:var(--color-neutral-700);">Una sola spedizione per l'ordine: si applica la tariffa più alta tra gli articoli.</div>
-        </sc-if>
-      </div>
       <div class="field" style="margin:var(--space-4) 0;">
-        <label id="ship-zone-label">Consegna</label>
-        <div class="seg" role="radiogroup" aria-labelledby="ship-zone-label">
-          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_centro" checked="{{ isZoneRomaCentro }}" onChange="{{ setShipZone }}">Roma Sud/EUR/Centro — € 20,00</label>
-          <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30,00</label>
-          <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25,00</label>
-          <label class="seg-opt"><input type="radio" name="shipZone" value="ue" checked="{{ isZoneUe }}" onChange="{{ setShipZone }}">Unione Europea (+2/3 giorni) — € 35,00</label>
-          <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><label class="seg-opt"><input type="radio" name="shipZone" value="ritiro" checked="{{ isZoneRitiro }}" onChange="{{ setShipZone }}">Ritiro in sede — gratuito</label></sc-if>
-        </div>
+        <label for="ship-zone">Consegna</label>
+        <select class="input" id="ship-zone" value="{{ shipZone }}" onChange="{{ setShipZone }}" style="max-width:420px;">
+          <option value="roma_centro">Roma Sud/EUR/Centro — € 20,00</option>
+          <option value="roma_resto">Resto di Roma — € 30,00</option>
+          <option value="italia">Italia (+1 giorno) — € 25,00</option>
+          <option value="ue">Unione Europea (+2/3 giorni) — € 35,00</option>
+          <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><option value="ritiro">Ritiro in sede — gratuito</option></sc-if>
+        </select>
         <sc-if value="{{ isZoneRitiro }}" hint-placeholder-val="{{ false }}">
           <p class="card-body" style="margin:var(--space-2) 0 0;color:var(--color-text);">Ritiro in sede: Via Lorenzo Bonincontri, 26, 00147 Roma. Lun-Ven 8-12 / 15-18. Ti avvisiamo al cellulare quando l'ordine è pronto.</p>
         </sc-if>
@@ -151,6 +143,14 @@
           <p class="card-body" style="margin:var(--space-2) 0 0;">Backdrop: trasporto incluso in tutta Italia. Unione Europea + € 55,00.</p>
         </sc-if>
         <p class="card-body" style="margin:var(--space-2) 0 0;">Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;padding-top:var(--space-4);font-size:14px;">
+        <div style="display:flex;justify-content:space-between;"><span>Prodotti</span><span>€ {{ productPriceFmt }}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Spedizione</span><span>{{ shippingLabel }}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;">Totale</span><span style="font-family:var(--font-heading);font-size:28px;">€ {{ orderTotal }}</span></div>
+        <sc-if value="{{ isMultiItem }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px;color:var(--color-neutral-700);">Una sola spedizione per l'ordine: si applica la tariffa più alta tra gli articoli.</div>
+        </sc-if>
       </div>
       <a href="index.html" class="btn btn-ghost" style="margin-top:var(--space-3);padding-left:0;">+ Aggiungi altri prodotti</a>
     </div>
@@ -659,6 +659,7 @@ class Component extends DCLogic {
       isZoneUe: s.shipZone === 'ue',
       shipCountry: s.shipCountry,
       setShipCountry: (e) => this.setState({ shipCountry: e.target.value }),
+      shipZone: s.shipZone === 'ritiro' && !this.canPickup() ? 'roma_centro' : s.shipZone,
       setShipZone: (e) => this.setState({ shipZone: e.target.value }),
       isPrivato: s.invType === 'privato',
       isAzienda: s.invType === 'azienda',
