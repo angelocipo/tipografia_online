@@ -154,11 +154,12 @@ class Component extends DCLogic {
     const ean = params.get('ean') || '';
     const collection = params.get('collection') || 'strategici';
     // Same rule as checkout.dc.html: shipping only on "Su Misura" products, zone rate (no reduced rate over € 100,00).
-    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
+    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35, ritiro: 0 };
     const zona = params.get('zona') || 'roma_centro';
     let spedizione = collection === 'misura' && prezzo > 0 ? (zoneRates[zona] ?? 20) : 0;
     // Backdrop '5970': trasporto incluso in Italia, UE + € 55 (stessa regola in checkout.dc.html).
     if (String(pid) === '5970') spedizione = zona === 'ue' ? 55 : 0;
+    if (zona === 'ritiro') spedizione = 0;
     if (String(pid) === '215') spedizione = 0; // Struttura per Eventi: consegna inclusa.
     // Roll-Up 80/85 × 200: stessa regola del checkout (1° a tariffa zona, successivi € 15).
     const rollupQ = pid === '197' ? Math.max(1, parseInt(params.get('quantita'), 10) || 1) : 0;

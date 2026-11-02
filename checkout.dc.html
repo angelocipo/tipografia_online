@@ -182,7 +182,11 @@
           <label class="seg-opt"><input type="radio" name="shipZone" value="roma_resto" checked="{{ isZoneRomaResto }}" onChange="{{ setShipZone }}">Resto di Roma — € 30,00</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="italia" checked="{{ isZoneItalia }}" onChange="{{ setShipZone }}">Italia (+1 giorno) — € 25,00</label>
           <label class="seg-opt"><input type="radio" name="shipZone" value="ue" checked="{{ isZoneUe }}" onChange="{{ setShipZone }}">Unione Europea (+2/3 giorni) — € 35,00</label>
+          <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><label class="seg-opt"><input type="radio" name="shipZone" value="ritiro" checked="{{ isZoneRitiro }}" onChange="{{ setShipZone }}">Ritiro in sede — gratuito</label></sc-if>
         </div>
+        <sc-if value="{{ isZoneRitiro }}" hint-placeholder-val="{{ false }}">
+          <p class="card-body" style="margin:var(--space-2) 0 0;color:var(--color-text);">Ritiro in sede: Via Lorenzo Bonincontri, 26, 00147 Roma. Lun-Ven 8-12 / 15-18. Ti avvisiamo al cellulare quando l'ordine è pronto.</p>
+        </sc-if>
         <sc-if value="{{ isZoneUe }}" hint-placeholder-val="{{ false }}">
           <div class="field" style="margin-top:var(--space-3);max-width:360px;"><label for="ship-country">Paese di destinazione (UE)</label>
             <select class="input" id="ship-country" value="{{ shipCountry }}" onChange="{{ setShipCountry }}">
@@ -293,6 +297,7 @@
         <span>Unione Europea (+2/3 giorni) € 35,00</span>
         <span>Roll-Up 80/85 × 200 cm a Roma e in UE: il 1° a tariffa zona, ogni successivo € 15,00</span>
         <span>Prezzi strategici: spedizione inclusa</span>
+        <span>Ritiro in sede gratuito (esclusi Prezzi strategici)</span>
         <span>Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</span>
       </div>
     </div>
@@ -522,6 +527,7 @@ class Component extends DCLogic {
   // Spedizione di un articolo (stessa regola di api/create-checkout-session.js e preventivo.dc.html).
   itemShippingFee(it) {
     const zone = this.state.shipZone;
+    if (zone === 'ritiro') return 0; // Ritiro in sede: gratuito (non disponibile con Prezzi strategici).
     // Backdrop '5970': trasporto incluso in Italia, UE + € 55.
     if (String(it.productId) === '5970') return zone === 'ue' ? 55 : 0;
     if (String(it.productId) === '215') return 0; // Struttura per Eventi: consegna inclusa (stessa regola del server).
@@ -540,6 +546,12 @@ class Component extends DCLogic {
     return Math.max(0, ...this.state.items.map(it => this.itemShippingFee(it)));
   }
 
+  // Ritiro in sede gratuito: tutti i prodotti tranne Prezzi strategici e Struttura per Eventi (montaggio sul posto).
+  canPickup() {
+    const it = this.state.items;
+    return it.length > 0 && it.every(i => i.col !== 'strategici' && String(i.productId) !== '215');
+  }
+
   subtotal() { return this.state.items.reduce((a, i) => a + (parseFloat(i.price) || 0), 0); }
 
   validate() {
@@ -551,6 +563,7 @@ class Component extends DCLogic {
     if (invType === 'azienda' && !inv.pec && !inv.sdi) return 'Inserisci PEC o Codice SDI.';
     const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
     if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
+    if (this.state.shipZone === 'ritiro' && !this.canPickup()) return 'Il ritiro in sede non è disponibile per i Prezzi strategici: scegli una zona di consegna.';
     if (this.state.shipZone === 'ue' && !this.state.shipCountry) return 'Seleziona il paese UE di destinazione.';
     if (!this.state.items.length) return 'Il carrello è vuoto.';
     return null;
@@ -634,7 +647,9 @@ class Component extends DCLogic {
       hasPreventivo: n === 1,
       orderTotal: eur(sub + shippingFee),
       productPriceFmt: eur(sub),
-      shippingLabel: shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
+      canPickup: this.canPickup(),
+      isZoneRitiro: s.shipZone === 'ritiro' && this.canPickup(),
+      shippingLabel: s.shipZone === 'ritiro' && this.canPickup() ? 'ritiro in sede (gratuito)' : shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: false,
       isRollupShipping: s.items.some(i => String(i.productId) === '197') && s.shipZone !== 'italia',
       isBackdrop: s.items.some(i => String(i.productId) === '5970'),
