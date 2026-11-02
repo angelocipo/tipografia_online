@@ -364,7 +364,7 @@ module.exports = async (req, res) => {
     // Elenco = SU_MISURA_IDS in index.html (include decalcomanie e quadri): tenerli allineati.
     // '5970' Backdrop escluso: trasporto incluso nel prezzo.
     const SHIPPING_IDS = ['197', '5833', '5850', '198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
-    const ZONE_RATES = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
+    const ZONE_RATES = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35, ritiro: 0 };
     const EU_COUNTRIES = ["Austria","Belgio","Bulgaria","Cipro","Croazia","Danimarca","Estonia","Finlandia","Francia","Germania","Grecia","Irlanda","Lettonia","Lituania","Lussemburgo","Malta","Paesi Bassi","Polonia","Portogallo","Repubblica Ceca","Romania","Slovacchia","Slovenia","Spagna","Svezia","Ungheria"];
     const zone = ZONE_RATES[shippingZone] !== undefined ? shippingZone : 'roma_centro';
     const shipCountry = zone === 'ue' ? String((req.body && req.body.shippingCountry) || '') : 'Italia';
@@ -387,8 +387,14 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: 'La Struttura per Eventi è disponibile solo a Roma: scegli una zona di consegna di Roma.' });
       return;
     }
+    // Ritiro in sede gratuito: non per Prezzi strategici (fuori da SHIPPING_IDS, Backdrop a parte) né Struttura per Eventi.
+    if (zone === 'ritiro' && priced.some(p => p.productId === '215' || (!SHIPPING_IDS.includes(p.productId) && p.productId !== '5970'))) {
+      res.status(400).json({ error: 'Il ritiro in sede non è disponibile per i Prezzi strategici: scegli una zona di consegna.' });
+      return;
+    }
     // Carrello: una sola spedizione = la tariffa più alta tra gli articoli.
     const shipFeeFor = (productId, formula) => {
+      if (zone === 'ritiro') return 0;
       if (productId === '5970') return zone === 'ue' ? 55 : 0; // Backdrop: trasporto incluso in Italia, UE + € 55.
       if (productId === '215') return 0; // Struttura per Eventi: consegna e montaggio inclusi (solo Roma).
       if (!SHIPPING_IDS.includes(productId)) return 0;

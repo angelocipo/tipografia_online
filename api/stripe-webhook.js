@@ -482,7 +482,7 @@ function ownerBlockHtml(order, buyerEmail, session, fatturaLink, hasXml, xmlWarn
     ['Tipo', order.customer.isCompany ? 'Azienda' : 'Privato'],
     ['P. IVA / CF', order.customer.vatNumber || order.customer.fiscalCode || '—'],
     ['Indirizzo', [order.customer.address, order.customer.cap, order.customer.city].filter(Boolean).join(', ') || '—'],
-    ['Spedizione', md.ship_same === '0'
+    ['Spedizione', md.shipping_zone === 'ritiro' ? 'RITIRO IN SEDE (gratuito)' : md.ship_same === '0'
       ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city, md.shipping_zone === 'ue' ? md.ship_country : ''].filter(Boolean).join(', ')
       : 'Come fatturazione' + (md.shipping_zone === 'ue' && md.ship_country ? ' — ' + md.ship_country : '')],
     ['Cellulare consegna', md.ship_phone || '—'],

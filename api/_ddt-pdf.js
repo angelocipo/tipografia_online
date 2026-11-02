@@ -100,7 +100,7 @@ function buildDdtPdf(order, md, session, lang) {
   y -= bh + 14;
   const facts = [
     [L('Causale del trasporto', 'Reason'), L('Vendita', 'Sale')],
-    [L('Trasporto a cura di', 'Carrier'), en ? 'Corriere / Courier' : 'Vettore (corriere)'],
+    [L('Trasporto a cura di', 'Carrier'), md.shipping_zone === 'ritiro' ? (en ? 'Destinatario / Consignee (ritiro in sede)' : 'Destinatario (ritiro in sede)') : (en ? 'Corriere / Courier' : 'Vettore (corriere)')],
     [L('Porto', 'Freight'), L('Franco', 'Prepaid')],
     [L('Rif. ordine', 'Order ref.'), '#' + order.number],
   ];
