@@ -300,7 +300,7 @@ const PRODUCTS = [
     gallery:['img/Tri-fold-brochures-with-Italian-design700.webp'],
     intro:"Pieghevole aperto A4, chiuso 10×21 cm, con piega a portafoglio o a zig-zag: ordinato e d'impatto per servizi, menù e listini.",
     features:['Piega a portafoglio o a zig-zag','Layout ordinato per menù e listini','Prezzi all inclusive: stampa, gestione file e IVA'],
-    specs:{'Formato':'Aperto A4 · chiuso 10×21 cm','Piega':'Portafoglio o zig-zag','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
+    specs:{'Formato':'Aperto A4 · chiuso 10×21 cm','Carta':'Patinata lucida 130 g/m²','Piega':'Portafoglio o zig-zag','Tempi':'Budget 4–6 gg lavorativi · Express 2 gg'},
     // Reconstructed 1:1 from the real APF config for this product (Consegna → Quantità con prezzi differenziati; Carta e Piega non incidono sul prezzo).
     pricing:{ type:'tiersDelivery', unit:'copie',
       deliveryChoices: ['Budget 1 Settimana', 'Express 2 gg'],
