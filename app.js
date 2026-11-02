@@ -3917,7 +3917,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
     const parseVal = (s) => dec ? Math.round(parseFloat(String(s).replace(',', '.')) * 10) / 10 : parseInt(s, 10);
     const done = after || renderDetail;
     // Pulsanti − / + ai lati del campo (lo stesso campo resta digitabile).
-    const step = dec ? stepAttr : 1;
+    const step = 1; // +/− sempre a unità intere; i decimali restano digitabili
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:relative;display:flex;align-items:stretch;width:100%;';
     el.parentNode.insertBefore(wrap, el);
@@ -3928,7 +3928,8 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
       b.addEventListener('click', () => {
         let n = parseVal(el.value);
         if (isNaN(n)) n = min != null ? min : 1;
-        n = dec ? Math.round((n + delta * step) * 10) / 10 : n + delta * step;
+        // Arrotonda al numero intero successivo/precedente (8,5 → 9 con +, → 8 con −).
+        n = Number.isInteger(n) ? n + delta : (delta > 0 ? Math.ceil(n) : Math.floor(n));
         if (min != null && n < min) n = min;
         if (max != null && n > max) n = max;
         el.value = String(n);
