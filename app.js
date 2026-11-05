@@ -1614,32 +1614,6 @@ const PRODUCTS = [
       { key:'quantita', label:'Quantità di Rilegature', type:'slider', unitSuffix:'rilegature', choices:['1','200'] },
       { key:'facciate', label:"Facciate A5 interno B/N", type:'slider', unitSuffix:'facciate', step:4, choices:['12','100'] },
     ] } },
-  { id:'5851', ean:'0652026573619', nome:'Volantini e Pieghevoli Personalizzati', categoria:'Volantini',
-    img:'img/volantini-pieghevoli-personalizzati.png',
-    gallery:['img/volantini-pieghevoli-personalizzati.png'],
-    intro:'Volantini e pieghevoli su misura: scegli formato libero, materiale, stampa, perforazione e pieghe. Prezzo calcolato sulla superficie reale della carta.',
-    features:['Formato libero da 5×5 a 32×44 cm','Carta da gr. 100 a gr. 400, anche martellata gr. 280','Stampa 1 o 2 lati, a colori o B/N','Perforazione e fino a 3 pieghe','Quantità da 25 a 1.000 pezzi'],
-    specs:{'Quantità':'25 – 1.000 pz','Formato':'da 5×5 a 32×44 cm','Carta':'gr. 100 – gr. 400, martellata gr. 280'},
-    // Ricostruito 1:1 dalla formula Studio Wombat fornita dal titolare (superficie carta su foglio 440×320 mm).
-    pricing:{type:'quote', basePrice:0,
-      formula: (sel) => {
-        const q = Number(sel.qty ?? 25);
-        const w = Number(sel.larghezza ?? 5) * 10, h = Number(sel.altezza ?? 5) * 10; // cm → mm
-        const carta = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[sel.materiale] ?? 0.13;
-        const stampa = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.47 }[sel.stampa] ?? 0.4;
-        const perf = sel.perforazione === 'Si' ? 0.05 : 0;
-        const pieghe = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[sel.pieghe] ?? 0;
-        return ((carta + stampa) * q * (w+20) * (h+20) / 440 / 320 + perf*q + pieghe*q + 10) * 1.6; // ricarico ×1,6
-      },
-      options:[
-      { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', row:true, choices:['25','1000'] },
-      { key:'larghezza', label:'Larghezza (5–32)', type:'slider', unitSuffix:'cm', row:true, choices:['5','32'] },
-      { key:'altezza', label:'Altezza (5–44)', type:'slider', unitSuffix:'cm', row:true, choices:['5','44'] },
-      { key:'materiale', label:'Materiale', choices:['gr. 100','gr. 200','gr. 300','gr. 400','gr. 280 martellata'] },
-      { key:'stampa', label:'Stampa', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato bianco nero + 1 a colori'] },
-      { key:'perforazione', label:'Perforazione', choices:['No grazie','Si'] },
-      { key:'pieghe', label:'Pieghe', choices:['Nessuna','1 piega','2 pieghe','3 pieghe'] },
-    ] } },
   { id:'202', ean:'0652026573572', nome:'Biglietti da visita a rilievo', categoria:'Biglietti da Visita',
     templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'5,5×8,5 cm','path':'template/formato-5-5x8-5.pdf'},{'label':'9×5 cm','path':'template/formato-9x5.pdf'},{'label':'5×9 cm','path':'template/formato-5x9.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
     img:'img/bv-rilievo-hero.webp',
@@ -1651,25 +1625,25 @@ const PRODUCTS = [
     pricing:{ type:'businessCardRilievo', readyDays: [[8,8]], unit:'copie',
       formats: [
         { label: 'Orizzontale 8,5×5,5 cm', papers: [
-          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
-          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
-          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:87.97},{qty:250,price:106.48},{qty:500,price:136.21},{qty:1000,price:153.09},{qty:2500,price:259.92},{qty:5000,price:417.74},{qty:7500,price:587.62},{qty:10000,price:762.04},{qty:15000,price:1112.67},{qty:20000,price:1456.4}] },
+          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:92.44},{qty:250,price:110.22},{qty:500,price:130.76},{qty:1000,price:177.18},{qty:2500,price:321.29},{qty:5000,price:566.23},{qty:7500,price:807.79},{qty:10000,price:1054.48},{qty:15000,price:1535.36},{qty:20000,price:2039.09}] },
+          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:102.9},{qty:250,price:136.56},{qty:500,price:178.27},{qty:1000,price:274.17},{qty:2500,price:570.37},{qty:5000,price:1071.21},{qty:7500,price:1566.34},{qty:10000,price:2066.32},{qty:15000,price:3062.84},{qty:20000,price:4021.39}] },
           { label: 'gr. 350 cartoncino SBS opaco', readyDays:[7,9], tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
         ] },
         { label: 'Verticale 5,5×8,5 cm', papers: [
-          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:71.62},{qty:250,price:86.78},{qty:500,price:111.15},{qty:1000,price:124.99},{qty:2500,price:212.56},{qty:5000,price:341.92},{qty:7500,price:481.17},{qty:10000,price:624.13},{qty:15000,price:911.54},{qty:20000,price:1193.28}] },
-          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:75.28},{qty:250,price:89.86},{qty:500,price:106.69},{qty:1000,price:144.74},{qty:2500,price:262.86},{qty:5000,price:463.63},{qty:7500,price:661.63},{qty:10000,price:863.84},{qty:15000,price:1258},{qty:20000,price:1670.9}] },
-          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:83.86},{qty:250,price:111.44},{qty:500,price:145.63},{qty:1000,price:224.24},{qty:2500,price:467.02},{qty:5000,price:877.55},{qty:7500,price:1283.39},{qty:10000,price:1693.25},{qty:15000,price:2510.03},{qty:20000,price:3295.73}] },
+          { label: 'gr. 300 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:87.97},{qty:250,price:106.48},{qty:500,price:136.21},{qty:1000,price:153.09},{qty:2500,price:259.92},{qty:5000,price:417.74},{qty:7500,price:587.62},{qty:10000,price:762.04},{qty:15000,price:1112.67},{qty:20000,price:1456.4}] },
+          { label: 'gr. 400 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:92.44},{qty:250,price:110.22},{qty:500,price:130.76},{qty:1000,price:177.18},{qty:2500,price:321.29},{qty:5000,price:566.23},{qty:7500,price:807.79},{qty:10000,price:1054.48},{qty:15000,price:1535.36},{qty:20000,price:2039.09}] },
+          { label: 'gr. 500 patinata opaca', readyDays:[7,9], tiers: [{qty:100,price:102.9},{qty:250,price:136.56},{qty:500,price:178.27},{qty:1000,price:274.17},{qty:2500,price:570.37},{qty:5000,price:1071.21},{qty:7500,price:1566.34},{qty:10000,price:2066.32},{qty:15000,price:3062.84},{qty:20000,price:4021.39}] },
           { label: 'gr. 350 cartoncino SBS opaco', readyDays:[7,9], tiers: [{qty:100,price:93.89},{qty:250,price:114.86},{qty:500,price:151.18},{qty:1000,price:194.19},{qty:2500,price:369.42},{qty:5000,price:618.69},{qty:7500,price:887.94},{qty:10000,price:1159.12},{qty:15000,price:1709.1},{qty:20000,price:2257.81}] },
         ] },
         { label: 'Orizzontale 9×5 cm', papers: [
-          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:115.67},{qty:500,price:140.15},{qty:1000,price:175.81},{qty:2500,price:289.22},{qty:5000,price:468.47},{qty:7500,price:657.96},{qty:10000,price:876.13}] },
         ] },
         { label: 'Verticale 5×9 cm', papers: [
-          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:115.67},{qty:500,price:140.15},{qty:1000,price:175.81},{qty:2500,price:289.22},{qty:5000,price:468.47},{qty:7500,price:657.96},{qty:10000,price:876.13}] },
         ] },
         { label: 'Quadrato 5,5×5,5 cm', papers: [
-          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:94.32},{qty:500,price:114.38},{qty:1000,price:143.62},{qty:2500,price:236.58},{qty:5000,price:383.5},{qty:7500,price:538.82},{qty:10000,price:717.65}] },
+          { label: 'gr. 350 offset', readyDays:[10,12], tiers: [{qty:250,price:115.67},{qty:500,price:140.15},{qty:1000,price:175.81},{qty:2500,price:289.22},{qty:5000,price:468.47},{qty:7500,price:657.96},{qty:10000,price:876.13}] },
         ] },
       ],
     } },

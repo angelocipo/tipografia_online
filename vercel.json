@@ -46,13 +46,18 @@
       "permanent": true
     },
     {
+      "source": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "destination": "/blog-100000-biglietti-da-visita.html",
+      "permanent": true
+    },
+    {
       "source": "/biglietti-da-visita-roma-eur-24h",
-      "destination": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "destination": "/blog-100000-biglietti-da-visita.html",
       "permanent": true
     },
     {
       "source": "/biglietti-da-visita-roma-eur-24h/",
-      "destination": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "destination": "/blog-100000-biglietti-da-visita.html",
       "permanent": true
     },
     {
@@ -467,7 +472,7 @@
     },
     {
       "source": "/blog-biglietti-da-visita-roma-eur-24h.dc.html",
-      "destination": "/blog-biglietti-da-visita-roma-eur-24h.html",
+      "destination": "/blog-100000-biglietti-da-visita.html",
       "permanent": true
     },
     {
@@ -807,10 +812,6 @@
     {
       "source": "/blog-addio-al-celibato-magliette-personalizzate.html",
       "destination": "/blog-addio-al-celibato-magliette-personalizzate.dc.html"
-    },
-    {
-      "source": "/blog-biglietti-da-visita-roma-eur-24h.html",
-      "destination": "/blog-biglietti-da-visita-roma-eur-24h.dc.html"
     },
     {
       "source": "/blog-canvas-effetto-pittura-ad-olio.html",
