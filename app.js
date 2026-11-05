@@ -1389,7 +1389,7 @@ const PRODUCTS = [
       ] } },
   { id:'215', ean:'0652026573411', nome:'Struttura Personalizzata per Eventi', categoria:'Eventi',
     img:'img/struttura-eventi-backdrop-acutis.webp',
-    gallery:['img/struttura-eventi-backdrop-acutis.webp','img/insieme-copia.webp','img/struttura-eventi-backdrop-castello.webp','img/struttura-eventi-crown-u.webp','img/struttura-eventi-telaio.webp','img/struttura-eventi-crown-modelli.webp','img/struttura-eventi-crown-modelli-quadrato.webp','img/struttura-eventi-crown-piccolo.webp','img/struttura-eventi-crown-fiera.webp','img/struttura-eventi-piede.webp'],
+    gallery:['img/struttura-eventi-backdrop-acutis.webp','img/insieme-copia.webp','img/struttura-eventi-backdrop-castello.webp','img/struttura-eventi-crown-u.webp','img/struttura-eventi-telaio.webp','img/struttura-eventi-crown-modelli.webp','img/struttura-eventi-crown-modelli-quadrato.webp','img/struttura-eventi-crown-piccolo.webp','img/struttura-eventi-crown-fiera.webp','img/struttura-eventi-piede.webp','img/struttura-eventi-montaggio-acutis.webp'],
     intro:'Fondale su misura per eventi e conferenze: traliccio in alluminio e stampa PVC ad alta definizione, montaggio incluso.',
     features:['Dimensioni su misura, adattate al tuo spazio (100–400 cm altezza, 100–600 cm larghezza)','Traliccio in alluminio certificato + telo in PVC ignifugo, robusto e riutilizzabile','Stampa ad alta definizione','Consegna, installazione, messa in bolla e smontaggio a cura del nostro team','Richiesta caparra confirmatoria del 50%, restituita dopo ispezione senza danni','Servizio disponibile solo a Roma: scegli montaggio e smontaggio nel calendario'],
     specs:{'Altezza':'100 – 400 cm','Larghezza':'100 – 600 cm','Materiale':'Alluminio certificato + PVC ignifugo'},
