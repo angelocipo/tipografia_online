@@ -166,7 +166,7 @@ const PRODUCTS = [
     templatePdf:'template/rollup-200x200.pdf',
     templatePdfs:[{'label':'200×200 cm','path':'template/rollup-200x200.pdf'},{'label':'240×200 cm','path':'template/rollup-240x200.pdf'}],
     img:'img/Professional-rollup-banner-mockup-display-copia2.webp',
-    gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/rollup-240x200-struttura.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
     pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0} },
