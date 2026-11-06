@@ -26,6 +26,20 @@ function latin1(s) {
 const esc = (s) => latin1(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 const eur = (cents) => (cents / 100).toFixed(2);
 const clean = (s) => String(s || '').replace(/\s+/g, '').toUpperCase();
+// Il cliente scrive il paese a mano ("United States", "Francia"...): FatturaPA vuole il codice ISO a 2 lettere.
+const COUNTRY_ISO = { ITALIA:'IT', ITALY:'IT', SANMARINO:'SM', VATICANO:'VA', CITTADELVATICANO:'VA', VATICANCITY:'VA',
+  STATIUNITI:'US', STATIUNITIDAMERICA:'US', USA:'US', UNITEDSTATES:'US', UNITEDSTATESOFAMERICA:'US', AMERICA:'US',
+  REGNOUNITO:'GB', UNITEDKINGDOM:'GB', UK:'GB', INGHILTERRA:'GB', ENGLAND:'GB', GRANBRETAGNA:'GB', GREATBRITAIN:'GB',
+  FRANCIA:'FR', FRANCE:'FR', GERMANIA:'DE', GERMANY:'DE', DEUTSCHLAND:'DE', SPAGNA:'ES', SPAIN:'ES', ESPANA:'ES', ESPAÑA:'ES',
+  PORTOGALLO:'PT', PORTUGAL:'PT', SVIZZERA:'CH', SWITZERLAND:'CH', AUSTRIA:'AT', BELGIO:'BE', BELGIUM:'BE',
+  PAESIBASSI:'NL', OLANDA:'NL', NETHERLANDS:'NL', HOLLAND:'NL', LUSSEMBURGO:'LU', LUXEMBOURG:'LU', IRLANDA:'IE', IRELAND:'IE',
+  DANIMARCA:'DK', DENMARK:'DK', SVEZIA:'SE', SWEDEN:'SE', NORVEGIA:'NO', NORWAY:'NO', FINLANDIA:'FI', FINLAND:'FI',
+  POLONIA:'PL', POLAND:'PL', GRECIA:'GR', GREECE:'GR', CROAZIA:'HR', CROATIA:'HR', SLOVENIA:'SI', SLOVACCHIA:'SK', SLOVAKIA:'SK',
+  REPUBBLICACECA:'CZ', CECHIA:'CZ', CZECHREPUBLIC:'CZ', CZECHIA:'CZ', UNGHERIA:'HU', HUNGARY:'HU', ROMANIA:'RO', BULGARIA:'BG',
+  ESTONIA:'EE', LETTONIA:'LV', LATVIA:'LV', LITUANIA:'LT', LITHUANIA:'LT', MALTA:'MT', CIPRO:'CY', CYPRUS:'CY',
+  CANADA:'CA', AUSTRALIA:'AU', BRASILE:'BR', BRAZIL:'BR', ARGENTINA:'AR', MESSICO:'MX', MEXICO:'MX', GIAPPONE:'JP', JAPAN:'JP',
+  CINA:'CN', CHINA:'CN', ISRAELE:'IL', ISRAEL:'IL', ALBANIA:'AL', SERBIA:'RS', UCRAINA:'UA', UKRAINE:'UA', TURCHIA:'TR', TURKEY:'TR' };
+const isoCountry = (s) => { const k = clean(s).replace(/[.'\-]/g, ''); return COUNTRY_ISO[k] || k; };
 
 function progressivo() {
   const A = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -36,7 +50,7 @@ function progressivo() {
 
 // c: { type: 'privato'|'azienda', name, company, vat, cf, pec, sdi, address, cap, city, province, country }
 function buyerBlock(c, warnings) {
-  const country = clean(c.country) || 'IT';
+  const country = isoCountry(c.country) || 'IT';
   const foreign = country !== 'IT';
   if (!/^[A-Z]{2}$/.test(country)) warnings.push(`Codice paese cliente non valido: "${c.country}"`);
   let vat = clean(c.vat).replace(/^[A-Z]{2}(?=\d)/, '');
@@ -170,7 +184,7 @@ function buildFattura(inv) {
         <TipoDocumento>TD01</TipoDocumento>
         <Divisa>EUR</Divisa>
         <Data>${esc(inv.date)}</Data>
-        <Numero>${esc(inv.number || '')}</Numero>
+        <Numero>${esc(inv.number || ('BOZZA-' + String(inv.ref || '').replace(/[^A-Za-z0-9]/g, '') + '1').slice(0, 20))}</Numero>
         <ImportoTotaleDocumento>${eur(inv.totalCents)}</ImportoTotaleDocumento>
         <Causale>${esc(`Ordine ${inv.ref} - ${pagato}`.slice(0, 200))}</Causale>
       </DatiGeneraliDocumento>
