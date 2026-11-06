@@ -1,64 +1,93 @@
-%PDF-1.4
-%âãÏÓ
+%PDF-1.3
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 4 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R 7 0 R] /Count 2 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 2437.8 5697.64] /TrimBox [14.17 14.17 2423.62 5683.46] /BleedBox [0 0 2437.8 5697.64] /Resources << >> /Contents 4 0 R >>
+<<
+/Contents 9 0 R /MediaBox [ 0 0 2409.449 5669.291 ] /Parent 8 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 4 0 obj
-<< /Length 199 >>
-stream
-1 0.86 0.86 rg 0 0 2437.8 5697.64 re f
-1 1 1 rg 14.17 14.17 2409.45 5669.29 re f
-0.8 0 0 RG 4 w 14.17 14.17 2409.45 5669.29 re S
-0 0.35 0.75 RG 4 w [24 16] 0 d 42.52 42.52 2352.76 5612.6 re S [] 0 d
-endstream
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+<<
+/Contents 10 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 8 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 6 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+<<
+/PageMode /UseNone /Pages 8 0 R /Type /Catalog
+>>
 endobj
 7 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 8 0 R >>
+<<
+/Author (Tipografia Online Roma EUR) /CreationDate (D:20261106085335+01'00') /Creator (anonymous) /Keywords () /ModDate (D:20261106085335+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (unspecified) /Title (Template Roll-up 85 x 200 cm - Tipografia Online) /Trapped /False
+>>
 endobj
 8 0 obj
-<< /Length 1295 >>
+<<
+/Count 2 /Kids [ 3 0 R 5 0 R ] /Type /Pages
+>>
+endobj
+9 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 175
+>>
 stream
-BT 0 0 0 rg /F2 22 Tf 50 780 Td (Roll-up 85 \327 200 cm) Tj ET
-BT 0.3 0.3 0.3 rg /F1 12 Tf 50 756 Td (Template di stampa \267 pagina 1 in scala 1:1 \267 formato finito 85 \327 200 cm \267 pagina 86 \327 201 cm con abbondanza) Tj ET
-0.8 0 0 rg 50 718 11 11 re f
-BT 0 0 0 rg /F1 11.5 Tf 68 720 Td (Linea rossa continua: taglio, formato finito 85 \327 200 cm.) Tj ET
-0.85 0.45 0.45 rg 50 698 11 11 re f
-BT 0 0 0 rg /F1 11.5 Tf 68 700 Td (Fascia rosa: abbondanza 5 mm. Estendi lo sfondo fino al bordo esterno.) Tj ET
-0 0.35 0.75 rg 50 678 11 11 re f
-BT 0 0 0 rg /F1 11.5 Tf 68 680 Td (Linea blu tratteggiata: area sicura. Testi e loghi ad almeno 10 mm dal taglio.) Tj ET
-BT 0 0 0 rg /F2 14 Tf 50 646 Td (Come fornirci il file) Tj ET
-BT 0.2 0.2 0.2 rg /F1 11 Tf 58 626 Td (\267  PDF in scala 1:1, non protetto da password, senza segni di taglio n\351 crocini.) Tj ET
-BT 0.2 0.2 0.2 rg /F1 11 Tf 58 609 Td (\267  Colori CMYK con profilo Fogra 39 \267 risoluzione 300 dpi.) Tj ET
-BT 0.2 0.2 0.2 rg /F1 11 Tf 58 592 Td (\267  Font incorporati o convertiti in curve \267 tracciati min. 0,25 pt.) Tj ET
-BT 0.2 0.2 0.2 rg /F1 11 Tf 58 575 Td (\267  Usa la pagina 1 come guida ed eliminala, con le linee, prima di esportare.) Tj ET
-BT 0.45 0.45 0.45 rg /F1 10 Tf 50 50 Td (Tipografia Online Roma EUR) Tj ET
-endstream
+GaqKeYn"W9$q'c:KkH-Z8X$Nj+or&bgf?-1AYMO.INRBGQ&m<8P+O<s8<Dtp%r`rLT*1l:'?&O"/iXUZ<%W$W)lf2ZRq6h4B$GqhKkX%>[/,(q_j=tKPpP<ihq/koE9H09.m9muif8\)>n,Rl=T!luQ$X$dLpH2Pr>=,ikQeOs-r0~>endstream
+endobj
+10 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 750
+>>
+stream
+GatUp6#W5X&;BTK(%9dE/nMk,4&R_+j%IiZMTDJh/n8#4WKnR3/?+k@?S02+Z)pW`V1lgkb^=?km4-&1Tn[dE!1sXH>Uu`U`>320bu*9UVRRK&$'HI'jSO0ar9<LN6+u@%@P!g"M?`P;`L%0aMe.X`1g(rX6^dZsI\XF.k<2Zq8hmL/e6+u2/p,P\ner7<o@1.#a!>#bV4&u%JM"Hr$pe0un^CND6XI!.b?b[O`\!aicNMs<`)^E@Bn@6TG?XCLTlMOrQIFJm^?NQY8O_;T.ZKat:#$&sQWU3J+QSij-916N67LKlmHFrsEL!3F`m@K/Vgf)1-EJqr1deXkp:0q`9\b"Q`SHn&hN@QDY*hCXJXe'/>kX1%'Y<lE%3tO!##uepBIcn6RKaLp;."G/KEQ$R:unN&JrG(@:g?Yg6TZj2P/.?,2Yr*1e;L27kGnaG3q1Z4q0^CKfDp,&eo(sRKC6g-C:*[1T^f?5f,X&O5E]P3+o*`+XV7nO(KA3Z?2$io[B&$Gg2].USnc.Eqj:t&V3@&oT*_7O$-9LkEK'4%5JIDp#,j*m_-1SD86=gPEnlN9T386b)TSf11Ej&(3e:CkojD!]CW2EK876_kcEl[fZ*JRLH:7:`b*'Z>L2DTgQ=O\-R5BhL6M&P9?I,N9)-g>=>S2&]D7F"IL1WffN.tcAoaIt_L;M#Rf8B1\oI6_`JD)6m1[L^.4#%];<,`dgZ":c_)f"><)T'b:r?ONYrW83(NDo~>endstream
 endobj
 xref
-0 9
+0 11
 0000000000 65535 f 
-0000000015 00000 n 
-0000000064 00000 n 
-0000000127 00000 n 
-0000000308 00000 n 
-0000000557 00000 n 
-0000000654 00000 n 
-0000000756 00000 n 
-0000000898 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000412 00000 n 
+0000000524 00000 n 
+0000000728 00000 n 
+0000000796 00000 n 
+0000001114 00000 n 
+0000001179 00000 n 
+0000001444 00000 n 
 trailer
-<< /Size 9 /Root 1 0 R >>
+<<
+/ID 
+[<2c7921fc294b13f2c6e2c14dc56066e8><2c7921fc294b13f2c6e2c14dc56066e8>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 7 0 R
+/Root 6 0 R
+/Size 11
+>>
 startxref
-2244
+2285
 %%EOF
