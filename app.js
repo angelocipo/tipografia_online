@@ -3,6 +3,8 @@
 
 const ROLLUP_VARIANTS = [
   { label: '200 × 200 cm', price: 530 },
+  // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6.
+  { label: '240 × 200 cm', price: 549.73 },
 ];
 const ROLLUP_FEATURES = [
   'Stampa 4/0 colori (CMYK) su carta sintetica bi-strato',
@@ -162,6 +164,7 @@ const PRODUCTS = [
     } },
   { id:'5833', ean:'0652026573213', nome:'Stampa Roll-Up 200 × 200 cm', categoria:'Rollup',
     templatePdf:'template/rollup-200x200.pdf',
+    templatePdfs:[{'label':'200×200 cm','path':'template/rollup-200x200.pdf'},{'label':'240×200 cm','path':'template/rollup-240x200.pdf'}],
     img:'img/Professional-rollup-banner-mockup-display-copia2.webp',
     gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
