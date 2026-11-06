@@ -162,7 +162,7 @@ const PRODUCTS = [
       rollupRate: (qty) => (qty > 6 ? 20 : qty > 4 ? 25 : 30),
       rate24h: 10,
     } },
-  { id:'5833', ean:'0652026573213', nome:'Stampa Roll-Up 200 × 200 cm', categoria:'Rollup',
+  { id:'5833', ean:'0652026573213', nome:'Stampa Roll-Up 200/240 × 200 cm', categoria:'Rollup',
     templatePdf:'template/rollup-200x200.pdf',
     templatePdfs:[{'label':'200×200 cm','path':'template/rollup-200x200.pdf'},{'label':'240×200 cm','path':'template/rollup-240x200.pdf'}],
     img:'img/Professional-rollup-banner-mockup-display-copia2.webp',

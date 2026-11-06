@@ -1,6 +1,11 @@
 {
   "redirects": [
     {
+      "source": "/prodotto/stampa-roll-up-200-200-cm",
+      "destination": "/prodotto/stampa-roll-up-200-240-200-cm",
+      "permanent": true
+    },
+    {
       "source": "/whatsapp",
       "destination": "https://wa.me/393396021366",
       "permanent": false
