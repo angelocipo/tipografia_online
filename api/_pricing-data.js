@@ -3,6 +3,8 @@
 
 const ROLLUP_VARIANTS = [
   { label: '200 × 200 cm', price: 530 },
+  // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6.
+  { label: '240 × 200 cm', price: 549.73 },
 ];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
