@@ -232,6 +232,30 @@ async function processPaidOrder(session, lineItemsData) {
       } catch (ddtErr) {
         console.error('DDT generation failed for session', session.id, ddtErr);
       }
+      // ZTL di Roma: solo per le consegne fatte da noi. Avviso nell'email del titolare; mai bloccante (max 8 s).
+      let ztlHtml = '';
+      try {
+        const stops = [];
+        if (md.shipping_zone === 'roma_centro' || md.shipping_zone === 'roma_resto') {
+          stops.push(md.ship_same === '0'
+            ? { label: 'Consegna', address: md.ship_address, cap: md.ship_cap, city: md.ship_city, times: [] }
+            : { label: 'Consegna', address: order.customer.address, cap: order.customer.cap, city: order.customer.city, times: [] });
+        }
+        const toIso = (d, m, y) => `${y}-${m}-${d}`;
+        for (const li of lineItems.data) {
+          const m = / — Roma, montaggio (\d\d)\/(\d\d)\/(\d{4}) ore (\d\d:\d\d), smontaggio (\d\d)\/(\d\d)\/(\d{4}) ore (\d\d:\d\d), (.+?) — /.exec(li.description || '');
+          if (m) stops.push({ label: 'Struttura per Eventi', address: m[9], cap: '', city: 'Roma', times: [
+            { label: 'Montaggio', date: toIso(m[1], m[2], m[3]), time: m[4] }, { label: 'Smontaggio', date: toIso(m[5], m[6], m[7]), time: m[8] }] });
+        }
+        if (stops.length) {
+          const { checkZtl } = require('./_ztl');
+          const res = await Promise.race([checkZtl(stops), new Promise((r) => setTimeout(() => r(null), 8000))]);
+          if (res && res.length) ztlHtml = ztlBlockHtml(res);
+          else if (res === null) console.warn('Controllo ZTL scaduto per', order.number);
+        }
+      } catch (ztlErr) {
+        console.error('Controllo ZTL fallito per session', session.id, ztlErr);
+      }
       // XML FatturaPA (senza numero: lo assegna Aruba, data = giorno del pagamento) allegato SOLO
       // all'email del titolare. Lazy + try: se fallisce, l'email parte comunque.
       let xmlAttachments = [], xmlWarnings = [];
@@ -266,7 +290,7 @@ async function processPaidOrder(session, lineItemsData) {
         await sendEmail({
           to: OWNER_EMAIL,
           subject: `Nuovo ordine #${order.number} — € ${total.toFixed(2)}`,
-          html: summaryHtml.replace('</body></html>', ownerBlockHtml(order, buyerEmail, session, fatturaLink, xmlAttachments.length > 0, xmlWarnings) + '</body></html>'),
+          html: summaryHtml.replace('</body></html>', ztlHtml + ownerBlockHtml(order, buyerEmail, session, fatturaLink, xmlAttachments.length > 0, xmlWarnings) + '</body></html>'),
           attachments: [...attachments, ...xmlAttachments],
         });
         console.log('Owner notification sent to', OWNER_EMAIL);
@@ -472,6 +496,26 @@ function orderEmailHtml(order, total, md, hasDdt, lang) {
   </td></tr>
 </table>
 </body></html>`;
+}
+
+// Avviso ZTL per il titolare: zona, orari dei varchi e, per la Struttura, se sono attivi a montaggio/smontaggio.
+function ztlBlockHtml(stops) {
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const itD = (d) => d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4);
+  const items = stops.map((s) => {
+    const head = `<strong>${esc(s.label)}:</strong> ${esc([s.address, s.cap, s.city].filter(Boolean).join(', '))}`;
+    if (s.uncertain) return `<p style="margin:0 0 10px;">${head}<br>Indirizzo non trovato sulla mappa, ma il CAP ${esc(s.cap)} comprende vie in ZTL: <strong>verifica a mano</strong>.</p>`;
+    const zones = s.zones.map((z) => {
+      const checks = z.checks.map((c) => `${esc(c.label)} ${itD(c.date)} ore ${esc(c.time)}: ${c.active ? '<strong style="color:#8a2f27;">varco ATTIVO</strong>' : 'varco spento'}`).join(' · ');
+      return `• <strong>${esc(z.name)}</strong> — attiva ${esc(z.hours)}${checks ? '<br>&nbsp;&nbsp;' + checks : ''}`;
+    }).join('<br>');
+    return `<p style="margin:0 0 10px;">${head}<br>${zones}</p>`;
+  }).join('');
+  return `<div style="max-width:600px;margin:16px auto 0;padding:16px 18px;border:2px solid #c0392b;background:#fdf1ef;font:400 14px/1.5 ${BODY_FONT};color:${INK};">
+    <div style="font:700 13px/1.3 ${BODY_FONT};letter-spacing:.06em;text-transform:uppercase;color:#8a2f27;margin-bottom:8px;">Consegna in ZTL — Roma</div>
+    ${items}
+    <p style="margin:6px 0 0;font-size:12.5px;color:${MUTED};">Con il furgone serve il permesso ZTL Merci, oppure consegna con il varco spento. Gli alberghi possono autorizzare solo targhe di ospiti che pernottano, non consegne. Orari: romamobilita.it (aggiornati al 28/07/2026).</p>
+  </div>`;
 }
 
 function ownerBlockHtml(order, buyerEmail, session, fatturaLink, hasXml, xmlWarnings) {
