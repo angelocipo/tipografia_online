@@ -2648,6 +2648,9 @@ function computeBv24hPrice(p, f){
 const app = document.getElementById('app');
 const backBtn = document.getElementById('backBtn');
 // Categorie che, invece di aprire la scheda prodotto, mostrano prima una pagina di categoria.
+// Categorie che mostrano anche i prodotti di altre categorie (il prodotto resta nella sua categoria principale).
+const CATEGORY_ALSO = { 'Eventi': ['Rollup'] };
+const inCategory = (p, cat) => p.categoria === cat || (CATEGORY_ALSO[cat] || []).includes(p.categoria);
 const CATEGORY_PAGES = { '5720': 'Adesivi', '5910': 'Spille', '5920': 'Banner', '5940': 'Banner 500', '5960': 'Block Notes', '6001': 'Buste' };
 // Nome usato solo nella griglia del catalogo (scheda, pagina categoria, email e fattura usano p.nome).
 const CATALOG_NAMES = { '6001': 'Buste tutti i tipi', '5960': 'Block Notes tutti i formati', '5720': 'Adesivo PVC tutte le misure', '5910': 'Spille tutte le misure', '5920': 'Banner PVC 400gr senza occhielli tutte le misure', '5940': 'Banner PVC 500gr con occhielli tutte le misure' };
@@ -2837,7 +2840,7 @@ function renderCategoryPage(){
     return m ? num(m[1]) : -1;
   };
   // Senza parentId (categoria non in CATEGORY_PAGES, es. #cat-Servizi) si mostrano i prodotti della categoria.
-  const items = PRODUCTS.filter(p => !p.hidden && (parentId ? (p.id === parentId || p.variantOf === parentId) : (p.categoria === cat && !p.variantOf)))
+  const items = PRODUCTS.filter(p => !p.hidden && (parentId ? (p.id === parentId || p.variantOf === parentId) : (inCategory(p, cat) && !p.variantOf)))
     .sort((a,b) => sizeOf(a) - sizeOf(b) || a.nome.localeCompare(b.nome, 'it'));
   app.innerHTML = `
     <div class="p-cat" style="max-width:none; margin:0 auto;">
@@ -2860,7 +2863,7 @@ function renderCategoryPage(){
 function renderGrid(){
   const chips = ['Tutti', ...[...CATEGORIES, GARMENT_CAT].sort((a, b) => a.localeCompare(b, 'it'))];
   const visible = PRODUCTS.filter(p => !p.variantOf && !p.hidden)
-    .filter(p => state.category === 'Tutti' || p.categoria === state.category)
+    .filter(p => state.category === 'Tutti' || inCategory(p, state.category))
     .sort((a,b) => a.nome.localeCompare(b.nome, 'it'));
   const strategici = visible.filter(p => p.collection === 'strategici');
   const suMisura = visible.filter(p => p.collection === 'misura');
