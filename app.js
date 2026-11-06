@@ -1617,6 +1617,32 @@ const PRODUCTS = [
       { key:'quantita', label:'Quantità di Rilegature', type:'slider', unitSuffix:'rilegature', choices:['1','200'] },
       { key:'facciate', label:"Facciate A5 interno B/N", type:'slider', unitSuffix:'facciate', step:4, choices:['12','100'] },
     ] } },
+  { id:'5851', ean:'0652026573619', nome:'Volantini e Pieghevoli Personalizzati', categoria:'Volantini',
+    img:'img/volantini-pieghevoli-personalizzati.webp',
+    gallery:['img/volantini-pieghevoli-personalizzati.webp'],
+    intro:'Volantini e pieghevoli su misura: scegli formato libero, materiale, stampa, perforazione e pieghe. Prezzo calcolato sulla superficie reale della carta.',
+    features:['Formato libero da 5×5 a 32×44 cm','Carta da gr. 100 a gr. 400, anche martellata gr. 280','Stampa 1 o 2 lati, a colori o B/N','Perforazione e fino a 3 pieghe','Quantità da 25 a 1.000 pezzi'],
+    specs:{'Quantità':'25 – 1.000 pz','Formato':'da 5×5 a 32×44 cm','Carta':'gr. 100 – gr. 400, martellata gr. 280'},
+    // Ricostruito 1:1 dalla formula Studio Wombat fornita dal titolare (superficie carta su foglio 440×320 mm).
+    pricing:{type:'quote', basePrice:0,
+      formula: (sel) => {
+        const q = Number(sel.qty ?? 25);
+        const w = Number(sel.larghezza ?? 5) * 10, h = Number(sel.altezza ?? 5) * 10; // cm → mm
+        const carta = { 'gr. 100':0.13, 'gr. 200':0.25, 'gr. 300':0.37, 'gr. 400':0.49, 'gr. 280 martellata':0.68 }[sel.materiale] ?? 0.13;
+        const stampa = { '1 lato a colori':0.4, '2 lati a colori':0.7, '1 lato bianco nero':0.07, '2 lati bianco nero':0.14, '1 lato bianco nero + 1 a colori':0.47 }[sel.stampa] ?? 0.4;
+        const perf = sel.perforazione === 'Si' ? 0.05 : 0;
+        const pieghe = { '1 piega':0.1, '2 pieghe':0.2, '3 pieghe':0.3 }[sel.pieghe] ?? 0;
+        return ((carta + stampa) * q * (w+20) * (h+20) / 440 / 320 + perf*q + pieghe*q + 10) * 1.6; // ricarico ×1,6
+      },
+      options:[
+      { key:'qty', label:'Quantità (25–1.000)', type:'slider', unitSuffix:'pz', row:true, choices:['25','1000'] },
+      { key:'larghezza', label:'Larghezza (5–32)', type:'slider', unitSuffix:'cm', row:true, choices:['5','32'] },
+      { key:'altezza', label:'Altezza (5–44)', type:'slider', unitSuffix:'cm', row:true, choices:['5','44'] },
+      { key:'materiale', label:'Materiale', choices:['gr. 100','gr. 200','gr. 300','gr. 400','gr. 280 martellata'] },
+      { key:'stampa', label:'Stampa', choices:['1 lato a colori','2 lati a colori','1 lato bianco nero','2 lati bianco nero','1 lato bianco nero + 1 a colori'] },
+      { key:'perforazione', label:'Perforazione', choices:['No grazie','Si'] },
+      { key:'pieghe', label:'Pieghe', choices:['Nessuna','1 piega','2 pieghe','3 pieghe'] },
+    ] } },
   { id:'202', ean:'0652026573572', nome:'Biglietti da visita a rilievo', categoria:'Biglietti da Visita',
     templatePdfs:[{'label':'8,5×5,5 cm','path':'template/formato-8-5x5-5.pdf'},{'label':'5,5×8,5 cm','path':'template/formato-5-5x8-5.pdf'},{'label':'9×5 cm','path':'template/formato-9x5.pdf'},{'label':'5×9 cm','path':'template/formato-5x9.pdf'},{'label':'5,5×5,5 cm','path':'template/formato-5-5x5-5.pdf'}],
     img:'img/bv-rilievo-hero.webp',
