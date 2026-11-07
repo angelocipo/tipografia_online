@@ -56,6 +56,12 @@ function buyerBlock(c, warnings) {
   let vat = clean(c.vat).replace(/^[A-Z]{2}(?=\d)/, '');
   let cf = clean(c.cf);
   if (!foreign && vat && !/^\d{11}$/.test(vat)) { if (!cf) cf = vat; vat = ''; }
+  // 11 cifre che iniziano per 8 o 9 = codice fiscale di un ente non commerciale (associazioni, ASD,
+  // parrocchie…), non una Partita IVA: in IdFiscaleIVA SDI lo scarta.
+  if (!foreign && /^[89]\d{10}$/.test(vat)) {
+    warnings.push(`"${vat}" sembra il codice fiscale di un ente non commerciale, non una P.IVA: messo in CodiceFiscale. Se il cliente ha anche una P.IVA, inseriscila.`);
+    if (!cf) cf = vat; vat = '';
+  }
 
   let fiscal = '';
   if (vat) fiscal += `<IdFiscaleIVA><IdPaese>${esc(country)}</IdPaese><IdCodice>${esc(vat)}</IdCodice></IdFiscaleIVA>`;

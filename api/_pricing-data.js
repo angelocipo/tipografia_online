@@ -218,6 +218,36 @@ const PRICING = {
         { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] } ] },
       ] },
     ] },
+  // Soft Touch: costo Flyeralarm (IVA esclusa, consegna inclusa) × 1,5 + IVA 22%. Verticale 5,5×8,5 = Orizzontale 8,5×5,5 e Orizzontale 9×5 = Verticale 5×9 (stesso costo, formato ruotato). Ordine formati = api/_pricing-data.js.
+  '5517': { nome: 'Biglietti da Visita Soft Touch', ean: '', type: 'businessCardStrategici', noFinish: true,
+    qtyLabels: [500,1000,2500,5000,10000,15000,20000],
+    formats: [
+      { label: 'Orizzontale 8,5×5,5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [60.66,78.34,113.61,161.37,260.96,359.05,469.27] } ] },
+        { label: 'gr. 400 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [75.29,98.53,133.92,172.94,273.15,395.21,533.57] } ] },
+        { label: 'gr. 500 patinata opaca', deliveries: [ { label: 'Standard 7–9 gg lavorativi', prices: [149.69,213.05,426.5,785.53,1502.19,2242.19,2916.8] } ] },
+      ] },
+      { label: 'Verticale 5,5×8,5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [60.66,78.34,113.61,161.37,260.96,359.05,469.27] } ] },
+        { label: 'gr. 400 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [75.29,98.53,133.92,172.94,273.15,395.21,533.57] } ] },
+        { label: 'gr. 500 patinata opaca', deliveries: [ { label: 'Standard 7–9 gg lavorativi', prices: [149.69,213.05,426.5,785.53,1502.19,2242.19,2916.8] } ] },
+      ] },
+      { label: 'Orizzontale 9×5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [59.46,76.44,110.42,156.41,256.55,346.84,453.49] } ] },
+        { label: 'gr. 400 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [73.64,95.97,130,170.7,264.2,382.01,516.15] } ] },
+        { label: 'gr. 500 patinata opaca', deliveries: [ { label: 'Standard 7–9 gg lavorativi', prices: [109.43,157.95,286.65,527.7,999.4,1464.09,1955.59] } ] },
+      ] },
+      { label: 'Verticale 5×9 cm', papers: [
+        { label: 'gr. 300 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [59.46,76.44,110.42,156.41,256.55,346.84,453.49] } ] },
+        { label: 'gr. 400 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [73.64,95.97,130,170.7,264.2,382.01,516.15] } ] },
+        { label: 'gr. 500 patinata opaca', deliveries: [ { label: 'Standard 7–9 gg lavorativi', prices: [109.43,157.95,286.65,527.7,999.4,1464.09,1955.59] } ] },
+      ] },
+      { label: 'Quadrato 5,5×5,5 cm', papers: [
+        { label: 'gr. 300 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [48.86,60.44,82.48,117.01,184.63,251.13,303.96] } ] },
+        { label: 'gr. 400 patinata opaca', deliveries: [ { label: 'Standard 5–7 gg lavorativi', prices: [59.2,74.3,97.78,127.22,194.99,267.44,346.49] } ] },
+        { label: 'gr. 500 patinata opaca', deliveries: [ { label: 'Standard 7–9 gg lavorativi', prices: [149.69,213.05,426.5,785.53,1502.19,2242.19,2916.8] } ] },
+      ] },
+    ] },
   '198': { nome: 'Foto Quadro Personalizzato', ean: '0652026573312', type: 'fotoQuadro', basePrice: 30 },
   '199': { nome: 'Marilyn Monroe Warhol', ean: '0652026573329', type: 'size', variants: [
     { label: '50×40 cm', price: 48 },
