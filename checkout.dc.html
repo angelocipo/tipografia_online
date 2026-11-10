@@ -94,12 +94,18 @@
       <div class="field" style="margin:var(--space-4) 0;">
         <label for="ship-zone">Consegna</label>
         <select class="input" id="ship-zone" value="{{ shipZone }}" onChange="{{ setShipZone }}" style="max-width:420px;">
+          <sc-if value="{{ notPickupOnly }}" hint-placeholder-val="{{ true }}">
           <option value="roma_centro">Roma Sud/EUR/Centro — € 20,00</option>
           <option value="roma_resto">Resto di Roma — € 30,00</option>
           <option value="italia">Italia (+1 giorno) — € 25,00</option>
           <option value="ue">Unione Europea (+2/3 giorni) — € 35,00</option>
+          </sc-if>
+          <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}"><option value="italia">Spedizione UPS in Italia — € 99,00</option></sc-if>
           <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><option value="ritiro">Ritiro in sede — gratuito</option></sc-if>
         </select>
+        <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}">
+          <p class="card-body" style="margin:var(--space-2) 0 0;color:var(--color-accent-700);font-weight:600;">{{ pickupOnlyNote }}</p>
+        </sc-if>
         <sc-if value="{{ isZoneRitiro }}" hint-placeholder-val="{{ false }}">
           <p class="card-body" style="margin:var(--space-2) 0 0;color:var(--color-text);">Ritiro in sede: Via Lorenzo Bonincontri, 26, 00147 Roma. Lun-Ven 8-12 / 15-18. Ti avvisiamo al cellulare quando l'ordine è pronto.</p>
         </sc-if>
@@ -531,6 +537,7 @@ class Component extends DCLogic {
     // Backdrop '5970': trasporto incluso in Italia, UE + € 55.
     if (String(it.productId) === '5970') return zone === 'ue' ? 55 : 0;
     if (String(it.productId) === '215') return 0; // Struttura per Eventi: consegna inclusa (stessa regola del server).
+    if (String(it.productId) === '5833') return 99; // Roll-Up 200/240 × 200: spedizione UPS in Italia € 99 (o ritiro gratuito).
     if (it.col === 'strategici') return 0;
     const rates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
     // Roll-Up 80/85 a Roma e UE: 1° a tariffa zona, successivi € 15.
@@ -552,6 +559,9 @@ class Component extends DCLogic {
     return it.length > 0 && it.every(i => i.col !== 'strategici' && String(i.productId) !== '215');
   }
 
+  // Roll-Up 200/240 × 200 (5833): ritiro a Roma (gratis) o spedizione UPS in Italia € 99 (zona 'italia'). Stessa regola del server.
+  pickupOnly() { return this.state.items.some(i => String(i.productId) === '5833'); }
+
   subtotal() { return this.state.items.reduce((a, i) => a + (parseFloat(i.price) || 0), 0); }
 
   validate() {
@@ -563,6 +573,8 @@ class Component extends DCLogic {
     if (invType === 'azienda' && !inv.pec && !inv.sdi) return 'Inserisci PEC o Codice SDI.';
     const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
     if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
+    if (this.pickupOnly() && this.state.items.some(i => String(i.productId) === '215')) return 'Il Roll-Up 200/240 × 200 cm (ritiro o UPS) e la Struttura per Eventi (consegna e montaggio a Roma) vanno ordinati separatamente: fai due ordini.';
+    if (this.pickupOnly() && !['ritiro', 'italia'].includes(this.state.shipZone)) return "Il Roll-Up 200/240 × 200 cm si ritira nel nostro punto vendita a Roma oppure si spedisce con UPS in Italia (€ 99,00): non spediamo all'estero.";
     if (this.state.shipZone === 'ritiro' && !this.canPickup()) return 'Il ritiro in sede non è disponibile per i Prezzi strategici: scegli una zona di consegna.';
     if (this.state.shipZone === 'ue' && !this.state.shipCountry) return 'Seleziona il paese UE di destinazione.';
     if (!this.state.items.length) return 'Il carrello è vuoto.';
@@ -617,6 +629,8 @@ class Component extends DCLogic {
   }
 
   renderVals() {
+    // Roll-Up 200/240 (5833): solo «Ritiro in sede» o «UPS Italia» (zona 'italia'); ogni altra zona torna su una delle due.
+    if (this.pickupOnly() && !['ritiro', 'italia'].includes(this.state.shipZone)) setTimeout(() => this.setState({ shipZone: this.canPickup() ? 'ritiro' : 'italia' }), 0);
     const s = this.state;
     const shippingFee = this.computeShippingFee();
     const sub = this.subtotal();
@@ -648,6 +662,9 @@ class Component extends DCLogic {
       orderTotal: eur(sub + shippingFee),
       productPriceFmt: eur(sub),
       canPickup: this.canPickup(),
+      pickupOnly: this.pickupOnly(),
+      notPickupOnly: !this.pickupOnly(),
+      pickupOnlyNote: s.items.some(i => String(i.productId) === '215') ? 'Il Roll-Up 200/240 × 200 cm (ritiro o UPS) e la Struttura per Eventi (consegna e montaggio a Roma) vanno ordinati separatamente: fai due ordini.' : (this.canPickup() ? 'Roll-Up 200/240 × 200 cm: ritiro gratuito nel nostro punto vendita a Roma oppure spedizione UPS in Italia € 99,00.' : 'Roll-Up 200/240 × 200 cm: spedizione UPS in Italia € 99,00 (con i Prezzi strategici il ritiro non è disponibile).'),
       isZoneRitiro: s.shipZone === 'ritiro' && this.canPickup(),
       shippingLabel: s.shipZone === 'ritiro' && this.canPickup() ? 'ritiro in sede (gratuito)' : shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: false,

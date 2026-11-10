@@ -31,6 +31,8 @@
         if (String(it.productId) === '197') { var q = Math.max(1, parseInt(((it.body || {}).formula || {}).qty, 10) || 1); return 20 + 15 * (q - 1); }
         return 20;
       })));
+      // Roll-Up 200/240 × 200 (5833): preventivo con spedizione UPS Italia € 99 (oppure ritiro gratuito a Roma).
+      if (a.some(function (it) { return String(it.productId) === '5833'; })) return 'preventivo.html?cart=1&zona=italia&sped=99.00';
       return 'preventivo.html?cart=1&zona=roma_centro&sped=' + fee.toFixed(2);
     },
 
