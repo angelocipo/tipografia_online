@@ -2,9 +2,15 @@
 // ---- PayPal renders a Smart Button that charges the live computed price (needs a real client-id above). ----
 
 const ROLLUP_VARIANTS = [
-  { label: '200 × 200 cm', price: 530 },
-  // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6.
-  { label: '240 × 200 cm', price: 549.73 },
+  // Ordine = gruppi in app.js (0–1 Con struttura, 2–3 Solo stampa fai da te, 4–5 Solo stampa + cambio da noi): il checkout usa l'indice.
+  { label: '200 × 200 cm — Con struttura', size: '200 × 200 cm', price: 320, img: 'img/rollup-200x200-mockup.webp' },
+  // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6 = € 549,73, arrotondato a € 550.
+  { label: '240 × 200 cm — Con struttura', size: '240 × 200 cm', price: 550, img: 'img/rollup-240x200-mockup.webp' },
+  // Solo stampa: cambio del telo sulla struttura del cliente fai da te (€ 0) o fatto da noi (+ € 40).
+  { label: '200 × 200 cm — Solo stampa, cambio telo fai da te', size: '200 × 200 cm', price: 78, img: 'img/rollup-200x200-mockup.webp' },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 88, img: 'img/rollup-240x200-mockup.webp' },
+  { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 118, img: 'img/rollup-200x200-mockup.webp' },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 128, img: 'img/rollup-240x200-mockup.webp' },
 ];
 const ROLLUP_FEATURES = [
   'Stampa 4/0 colori (CMYK) su carta sintetica bi-strato',
@@ -165,11 +171,12 @@ const PRODUCTS = [
   { id:'5833', ean:'0652026573213', nome:'Stampa Roll-Up 200/240 × 200 cm', categoria:'Rollup',
     templatePdf:'template/rollup-200x200.pdf',
     templatePdfs:[{'label':'200×200 cm','path':'template/rollup-200x200.pdf'},{'label':'240×200 cm','path':'template/rollup-240x200.pdf'}],
-    img:'img/Professional-rollup-banner-mockup-display-copia2.webp',
-    gallery:['img/Professional-rollup-banner-mockup-display-copia2.webp','img/rollup-240x200-struttura.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    img:'img/rollup-200-240x200-hero.webp',
+    gallery:['img/rollup-200-240x200-hero.webp','img/rollup-200x200-mockup.webp','img/rollup-240x200-mockup.webp','img/rollup-240x200-struttura.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni'},
-    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0} },
+    pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0,
+      groups:[{ label:'Con struttura', from:0, to:2 }, { label:'Solo stampa · cambio telo fai da te', from:2, to:4 }, { label:'Solo stampa · cambio telo da noi (+ € 40)', from:4, to:6 }]} },
   { id:'5850', ean:'0652026573220', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
     templatePdf:'template/rollup-150x200.pdf',
     img:'img/Professional-roll-up-banner-mockup-copia700.webp',
@@ -181,7 +188,7 @@ const PRODUCTS = [
       formatChoices: ['150x200cm'],
       tempiChoices: ['72H'],
       strutturaChoices: [
-        { label:'Con struttura', rate:255 },
+        { label:'Con struttura', rate:185 }, // 1 pz con struttura = 95 + 185 = € 280
         { label:'Solo stampa', rate:0 },
       ],
       rollupRate: (qty) => (qty > 1 ? 90 : 95),
@@ -4037,7 +4044,8 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
     state.deliveryIdxById[p.id] = { deliveryIdx: dNew, qtyIdx: Math.min(q, maxQ) };
     renderDetail();
   }));
-  app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { state.sizeIdxById[p.id] = parseInt(el.dataset.size,10); renderDetail(); }));
+  // Misura con foto propria (variants[i].img): la mostra come immagine principale.
+  app.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', () => { const i = parseInt(el.dataset.size,10); state.sizeIdxById[p.id] = i; const vi = (p.pricing.variants[i] || {}).img; if (vi) state.mainImageOverride = vi; renderDetail(); }));
   app.querySelectorAll('[data-size-group]').forEach(el => el.addEventListener('click', () => {
     const gs = p.pricing.groups; const g = gs[parseInt(el.dataset.sizeGroup,10)];
     const cur = state.sizeIdxById[p.id] ?? p.pricing.defaultIndex ?? 0;
