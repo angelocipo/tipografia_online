@@ -387,6 +387,11 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: 'La Struttura per Eventi è disponibile solo a Roma: scegli una zona di consegna di Roma.' });
       return;
     }
+    // Roll-Up 200/240 × 200 (5833): ritiro a Roma o UPS in Italia € 99 — niente UE (stessa regola di checkout.dc.html).
+    if (priced.some(p => p.productId === '5833') && zone === 'ue') {
+      res.status(400).json({ error: "Il Roll-Up 200/240 × 200 cm si ritira nel nostro punto vendita a Roma oppure si spedisce con UPS in Italia (€ 99,00): non spediamo all'estero." });
+      return;
+    }
     // Ritiro in sede gratuito: non per Prezzi strategici (fuori da SHIPPING_IDS, Backdrop a parte) né Struttura per Eventi.
     if (zone === 'ritiro' && priced.some(p => p.productId === '215' || (!SHIPPING_IDS.includes(p.productId) && p.productId !== '5970'))) {
       res.status(400).json({ error: 'Il ritiro in sede non è disponibile per i Prezzi strategici: scegli una zona di consegna.' });
@@ -397,6 +402,7 @@ module.exports = async (req, res) => {
       if (zone === 'ritiro') return 0;
       if (productId === '5970') return zone === 'ue' ? 55 : 0; // Backdrop: trasporto incluso in Italia, UE + € 55.
       if (productId === '215') return 0; // Struttura per Eventi: consegna e montaggio inclusi (solo Roma).
+      if (productId === '5833') return 99; // Roll-Up 200/240 × 200: spedizione UPS in Italia € 99.
       if (!SHIPPING_IDS.includes(productId)) return 0;
       if (productId === '197' && zone !== 'italia') {
         // Roll-Up 80/85 × 200 (Speedy Boys) a Roma e UE: 1° a tariffa zona, ogni successivo € 15.
@@ -414,7 +420,7 @@ module.exports = async (req, res) => {
       lineItems.push({
         price_data: {
           currency: 'eur',
-          product_data: { name: `Spedizione — ${zoneLabels[zone] || zone}${zone === 'ue' ? ' — ' + shipCountry : ''}` },
+          product_data: { name: priced.some(p => p.productId === '5833') ? 'Spedizione UPS — Italia' : `Spedizione — ${zoneLabels[zone] || zone}${zone === 'ue' ? ' — ' + shipCountry : ''}` },
           unit_amount: Math.round(shipFee * 100),
         },
         quantity: 1,
