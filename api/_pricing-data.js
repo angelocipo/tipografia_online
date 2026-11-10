@@ -2,9 +2,15 @@
 // Only what's needed to recompute price safely (never trust a price sent from the browser).
 
 const ROLLUP_VARIANTS = [
-  { label: '200 × 200 cm', price: 530 },
-  // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6.
-  { label: '240 × 200 cm', price: 549.73 },
+  // Ordine = gruppi in app.js (0–1 Con struttura, 2–3 Solo stampa fai da te, 4–5 Solo stampa + cambio da noi): il checkout usa l'indice.
+  { label: '200 × 200 cm — Con struttura', size: '200 × 200 cm', price: 320 },
+  // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6 = € 549,73, arrotondato a € 550.
+  { label: '240 × 200 cm — Con struttura', size: '240 × 200 cm', price: 550 },
+  // Solo stampa: cambio del telo sulla struttura del cliente fai da te (€ 0) o fatto da noi (+ € 40).
+  { label: '200 × 200 cm — Solo stampa, cambio telo fai da te', size: '200 × 200 cm', price: 78 },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 88 },
+  { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 118 },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 128 },
 ];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
@@ -22,7 +28,7 @@ const PRICING = {
   '5833': { nome: 'Stampa Roll-Up 200/240 × 200 cm', ean: '0652026573213', type: 'size', variants: ROLLUP_VARIANTS },
   '5850': { nome: 'Stampa Roll-Up 150 × 200 cm', ean: '0652026573220', type: 'formula',
     rollupRate: (qty) => (qty > 1 ? 90 : 95),
-    strutturaRates: [255, 0], // index 0 = "Con struttura", 1 = "Solo stampa"
+    strutturaRates: [185, 0], // 1 pz con struttura = 95 + 185 = € 280. index 0 = "Con struttura", 1 = "Solo stampa"
     rate24h: 0 },
   // Backdrop: costo fornitore (display [+ struttura], IVA esclusa) × 1,6. 0–6 Completo, 7–13 Solo stampa. Ordine = index.html.
   '5970': { nome: 'Backdrop in tessuto', ean: '', type: 'size', variants: [
