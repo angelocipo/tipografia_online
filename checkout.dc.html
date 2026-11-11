@@ -118,11 +118,17 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
             <div class="vc-f">
               <label class="vc-lbl" for="ship-zone">Zona di consegna</label>
               <select class="vc-in" id="ship-zone" value="{{ shipZone }}" onChange="{{ setShipZone }}">
-                <sc-if value="{{ notPickupOnly }}" hint-placeholder-val="{{ true }}">
+                <sc-if value="{{ showZonePrices }}" hint-placeholder-val="{{ true }}">
                 <option value="roma_centro">Roma Sud/EUR/Centro — € 20,00</option>
                 <option value="roma_resto">Resto di Roma — € 30,00</option>
                 <option value="italia">Italia (+1 giorno) — € 25,00</option>
                 <option value="ue">Unione Europea (+2/3 giorni) — € 35,00</option>
+                </sc-if>
+                <sc-if value="{{ shipIncluded }}" hint-placeholder-val="{{ false }}">
+                <option value="roma_centro">Roma Sud/EUR/Centro — spedizione inclusa</option>
+                <option value="roma_resto">Resto di Roma — spedizione inclusa</option>
+                <option value="italia">Italia — spedizione inclusa</option>
+                <option value="ue">Unione Europea — spedizione inclusa</option>
                 </sc-if>
                 <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}"><option value="italia">Spedizione UPS in Italia — € 99,00</option></sc-if>
                 <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><option value="ritiro">Ritiro in sede — gratuito</option></sc-if>
@@ -165,6 +171,9 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
                     <option value="Ungheria">Ungheria</option>
                   </select>
                 </div>
+              </sc-if>
+              <sc-if value="{{ shipIncluded }}" hint-placeholder-val="{{ false }}">
+                <p class="vc-hint" style="color:#0062c4;font-weight:600;">Prezzi strategici: spedizione inclusa, nessun costo di trasporto.</p>
               </sc-if>
               <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
                 <p class="vc-hint">Roll-Up a Roma e in UE: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
@@ -672,10 +681,13 @@ class Component extends DCLogic {
       canPickup: this.canPickup(),
       pickupOnly: this.pickupOnly(),
       notPickupOnly: !this.pickupOnly(),
+      // Solo Prezzi strategici nel carrello: spedizione inclusa, la zona serve solo per la consegna (nessun prezzo).
+      shipIncluded: !this.pickupOnly() && n > 0 && s.items.every(i => i.col === 'strategici'),
+      showZonePrices: !this.pickupOnly() && !(n > 0 && s.items.every(i => i.col === 'strategici')),
       pickupOnlyNote: s.items.some(i => String(i.productId) === '215') ? 'Il Roll-Up 200/240 × 200 cm (ritiro o UPS) e la Struttura per Eventi (consegna e montaggio a Roma) vanno ordinati separatamente: fai due ordini.' : (this.canPickup() ? 'Roll-Up 200/240 × 200 cm: ritiro gratuito nel nostro punto vendita a Roma oppure spedizione UPS in Italia € 99,00.' : 'Roll-Up 200/240 × 200 cm: spedizione UPS in Italia € 99,00 (con i Prezzi strategici il ritiro non è disponibile).'),
       isZoneRitiro: s.shipZone === 'ritiro' && this.canPickup(),
       notZoneRitiro: !(s.shipZone === 'ritiro' && this.canPickup()),
-      shippingLabel: s.shipZone === 'ritiro' && this.canPickup() ? 'ritiro in sede (gratuito)' : shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
+      shippingLabel: s.shipZone === 'ritiro' && this.canPickup() ? 'ritiro in sede (gratuito)' : (n > 0 && s.items.every(i => i.col === 'strategici')) ? 'inclusa' : shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: false,
       isRollupShipping: s.items.some(i => String(i.productId) === '197') && s.shipZone !== 'italia',
       isBackdrop: s.items.some(i => String(i.productId) === '5970'),
