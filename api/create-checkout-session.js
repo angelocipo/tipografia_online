@@ -448,6 +448,8 @@ module.exports = async (req, res) => {
     metadata.inv_city = c.city || '';
     metadata.inv_cap = c.cap || '';
     metadata.inv_country = c.country || 'IT';
+    // Checkout in 2 passi: i dati di fatturazione arrivano dopo il pagamento (api/invoice-details.js).
+    metadata.inv_later = c.later ? '1' : '0';
 
     const sh = shipping || {};
     const shipPhoneDigits = String(sh.phone || '').replace(/[^\d]/g, '');

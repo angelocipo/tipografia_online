@@ -149,6 +149,34 @@ module.exports = async (req, res) => {
   res.status(200).json({ received: true });
 };
 
+// Dati fattura (righe, totale, cliente) per l'XML FatturaPA e per il link "Crea fattura XML".
+// Usata da processPaidOrder e da api/invoice-details.js (passo 2: dati fattura dopo il pagamento).
+function buildFatturaData(session, lineItemsData) {
+  const md = session.metadata || {};
+  const isCompany = md.inv_type === 'azienda';
+  // Struttura per Eventi: la caparra 50% (restituibile, fuori campo IVA art. 15 DPR 633/72) resta
+  // fuori dalla fattura. Importo letto dalla descrizione creata in create-checkout-session.js.
+  let depositCents = 0;
+  const invLines = (lineItemsData || []).map((li) => {
+    const m = / — noleggio € ([\d.]+,\d{2}) \+ caparra 50% € ([\d.]+,\d{2}) \(restituita dopo ispezione\)/.exec(li.description || '');
+    if (!m) return { d: li.description, q: 1, c: li.amount_total };
+    const dep = Math.round(parseFloat(m[2].replace(/\./g, '').replace(',', '.')) * 100);
+    depositCents += dep;
+    return { d: li.description.replace(m[0], ' — noleggio'), q: 1, c: li.amount_total - dep };
+  });
+  const cd = session.customer_details || {};
+  return {
+    k: 'fattura', ref: orderRef(session), pay: md.payment_method === 'PayPal' ? 'PayPal' : 'Stripe',
+    payId: md.payment_method === 'PayPal' ? (md.paypal_order || '') : '', totalCents: session.amount_total - depositCents, dep: depositCents,
+    pd: new Date((session.created ? session.created * 1000 : Date.now())).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' }),
+    c: { email: md.inv_email || cd.email || session.customer_email || '', type: isCompany ? 'azienda' : 'privato', name: md.inv_name || cd.name || '', company: md.inv_company || '',
+      vat: md.inv_vat || '', cf: md.inv_cf || '', sdi: md.inv_sdi || '', pec: md.inv_pec || '',
+      address: md.inv_address || (cd.address && cd.address.line1) || '', cap: md.inv_cap || (cd.address && cd.address.postal_code) || '',
+      city: md.inv_city || (cd.address && cd.address.city) || '', province: '', country: md.inv_country || (cd.address && cd.address.country) || 'IT' },
+    lines: invLines,
+  };
+}
+
 // Email al cliente e al titolare + DDT + (se attiva) fattura Aruba. Usata dal webhook Stripe e da
 // api/paypal-capture.js. `session` = { id, metadata, amount_total (centesimi), customer_email?,
 // customer_details? }; `lineItemsData` = [{ description, quantity, amount_total (centesimi) }],
@@ -199,25 +227,7 @@ async function processPaidOrder(session, lineItemsData) {
       let fatturaLink = '', fatturaData = null;
       try {
         const { signTicket } = require('./_paypal');
-        // Struttura per Eventi: la caparra 50% (restituibile, fuori campo IVA art. 15 DPR 633/72) resta
-        // fuori dalla fattura. Importo letto dalla descrizione creata in create-checkout-session.js.
-        let depositCents = 0;
-        const invLines = lineItems.data.map((li) => {
-          const m = / — noleggio € ([\d.]+,\d{2}) \+ caparra 50% € ([\d.]+,\d{2}) \(restituita dopo ispezione\)/.exec(li.description || '');
-          if (!m) return { d: li.description, q: 1, c: li.amount_total };
-          const dep = Math.round(parseFloat(m[2].replace(/\./g, '').replace(',', '.')) * 100);
-          depositCents += dep;
-          return { d: li.description.replace(m[0], ' — noleggio'), q: 1, c: li.amount_total - dep };
-        });
-        fatturaData = {
-          k: 'fattura', ref: order.number, pay: md.payment_method === 'PayPal' ? 'PayPal' : 'Stripe',
-          payId: md.payment_method === 'PayPal' ? (md.paypal_order || '') : '', totalCents: session.amount_total - depositCents, dep: depositCents,
-          pd: new Date((session.created ? session.created * 1000 : Date.now())).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' }),
-          c: { email: buyerEmail || '', type: isCompany ? 'azienda' : 'privato', name: md.inv_name || session.customer_details?.name || '', company: md.inv_company || '',
-            vat: md.inv_vat || '', cf: md.inv_cf || '', sdi: md.inv_sdi || '', pec: md.inv_pec || '', address: order.customer.address,
-            cap: order.customer.cap, city: order.customer.city, province: '', country: order.customer.country },
-          lines: invLines,
-        };
+        fatturaData = buildFatturaData(session, lineItems.data);
         fatturaLink = 'https://tipografia.online/api/fattura-xml?t=' + signTicket(fatturaData);
       } catch (e) {
         console.error('Fattura link failed for session', session.id, e);
@@ -260,7 +270,7 @@ async function processPaidOrder(session, lineItemsData) {
       // all'email del titolare. Lazy + try: se fallisce, l'email parte comunque.
       let xmlAttachments = [], xmlWarnings = [];
       try {
-        if (fatturaData) {
+        if (fatturaData && md.inv_later !== '1') {
           const { buildFattura } = require('./_fattura-pa');
           const f = buildFattura({ number: '', date: fatturaData.pd, ref: fatturaData.ref, pay: fatturaData.pay, payId: fatturaData.payId,
             totalCents: fatturaData.totalCents, customer: fatturaData.c, lines: fatturaData.lines });
@@ -520,12 +530,14 @@ function ztlBlockHtml(stops) {
 
 function ownerBlockHtml(order, buyerEmail, session, fatturaLink, hasXml, xmlWarnings) {
   const md = session.metadata || {};
+  const later = md.inv_later === '1';
   const rowsData = [
     ['Cliente', order.customer.name],
+    ...(later ? [['Dati fattura', '<b>In attesa</b>: il cliente li inserisce dopo il pagamento (passo 2). Riceverai l\'email «Dati fattura ordine #' + order.number + '» con l\'XML.']] : []),
     ['Email', buyerEmail || '—'],
-    ['Tipo', order.customer.isCompany ? 'Azienda' : 'Privato'],
+    ...(later ? [] : [['Tipo', order.customer.isCompany ? 'Azienda' : 'Privato'],
     ['P. IVA / CF', order.customer.vatNumber || order.customer.fiscalCode || '—'],
-    ['Indirizzo', [order.customer.address, order.customer.cap, order.customer.city].filter(Boolean).join(', ') || '—'],
+    ['Indirizzo', [order.customer.address, order.customer.cap, order.customer.city].filter(Boolean).join(', ') || '—']]),
     ['Spedizione', md.shipping_zone === 'ritiro' ? 'RITIRO IN SEDE (gratuito)' : md.ship_same === '0'
       ? [md.ship_name, md.ship_address, md.ship_cap, md.ship_city, md.shipping_zone === 'ue' ? md.ship_country : ''].filter(Boolean).join(', ')
       : 'Come fatturazione' + (md.shipping_zone === 'ue' && md.ship_country ? ' — ' + md.ship_country : '')],
@@ -539,7 +551,7 @@ function ownerBlockHtml(order, buyerEmail, session, fatturaLink, hasXml, xmlWarn
       ? `<br><span style="color:#8a2f27;">Da controllare prima di caricare su Aruba:</span><br>${xmlWarnings.map((w) => '• ' + esc(w)).join('<br>')}`
       : '';
     rowsData.push(['Fattura Aruba', `XML allegato (senza numero, lingua copia cortesia: Inglese)${warn}${fatturaLink ? `<br><a href="${fatturaLink}" style="color:${STEEL};font-weight:600;">Correggi dati e rigenera XML</a>` : ''}`]);
-  } else if (fatturaLink) {
+  } else if (fatturaLink && !later) {
     rowsData.push(['Fattura Aruba', `<a href="${fatturaLink}" style="color:${STEEL};font-weight:600;">Crea fattura XML</a>`]);
   }
   if (md.product_ean || md.product_id) {
@@ -577,3 +589,6 @@ function ownerBlockHtml(order, buyerEmail, session, fatturaLink, hasXml, xmlWarn
 // handler above, otherwise `module.exports = handler` discards it.
 module.exports.config = { api: { bodyParser: false } };
 module.exports.processPaidOrder = processPaidOrder;
+module.exports.buildFatturaData = buildFatturaData;
+module.exports.sendEmail = sendEmail;
+module.exports.OWNER_EMAIL = OWNER_EMAIL;
