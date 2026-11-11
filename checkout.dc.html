@@ -116,6 +116,12 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
           </div>
           <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
             <div class="vc-f">
+              <sc-if value="{{ shipIncluded }}" hint-placeholder-val="{{ false }}">
+                <p class="vc-lbl">Spedizione</p>
+                <p class="vc-in" style="background:#eaf3ff;border-color:#b9d6f7;color:#0b3d75;font-weight:600;">Prezzi strategici: spedizione inclusa</p>
+                <label class="vc-check" style="margin-top:12px;"><input type="checkbox" checked="{{ shipEu }}" onChange="{{ toggleShipEu }}">Consegna in un altro paese dell'Unione Europea</label>
+              </sc-if>
+              <sc-if value="{{ showZoneSelect }}" hint-placeholder-val="{{ true }}">
               <label class="vc-lbl" for="ship-zone">Zona di consegna</label>
               <select class="vc-in" id="ship-zone" value="{{ shipZone }}" onChange="{{ setShipZone }}">
                 <sc-if value="{{ showZonePrices }}" hint-placeholder-val="{{ true }}">
@@ -124,15 +130,10 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
                 <option value="italia">Italia (+1 giorno) — € 25,00</option>
                 <option value="ue">Unione Europea (+2/3 giorni) — € 35,00</option>
                 </sc-if>
-                <sc-if value="{{ shipIncluded }}" hint-placeholder-val="{{ false }}">
-                <option value="roma_centro">Roma Sud/EUR/Centro — spedizione inclusa</option>
-                <option value="roma_resto">Resto di Roma — spedizione inclusa</option>
-                <option value="italia">Italia — spedizione inclusa</option>
-                <option value="ue">Unione Europea — spedizione inclusa</option>
-                </sc-if>
                 <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}"><option value="italia">Spedizione UPS in Italia — € 99,00</option></sc-if>
                 <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><option value="ritiro">Ritiro in sede — gratuito</option></sc-if>
               </select>
+              </sc-if>
               <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}">
                 <p class="vc-warn">{{ pickupOnlyNote }}</p>
               </sc-if>
@@ -171,9 +172,6 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
                     <option value="Ungheria">Ungheria</option>
                   </select>
                 </div>
-              </sc-if>
-              <sc-if value="{{ shipIncluded }}" hint-placeholder-val="{{ false }}">
-                <p class="vc-hint" style="color:#0062c4;font-weight:600;">Prezzi strategici: spedizione inclusa, nessun costo di trasporto.</p>
               </sc-if>
               <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
                 <p class="vc-hint">Roll-Up a Roma e in UE: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
@@ -338,6 +336,7 @@ class Component extends DCLogic {
     shipSame: true,
     shipZone: 'roma_centro',
     shipCountry: '',
+    shipEu: false,
     ship: { name: '', phone: '', address: '', city: '', cap: '', notes: '' },
     useSender: false,
     sender: { company: '', phone: '', address: '', city: '', cap: '' },
@@ -581,6 +580,8 @@ class Component extends DCLogic {
   // Roll-Up 200/240 × 200 (5833): ritiro a Roma (gratis) o spedizione UPS in Italia € 99 (zona 'italia'). Stessa regola del server.
   pickupOnly() { return this.state.items.some(i => String(i.productId) === '5833'); }
 
+  allStrategici() { const it = this.state.items; return it.length > 0 && !this.pickupOnly() && it.every(i => i.col === 'strategici'); }
+
   subtotal() { return this.state.items.reduce((a, i) => a + (parseFloat(i.price) || 0), 0); }
 
   validate() {
@@ -648,6 +649,11 @@ class Component extends DCLogic {
   renderVals() {
     // Roll-Up 200/240 (5833): solo «Ritiro in sede» o «UPS Italia» (zona 'italia'); ogni altra zona torna su una delle due.
     if (this.pickupOnly() && !['ritiro', 'italia'].includes(this.state.shipZone)) setTimeout(() => this.setState({ shipZone: this.canPickup() ? 'ritiro' : 'italia' }), 0);
+    // Prezzi strategici: niente menu, la zona si ricava dall'indirizzo (CAP di Roma 00118-00199 → consegna Roma, per il controllo ZTL; altrimenti Italia) o dalla spunta UE.
+    if (this.allStrategici()) {
+      const want = this.state.shipEu ? 'ue' : (/^001(1[89]|[2-9]\d)$/.test(String(this.state.ship.cap || '').trim()) ? 'roma_centro' : 'italia');
+      if (this.state.shipZone !== want) setTimeout(() => this.setState({ shipZone: want }), 0);
+    }
     const s = this.state;
     const shippingFee = this.computeShippingFee();
     const sub = this.subtotal();
@@ -682,8 +688,11 @@ class Component extends DCLogic {
       pickupOnly: this.pickupOnly(),
       notPickupOnly: !this.pickupOnly(),
       // Solo Prezzi strategici nel carrello: spedizione inclusa, la zona serve solo per la consegna (nessun prezzo).
-      shipIncluded: !this.pickupOnly() && n > 0 && s.items.every(i => i.col === 'strategici'),
-      showZonePrices: !this.pickupOnly() && !(n > 0 && s.items.every(i => i.col === 'strategici')),
+      shipIncluded: this.allStrategici(),
+      showZoneSelect: !this.allStrategici(),
+      showZonePrices: !this.pickupOnly(),
+      shipEu: s.shipEu,
+      toggleShipEu: () => this.setState({ shipEu: !this.state.shipEu }),
       pickupOnlyNote: s.items.some(i => String(i.productId) === '215') ? 'Il Roll-Up 200/240 × 200 cm (ritiro o UPS) e la Struttura per Eventi (consegna e montaggio a Roma) vanno ordinati separatamente: fai due ordini.' : (this.canPickup() ? 'Roll-Up 200/240 × 200 cm: ritiro gratuito nel nostro punto vendita a Roma oppure spedizione UPS in Italia € 99,00.' : 'Roll-Up 200/240 × 200 cm: spedizione UPS in Italia € 99,00 (con i Prezzi strategici il ritiro non è disponibile).'),
       isZoneRitiro: s.shipZone === 'ritiro' && this.canPickup(),
       notZoneRitiro: !(s.shipZone === 'ritiro' && this.canPickup()),
