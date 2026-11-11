@@ -136,8 +136,8 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
         </div>
         <div class="vc-f"><div><label class="vc-lbl" for="i-piva">Partita IVA / Codice Fiscale <span class="vc-req">*</span></label><input class="vc-in" id="i-piva" value="{{ inv.vat }}" onChange="{{ setInvVat }}"></div></div>
         <div class="vc-two vc-f">
-          <div><label class="vc-lbl" for="i-sdi">Codice SDI</label><input class="vc-in" id="i-sdi" placeholder="oppure la PEC" maxlength="7" value="{{ inv.sdi }}" onChange="{{ setInvSdi }}"></div>
-          <div><label class="vc-lbl" for="i-pec">PEC</label><input class="vc-in" id="i-pec" type="email" placeholder="oppure il Codice SDI" value="{{ inv.pec }}" onChange="{{ setInvPec }}"></div>
+          <div><label class="vc-lbl" for="i-sdi">Codice SDI</label><input class="vc-in" id="i-sdi" maxlength="7" value="{{ inv.sdi }}" onChange="{{ setInvSdi }}"></div>
+          <div><label class="vc-lbl" for="i-pec">PEC</label><input class="vc-in" id="i-pec" type="email" value="{{ inv.pec }}" onChange="{{ setInvPec }}"></div>
         </div>
         <p class="vc-hint">Serve almeno uno tra Codice SDI e PEC.</p>
           <div class="vc-f"><div><label class="vc-lbl" for="i-address-a">Indirizzo sede legale <span class="vc-req">*</span></label><input class="vc-in" id="i-address-a" autocomplete="street-address" placeholder="Via e numero civico" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div></div>
