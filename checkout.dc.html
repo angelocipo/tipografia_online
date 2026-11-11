@@ -30,10 +30,57 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-341HJWRT35');</script>
 <style>
 .idx-wrap{max-width:900px;margin:0 auto;padding:0 var(--space-6);}
-.co-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);}
-@media (max-width:640px){.co-grid{grid-template-columns:1fr;}.nav > a.btn-primary{display:none;}}
-.co-section{padding:var(--space-6);margin-bottom:var(--space-6);}
-.co-h{font-size:20px;margin:0 0 var(--space-4);}
+.vc{font-family:"SF Pro Display",-apple-system,system-ui,"Helvetica Neue",Inter,sans-serif;color:#1d1d1f;}
+.vc *{box-sizing:border-box;}
+.vc-wrap{max-width:1100px;margin:0 auto;padding-left:22px;padding-right:22px;}
+.vc-kick{font-size:14px;font-weight:600;color:#0062c4;letter-spacing:.4px;text-transform:uppercase;margin:0;}
+.vc-h1{font-size:clamp(32px,4.4vw,50px);line-height:1.06;font-weight:700;letter-spacing:-1.6px;margin:12px 0 0;font-family:inherit;}
+.vc-sub{font-size:16px;line-height:1.5;color:#636366;margin:16px 0 0;text-wrap:pretty;}
+.vc-panel{background:#f5f5f7;border-radius:26px;padding:36px;}
+.vc-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:start;}
+.vc-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+.vc-cap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:14px;}
+.vc h3{font-size:21px;font-weight:600;letter-spacing:-.4px;margin:0;font-family:inherit;color:#1d1d1f;}
+.vc-f{margin-top:14px;}
+.vc-lbl{display:block;font-size:14px;font-weight:600;color:#1d1d1f;}
+.vc-req{color:#0062c4;}
+.vc-in{display:block;width:100%;max-width:100%;margin-top:7px;font-size:16px;font-family:inherit;color:#1d1d1f;background:#fff;border:1px solid #d2d2d7;border-radius:13px;padding:13px 15px;outline:none;}
+.vc-in:focus{border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,.2);}
+select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23636366' stroke-width='1.8'/%3E%3C/svg%3E") no-repeat right 16px center;}
+.vc-hint{font-size:13px;line-height:1.45;color:#636366;margin:8px 0 0;text-wrap:pretty;}
+.vc-seg{display:flex;gap:4px;background:#e5e5ea;border-radius:980px;padding:4px;}
+.vc-seg label{flex:1;text-align:center;font-size:14px;font-weight:600;color:#3a3a3c;padding:9px 8px;border-radius:980px;cursor:pointer;position:relative;}
+.vc-seg input{position:absolute;opacity:0;width:1px;height:1px;}
+.vc-seg label:has(input:checked){background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.vc-seg label:has(input:focus-visible){outline:2px solid #0071e3;outline-offset:2px;}
+.vc-checks{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.vc-check{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:#1d1d1f;cursor:pointer;}
+.vc-check input{width:18px;height:18px;margin:0;accent-color:#0071e3;flex-shrink:0;}
+.vc-card{background:#fff;border-radius:18px;padding:20px;}
+.vc-spec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:14px 0 0;font-size:14px;}
+.vc-spec dt{color:#636366;font-weight:500;}
+.vc-spec dd{margin:0;font-weight:600;}
+.vc-drop{display:block;border:1px dashed #a1a1a6;border-radius:14px;background:#fafafa;padding:18px;margin-top:16px;cursor:pointer;}
+.vc-drop:hover{border-color:#0071e3;}
+.vc-warn{font-size:14px;font-weight:600;line-height:1.4;color:#1d1d1f;background:#fff4d6;border-radius:10px;padding:10px 14px;margin:10px 0 0;}
+.vc-textbtn{background:none;border:none;padding:0;margin-top:14px;font:inherit;font-size:14px;font-weight:600;color:#0062c4;cursor:pointer;text-decoration:none;}
+.vc-textbtn:hover{text-decoration:underline;}
+.vc-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;}
+.vc-big{font-size:28px;font-weight:700;letter-spacing:-1px;white-space:nowrap;}
+.vc-btn{display:block;width:100%;background:#0071e3;color:#fff;border:none;font-size:18px;font-weight:500;font-family:inherit;padding:16px;border-radius:980px;cursor:pointer;}
+.vc-btn:hover{background:#0062c4;}
+.vc-btn[disabled]{opacity:.6;cursor:wait;}
+.vc-btn2{display:block;width:100%;text-align:center;background:#fff;color:#1d1d1f;border:1px solid #d2d2d7;font-size:17px;font-weight:500;font-family:inherit;padding:15px;border-radius:980px;cursor:pointer;text-decoration:none;}
+.vc-btn2:hover{border-color:#1d1d1f;color:#1d1d1f;}
+.vc-or{display:flex;align-items:center;gap:12px;margin:22px 0 18px;}
+.vc-or span{flex:1;height:1px;background:rgba(0,0,0,.12);}
+.vc-or em{font-style:normal;font-size:12px;color:#636366;letter-spacing:.3px;text-transform:uppercase;}
+.vc-cond{margin:30px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:26px;}
+.vc-cond li{display:grid;grid-template-columns:38px 1fr;gap:16px;align-items:start;}
+.vc-cond li span{width:32px;height:32px;border-radius:50%;background:#1d1d1f;color:#fff;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.vc-cond p{font-size:16.5px;line-height:1.55;color:#1d1d1f;margin:0;text-wrap:pretty;}
+@media (max-width:900px){.vc-cols,.vc-two{grid-template-columns:minmax(0,1fr);}}
+@media (max-width:600px){.vc-panel{padding:22px 16px;border-radius:20px;}.vc-wrap{padding-left:12px;padding-right:12px;}.vc-cap{grid-template-columns:minmax(0,1fr);}.vc-seg label{font-size:13px;padding:9px 4px;}.vc-big{font-size:24px;}.nav > a.btn-primary{display:none;}}
 </style>
 <script src="i18n.js"></script>
 <script src="tp-files.js"></script>
@@ -48,249 +95,210 @@
   <a href="contattateci.html" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi preventivo</a>
 </nav>
 
-<main class="idx-wrap" style="padding-top:var(--space-8);padding-bottom:calc(var(--space-8) * 2);">
-  <h1 style="font-size:32px;margin:0 0 var(--space-6);">Checkout</h1>
+<main class="vc" style="padding-bottom:calc(var(--space-8) * 2);">
+  <section class="vc-wrap" style="padding-top:56px;text-align:center;">
+    <p class="vc-kick">Passo 1 di 2 · Consegna e pagamento</p>
+    <h1 class="vc-h1">Prenota la tua stampa, i dati di fattura dopo.</h1>
+    <p class="vc-sub">Dicci dove consegnare, carica il file e paga in sicurezza. Subito dopo il pagamento inserisci i dati per la fattura.</p>
+  </section>
 
-  <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
-    <div class="card blueprint co-section">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="card-kicker">Il tuo ordine · {{ itemsCountLabel }}</div>
-      <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="1">
-        <div style="padding:var(--space-4) 0;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:var(--space-3);">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-4);">
-            <div style="min-width:0;">
-              <div class="card-title">{{ it.name }}</div>
-              <div style="font-size:12px;letter-spacing:0.04em;font-family:ui-monospace,monospace;color:var(--color-neutral-700);margin-top:4px;">Rif. articolo {{ it.code }}<sc-if value="{{ it.hasEan }}" hint-placeholder-val="{{ false }}"> · EAN {{ it.ean }}</sc-if></div>
-            </div>
-            <div style="font-family:var(--font-heading);font-size:24px;white-space:nowrap;">€ {{ it.priceFmt }}</div>
+  <section class="vc-wrap" style="padding-top:36px;">
+    <form class="vc-panel" onSubmit="{{ handleSubmit }}">
+      <div class="vc-cols">
+
+        <!-- Colonna sinistra: consegna e mittente. I dati di fatturazione si chiedono dopo il pagamento (grazie.dc.html). -->
+        <div>
+          <h3>Consegna</h3>
+          <div class="vc-f" style="margin-top:16px;">
+            <label class="vc-lbl" for="inv-email">Email <span class="vc-req">*</span></label>
+            <input class="vc-in" id="inv-email" type="email" autocomplete="email" required placeholder="tu@email.it" value="{{ inv.email }}" onChange="{{ setInvEmail }}">
+            <p class="vc-hint">Per la ricevuta di pagamento e la fattura.</p>
           </div>
-          <sc-if value="{{ it.hasDetails }}" hint-placeholder-val="{{ true }}">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px,1fr));gap:var(--space-3);">
-              <sc-for list="{{ it.details }}" as="d" hint-placeholder-count="3">
-                <div>
-                  <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-neutral-700);margin-bottom:2px;">{{ d.label }}</div>
-                  <div style="font-size:13.5px;font-weight:600;">{{ d.value }}</div>
+          <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}">
+            <div class="vc-f">
+              <label class="vc-lbl" for="ship-zone">Zona di consegna</label>
+              <select class="vc-in" id="ship-zone" value="{{ shipZone }}" onChange="{{ setShipZone }}">
+                <sc-if value="{{ notPickupOnly }}" hint-placeholder-val="{{ true }}">
+                <option value="roma_centro">Roma Sud/EUR/Centro — € 20,00</option>
+                <option value="roma_resto">Resto di Roma — € 30,00</option>
+                <option value="italia">Italia (+1 giorno) — € 25,00</option>
+                <option value="ue">Unione Europea (+2/3 giorni) — € 35,00</option>
+                </sc-if>
+                <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}"><option value="italia">Spedizione UPS in Italia — € 99,00</option></sc-if>
+                <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><option value="ritiro">Ritiro in sede — gratuito</option></sc-if>
+              </select>
+              <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}">
+                <p class="vc-warn">{{ pickupOnlyNote }}</p>
+              </sc-if>
+              <sc-if value="{{ isZoneRitiro }}" hint-placeholder-val="{{ false }}">
+                <p class="vc-hint">Ritiro in sede: Via Lorenzo Bonincontri, 26, 00147 Roma. Lun-Ven 8-12 / 15-18. Ti avvisiamo al cellulare quando l'ordine è pronto.</p>
+              </sc-if>
+              <sc-if value="{{ isZoneUe }}" hint-placeholder-val="{{ false }}">
+                <div class="vc-f"><label class="vc-lbl" for="ship-country">Paese di destinazione (UE) <span class="vc-req">*</span></label>
+                  <select class="vc-in" id="ship-country" value="{{ shipCountry }}" onChange="{{ setShipCountry }}">
+                    <option value="">Seleziona il paese</option>
+                    <option value="Austria">Austria</option>
+                    <option value="Belgio">Belgio</option>
+                    <option value="Bulgaria">Bulgaria</option>
+                    <option value="Cipro">Cipro</option>
+                    <option value="Croazia">Croazia</option>
+                    <option value="Danimarca">Danimarca</option>
+                    <option value="Estonia">Estonia</option>
+                    <option value="Finlandia">Finlandia</option>
+                    <option value="Francia">Francia</option>
+                    <option value="Germania">Germania</option>
+                    <option value="Grecia">Grecia</option>
+                    <option value="Irlanda">Irlanda</option>
+                    <option value="Lettonia">Lettonia</option>
+                    <option value="Lituania">Lituania</option>
+                    <option value="Lussemburgo">Lussemburgo</option>
+                    <option value="Malta">Malta</option>
+                    <option value="Paesi Bassi">Paesi Bassi</option>
+                    <option value="Polonia">Polonia</option>
+                    <option value="Portogallo">Portogallo</option>
+                    <option value="Repubblica Ceca">Repubblica Ceca</option>
+                    <option value="Romania">Romania</option>
+                    <option value="Slovacchia">Slovacchia</option>
+                    <option value="Slovenia">Slovenia</option>
+                    <option value="Spagna">Spagna</option>
+                    <option value="Svezia">Svezia</option>
+                    <option value="Ungheria">Ungheria</option>
+                  </select>
                 </div>
-              </sc-for>
+              </sc-if>
+              <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
+                <p class="vc-hint">Roll-Up a Roma e in UE: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
+              </sc-if>
+              <sc-if value="{{ isBackdrop }}" hint-placeholder-val="{{ false }}">
+                <p class="vc-hint">Backdrop: trasporto incluso in tutta Italia. Unione Europea + € 55,00.</p>
+              </sc-if>
+              <p class="vc-hint">Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</p>
             </div>
           </sc-if>
-          <div class="field" style="display:flex;flex-direction:column;gap:var(--space-2);">
-            <label>File da stampare</label>
-            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3);">
-              <label class="btn btn-secondary blueprint" style="cursor:pointer;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ it.uploadLabel }}<input type="file" multiple style="display:none;" onChange="{{ it.onFiles }}"></label>
-              <span style="font-size:12px;color:var(--color-neutral-700);">JPG, PNG, PDF, AI, EPS, ZIP — max 3 MB in totale per l'ordine</span>
+          <sc-if value="{{ notZoneRitiro }}" hint-placeholder-val="{{ true }}">
+            <div class="vc-f"><div><label class="vc-lbl" for="ship-name">Nome destinatario <span class="vc-req">*</span></label><input class="vc-in" id="ship-name" autocomplete="name" placeholder="Persona o azienda che riceve il pacco" value="{{ ship.name }}" onChange="{{ setShipName }}"></div></div>
+            <div class="vc-f"><div><label class="vc-lbl" for="ship-address">Indirizzo di consegna <span class="vc-req">*</span></label><input class="vc-in" id="ship-address" autocomplete="street-address" placeholder="Via e numero civico" value="{{ ship.address }}" onChange="{{ setShipAddress }}"></div></div>
+            <div class="vc-cap vc-f">
+              <div><label class="vc-lbl" for="ship-cap">CAP <span class="vc-req">*</span></label><input class="vc-in" id="ship-cap" autocomplete="postal-code" placeholder="00147" value="{{ ship.cap }}" onChange="{{ setShipCap }}"></div>
+              <div><label class="vc-lbl" for="ship-city">Città <span class="vc-req">*</span></label><input class="vc-in" id="ship-city" placeholder="Roma" value="{{ ship.city }}" onChange="{{ setShipCity }}"></div>
             </div>
-            <sc-if value="{{ it.hasFiles }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:12.5px;font-weight:600;color:var(--color-accent-700);">Allegato: {{ it.filesText }}. Verrà inviato alla conferma dell'ordine.</div>
-            </sc-if>
-            <sc-if value="{{ it.hasError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:12.5px;color:#b23b3b;">{{ it.error }}</div>
-            </sc-if>
-            <input class="input" placeholder="Oppure incolla un link al file (Canva, WeTransfer, Drive…)" value="{{ it.link }}" onChange="{{ it.onLink }}">
-          </div>
-          <button type="button" class="btn btn-ghost" onClick="{{ it.onRemove }}" style="align-self:flex-start;padding-left:0;">Rimuovi dal carrello</button>
-        </div>
-      </sc-for>
-      <div class="field" style="margin:var(--space-4) 0;">
-        <label for="ship-zone">Consegna</label>
-        <select class="input" id="ship-zone" value="{{ shipZone }}" onChange="{{ setShipZone }}" style="max-width:420px;">
-          <sc-if value="{{ notPickupOnly }}" hint-placeholder-val="{{ true }}">
-          <option value="roma_centro">Roma Sud/EUR/Centro — € 20,00</option>
-          <option value="roma_resto">Resto di Roma — € 30,00</option>
-          <option value="italia">Italia (+1 giorno) — € 25,00</option>
-          <option value="ue">Unione Europea (+2/3 giorni) — € 35,00</option>
+            <div class="vc-f"><div><label class="vc-lbl" for="ship-notes">Note di consegna</label><input class="vc-in" id="ship-notes" placeholder="Citofono, piano, orari…" value="{{ ship.notes }}" onChange="{{ setShipNotes }}"></div></div>
           </sc-if>
-          <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}"><option value="italia">Spedizione UPS in Italia — € 99,00</option></sc-if>
-          <sc-if value="{{ canPickup }}" hint-placeholder-val="{{ false }}"><option value="ritiro">Ritiro in sede — gratuito</option></sc-if>
-        </select>
-        <sc-if value="{{ pickupOnly }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;color:var(--color-accent-700);font-weight:600;">{{ pickupOnlyNote }}</p>
-        </sc-if>
-        <sc-if value="{{ isZoneRitiro }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;color:var(--color-text);">Ritiro in sede: Via Lorenzo Bonincontri, 26, 00147 Roma. Lun-Ven 8-12 / 15-18. Ti avvisiamo al cellulare quando l'ordine è pronto.</p>
-        </sc-if>
-        <sc-if value="{{ isZoneUe }}" hint-placeholder-val="{{ false }}">
-          <div class="field" style="margin-top:var(--space-3);max-width:360px;"><label for="ship-country">Paese di destinazione (UE)</label>
-            <select class="input" id="ship-country" value="{{ shipCountry }}" onChange="{{ setShipCountry }}">
-              <option value="">Seleziona il paese</option>
-              <option value="Austria">Austria</option>
-              <option value="Belgio">Belgio</option>
-              <option value="Bulgaria">Bulgaria</option>
-              <option value="Cipro">Cipro</option>
-              <option value="Croazia">Croazia</option>
-              <option value="Danimarca">Danimarca</option>
-              <option value="Estonia">Estonia</option>
-              <option value="Finlandia">Finlandia</option>
-              <option value="Francia">Francia</option>
-              <option value="Germania">Germania</option>
-              <option value="Grecia">Grecia</option>
-              <option value="Irlanda">Irlanda</option>
-              <option value="Lettonia">Lettonia</option>
-              <option value="Lituania">Lituania</option>
-              <option value="Lussemburgo">Lussemburgo</option>
-              <option value="Malta">Malta</option>
-              <option value="Paesi Bassi">Paesi Bassi</option>
-              <option value="Polonia">Polonia</option>
-              <option value="Portogallo">Portogallo</option>
-              <option value="Repubblica Ceca">Repubblica Ceca</option>
-              <option value="Romania">Romania</option>
-              <option value="Slovacchia">Slovacchia</option>
-              <option value="Slovenia">Slovenia</option>
-              <option value="Spagna">Spagna</option>
-              <option value="Svezia">Svezia</option>
-              <option value="Ungheria">Ungheria</option>
-            </select>
+          <sc-if value="{{ isZoneRitiro }}" hint-placeholder-val="{{ false }}">
+            <div class="vc-f"><div><label class="vc-lbl" for="ship-name-r">Nome di chi ritira <span class="vc-req">*</span></label><input class="vc-in" id="ship-name-r" autocomplete="name" value="{{ ship.name }}" onChange="{{ setShipName }}"></div></div>
+          </sc-if>
+          <div class="vc-f">
+            <label class="vc-lbl" for="ship-phone">Cellulare <span class="vc-req">*</span></label>
+            <input class="vc-in" id="ship-phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="es. 333 123 4567" value="{{ ship.phone }}" onChange="{{ setShipPhone }}">
+            <p class="vc-hint">Cellulare, non un fisso: il corriere lo usa per avvisarti e concordare la consegna, noi per dirti quando l'ordine è pronto.</p>
           </div>
-        </sc-if>
-        <sc-if value="{{ isRollupShipping }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;">Roll-Up a Roma e in UE: il 1° al prezzo della zona, ogni Roll-Up successivo € 15,00.</p>
-        </sc-if>
-        <sc-if value="{{ isBackdrop }}" hint-placeholder-val="{{ false }}">
-          <p class="card-body" style="margin:var(--space-2) 0 0;">Backdrop: trasporto incluso in tutta Italia. Unione Europea + € 55,00.</p>
-        </sc-if>
-        <p class="card-body" style="margin:var(--space-2) 0 0;">Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</p>
+          <p class="vc-hint"><strong style="color:#1d1d1f;">Consegna a un ufficio o a un evento?</strong> Assicurati che qualcuno sia presente a ricevere il pacco e tieni acceso il cellulare: il corriere non consegna a un orario fisso.</p>
+
+          <h3 style="margin-top:34px;">Mittente</h3>
+          <label class="vc-check" style="margin-top:14px;"><input type="checkbox" checked="{{ useSender }}" onChange="{{ toggleSender }}">Voglio usare la mia azienda come mittente</label>
+          <p class="vc-hint">Utile se rivendi la stampa: il pacco arriva al tuo cliente con la tua azienda come mittente, invece della nostra.</p>
+          <sc-if value="{{ useSender }}" hint-placeholder-val="{{ false }}">
+            <div class="vc-two vc-f">
+              <div><label class="vc-lbl" for="send-company">Ragione sociale / Nome</label><input class="vc-in" id="send-company" value="{{ sender.company }}" onChange="{{ setSenderCompany }}"></div>
+              <div><label class="vc-lbl" for="send-phone">Telefono</label><input class="vc-in" id="send-phone" value="{{ sender.phone }}" onChange="{{ setSenderPhone }}"></div>
+            </div>
+            <div class="vc-f"><label class="vc-lbl" for="send-address">Indirizzo</label><input class="vc-in" id="send-address" value="{{ sender.address }}" onChange="{{ setSenderAddress }}"></div>
+            <div class="vc-cap vc-f">
+              <div><label class="vc-lbl" for="send-cap">CAP</label><input class="vc-in" id="send-cap" value="{{ sender.cap }}" onChange="{{ setSenderCap }}"></div>
+              <div><label class="vc-lbl" for="send-city">Città</label><input class="vc-in" id="send-city" value="{{ sender.city }}" onChange="{{ setSenderCity }}"></div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- Colonna destra: ordine, file, zona di consegna, pagamento -->
+        <div>
+          <h3>Il tuo ordine <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ true }}"><span style="font-size:15px;font-weight:500;color:#636366;letter-spacing:0;">· {{ itemsCountLabel }}</span></sc-if></h3>
+
+          <sc-if value="{{ noProduct }}" hint-placeholder-val="{{ false }}">
+            <div class="vc-card" style="margin-top:16px;"><p style="margin:0;font-size:15px;line-height:1.5;">Il carrello è vuoto. <a href="index.html">Torna ai prodotti</a> e clicca «Aggiungi al carrello».</p></div>
+          </sc-if>
+
+          <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="1">
+            <div class="vc-card" style="margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+                <div style="min-width:0;">
+                  <div style="font-size:17px;font-weight:600;letter-spacing:-0.2px;line-height:1.3;">{{ it.name }}</div>
+                  <div style="font-size:12px;letter-spacing:0.04em;font-family:ui-monospace,monospace;color:#636366;margin-top:4px;">Rif. articolo {{ it.code }}<sc-if value="{{ it.hasEan }}" hint-placeholder-val="{{ false }}"> · EAN {{ it.ean }}</sc-if></div>
+                </div>
+                <div style="font-size:21px;font-weight:700;letter-spacing:-0.5px;white-space:nowrap;">€ {{ it.priceFmt }}</div>
+              </div>
+              <sc-if value="{{ it.hasDetails }}" hint-placeholder-val="{{ true }}">
+                <dl class="vc-spec">
+                  <sc-for list="{{ it.details }}" as="d" hint-placeholder-count="3">
+                    <dt>{{ d.label }}</dt><dd>{{ d.value }}</dd>
+                  </sc-for>
+                </dl>
+              </sc-if>
+
+              <label class="vc-drop">
+                <span style="display:block;font-size:15px;font-weight:600;color:#1d1d1f;">{{ it.uploadLabel }}</span>
+                <span style="display:block;font-size:13px;color:#636366;margin-top:4px;">Scegli uno o più file: JPG, PNG, PDF, AI, EPS, ZIP</span>
+                <input type="file" multiple onChange="{{ it.onFiles }}" style="margin-top:12px;font-size:13px;font-family:inherit;color:#636366;max-width:100%;">
+              </label>
+              <sc-if value="{{ it.hasFiles }}" hint-placeholder-val="{{ false }}">
+                <p style="font-size:13px;font-weight:600;color:#0062c4;margin:8px 0 0;">Allegato: {{ it.filesText }}. Verrà inviato alla conferma dell'ordine.</p>
+              </sc-if>
+              <sc-if value="{{ it.hasError }}" hint-placeholder-val="{{ false }}">
+                <p style="font-size:13px;color:#b42318;margin:8px 0 0;">{{ it.error }}</p>
+              </sc-if>
+              <p class="vc-warn">Max 3 MB in totale per l'ordine. File più pesanti: incolla un link qui sotto.</p>
+              <div class="vc-f">
+                <label class="vc-lbl">Oppure incolla un link al file
+                <input class="vc-in" placeholder="Link Canva modificabile, WeTransfer, Google Drive…" value="{{ it.link }}" onChange="{{ it.onLink }}"></label>
+                <p class="vc-hint"><strong style="color:#1d1d1f;">NIENTE PASSWORD.</strong> Google Drive: imposta l'accesso «Chiunque abbia il link», così apriamo il file subito.</p>
+              </div>
+              <button type="button" class="vc-textbtn" onClick="{{ it.onRemove }}">Rimuovi dal carrello</button>
+            </div>
+          </sc-for>
+          <a href="index.html" class="vc-textbtn" style="display:inline-block;margin-top:12px;">+ Aggiungi altri prodotti</a>
+
+          <h3 style="margin:34px 0 16px;">Pagamento</h3>
+          <div class="vc-row"><span style="font-size:19px;font-weight:600;letter-spacing:-0.4px;">Subtotale</span><span class="vc-big">€ {{ productPriceFmt }}</span></div>
+          <div class="vc-row" style="margin-top:8px;"><span style="font-size:15px;font-weight:600;color:#636366;">Spedizione</span><span style="font-size:19px;font-weight:600;letter-spacing:-0.4px;text-align:right;">{{ shippingLabel }}</span></div>
+          <div class="vc-row" style="border-top:1px solid rgba(0,0,0,0.1);margin-top:14px;padding-top:14px;"><span style="font-size:19px;font-weight:600;letter-spacing:-0.4px;">Totale</span><span class="vc-big">€ {{ orderTotal }}</span></div>
+          <p style="font-size:13px;color:#636366;text-align:right;margin:4px 0 0;">IVA inclusa</p>
+          <sc-if value="{{ isMultiItem }}" hint-placeholder-val="{{ false }}">
+            <p class="vc-hint" style="text-align:right;">Una sola spedizione per l'ordine: si applica la tariffa più alta tra gli articoli.</p>
+          </sc-if>
+
+          <sc-if value="{{ errorMsg }}" hint-placeholder-val="{{ null }}">
+            <p role="alert" style="color:#b42318;background:#fdecea;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;margin:18px 0 0;">{{ errorMsg }}</p>
+          </sc-if>
+
+          <button type="submit" class="vc-btn" disabled="{{ submitting }}" style="margin-top:22px;">{{ submitLabel }}</button>
+          <p style="font-size:13px;color:#636366;text-align:center;margin:12px 0 0;">Pagamento sicuro con Stripe o PayPal. Dati per la fattura subito dopo il pagamento.</p>
+
+          <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
+            <div class="vc-or"><span></span><em>oppure</em><span></span></div>
+            <!-- PayPal limita i pulsanti a 750 px. -->
+            <div id="paypal-checkout-slot" style="min-height:45px;"></div>
+            <a href="{{ preventivoHref }}" target="_blank" rel="noopener" class="vc-btn2" style="margin-top:14px;">Richiedi un preventivo ufficiale</a>
+            <p style="font-size:13px;color:#636366;text-align:center;margin:12px 0 0;">Scarica subito il preventivo in PDF. Nessun pagamento.</p>
+          </sc-if>
+          <p style="font-size:13px;line-height:1.5;color:#636366;text-align:center;margin:18px 0 0;"><strong style="font-weight:600;color:#3a3a3c;">Privacy:</strong> i tuoi dati servono solo per gestire l'ordine. Non li vendiamo né li cediamo a nessuno.</p>
+        </div>
+
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;padding-top:var(--space-4);font-size:14px;">
-        <div style="display:flex;justify-content:space-between;"><span>Prodotti</span><span>€ {{ productPriceFmt }}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>Spedizione</span><span>{{ shippingLabel }}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;">Totale</span><span style="font-family:var(--font-heading);font-size:28px;">€ {{ orderTotal }}</span></div>
-        <sc-if value="{{ isMultiItem }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12px;color:var(--color-neutral-700);">Una sola spedizione per l'ordine: si applica la tariffa più alta tra gli articoli.</div>
-        </sc-if>
-      </div>
-      <a href="index.html" class="btn btn-ghost" style="margin-top:var(--space-3);padding-left:0;">+ Aggiungi altri prodotti</a>
+    </form>
+  </section>
+
+  <section class="vc-wrap" style="padding-top:44px;">
+    <div class="vc-panel" style="padding:44px;">
+      <p class="vc-kick">Condizioni d'ordine</p>
+      <h2 style="font-size:clamp(26px,3.2vw,36px);line-height:1.1;font-weight:700;letter-spacing:-1px;margin:10px 0 0;">Da leggere prima di ordinare.</h2>
+      <ol class="vc-cond">
+        <li><span>1</span><p>La produzione parte solo a pagamento ricevuto e segue i tempi indicati sul prodotto. Ogni ritardo nel pagamento sposta di pari passo produzione e consegna.</p></li>
+        <li><span>2</span><p>Per stampare serve un PDF ad alta risoluzione al 100% del formato finale, con abbondanza dove prevista, oppure un link Canva modificabile. Se possibile parliamo direttamente con il grafico: si evitano errori su misure, abbondanza, risoluzione e colori.</p></li>
+        <li><span>3</span><p>Indica un cellulare (non un fisso) di chi riceve il pacco. La data di consegna vale per l'intera giornata: il corriere non consegna a un orario fisso. Meglio tenere un giorno di margine.</p></li>
+        <li><span>4</span><p>Subito dopo il pagamento ti chiediamo i dati di fatturazione: la fattura viene emessa esattamente con quei dati e inviata entro un giorno lavorativo.</p></li>
+      </ol>
     </div>
-  </sc-if>
-  <sc-if value="{{ noProduct }}" hint-placeholder-val="{{ false }}">
-    <div class="card blueprint co-section">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <p class="card-body">Il carrello è vuoto. <a href="index.html">Torna ai prodotti</a> e clicca "Aggiungi al carrello".</p>
-    </div>
-  </sc-if>
-
-  <form onSubmit="{{ handleSubmit }}">
-    <section class="card blueprint co-section">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <h2 class="co-h">Dati di fatturazione</h2>
-
-      <div class="field" style="margin-bottom:var(--space-4);">
-        <label id="inv-type-label">Tipo cliente</label>
-        <div class="seg" role="radiogroup" aria-labelledby="inv-type-label">
-          <label class="seg-opt"><input type="radio" name="invType" value="privato" checked="{{ isPrivato }}" onChange="{{ setInvType }}">Privato</label>
-          <label class="seg-opt"><input type="radio" name="invType" value="azienda" checked="{{ isAzienda }}" onChange="{{ setInvType }}">Azienda</label>
-          <label class="seg-opt"><input type="radio" name="invType" value="estero" checked="{{ isEstero }}" onChange="{{ setInvType }}">Foreign / Estero</label>
-        </div>
-      </div>
-
-      <sc-if value="{{ isEstero }}" hint-placeholder-val="{{ false }}">
-        <div class="co-grid" style="margin-bottom:var(--space-4);">
-          <div class="field"><label for="inv-name">Full name</label><input class="input" id="inv-name" value="{{ inv.name }}" onChange="{{ setInvName }}"></div>
-          <div class="field"><label for="inv-email">Email</label><input class="input" id="inv-email" type="email" value="{{ inv.email }}" onChange="{{ setInvEmail }}"></div>
-          <div class="field"><label for="inv-company">Company (optional)</label><input class="input" id="inv-company" value="{{ inv.company }}" onChange="{{ setInvCompany }}"></div>
-          <div class="field"><label for="inv-vat">VAT / Tax ID (optional)</label><input class="input" id="inv-vat" value="{{ inv.vat }}" onChange="{{ setInvVat }}"></div>
-          <div class="field"><label for="inv-address">Address</label><input class="input" id="inv-address" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div>
-          <div class="field"><label for="inv-city">City</label><input class="input" id="inv-city" value="{{ inv.city }}" onChange="{{ setInvCity }}"></div>
-          <div class="field"><label for="inv-cap">Postal code</label><input class="input" id="inv-cap" value="{{ inv.cap }}" onChange="{{ setInvCap }}"></div>
-          <div class="field"><label for="inv-country">Country</label><input class="input" id="inv-country" value="{{ inv.country }}" onChange="{{ setInvCountry }}"></div>
-        </div>
-      </sc-if>
-
-      <sc-if value="{{ isPrivato }}" hint-placeholder-val="{{ true }}">
-        <div class="co-grid" style="margin-bottom:var(--space-4);">
-          <div class="field"><label for="inv-name-p">Nome e Cognome</label><input class="input" id="inv-name-p" value="{{ inv.name }}" onChange="{{ setInvName }}"></div>
-          <div class="field"><label for="inv-email-p">Email</label><input class="input" id="inv-email-p" type="email" value="{{ inv.email }}" onChange="{{ setInvEmail }}"></div>
-          <div class="field"><label for="inv-cf-p">Codice Fiscale</label><input class="input" id="inv-cf-p" value="{{ inv.cf }}" onChange="{{ setInvCf }}"></div>
-          <div class="field"><label for="inv-address-p">Indirizzo</label><input class="input" id="inv-address-p" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div>
-          <div class="field"><label for="inv-city-p">Città</label><input class="input" id="inv-city-p" value="{{ inv.city }}" onChange="{{ setInvCity }}"></div>
-          <div class="field"><label for="inv-cap-p">CAP</label><input class="input" id="inv-cap-p" value="{{ inv.cap }}" onChange="{{ setInvCap }}"></div>
-        </div>
-      </sc-if>
-
-      <sc-if value="{{ isAzienda }}" hint-placeholder-val="{{ false }}">
-        <div class="co-grid" style="margin-bottom:var(--space-4);">
-          <div class="field"><label for="inv-name-a">Nome e Cognome referente</label><input class="input" id="inv-name-a" value="{{ inv.name }}" onChange="{{ setInvName }}"></div>
-          <div class="field"><label for="inv-email-a">Email</label><input class="input" id="inv-email-a" type="email" value="{{ inv.email }}" onChange="{{ setInvEmail }}"></div>
-          <div class="field"><label for="inv-ragsoc">Ragione Sociale</label><input class="input" id="inv-ragsoc" value="{{ inv.company }}" onChange="{{ setInvCompany }}"></div>
-          <div class="field"><label for="inv-piva">Partita IVA / Codice Fiscale</label><input class="input" id="inv-piva" value="{{ inv.vat }}" onChange="{{ setInvVat }}"></div>
-          <div class="field"><label for="inv-address-a">Indirizzo sede legale</label><input class="input" id="inv-address-a" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div>
-          <div class="field"><label for="inv-city-a">Città</label><input class="input" id="inv-city-a" value="{{ inv.city }}" onChange="{{ setInvCity }}"></div>
-          <div class="field"><label for="inv-cap-a">CAP</label><input class="input" id="inv-cap-a" value="{{ inv.cap }}" onChange="{{ setInvCap }}"></div>
-          <div class="field"><label for="inv-pec">PEC</label><input class="input" id="inv-pec" type="email" placeholder="opzionale se inserisci Codice SDI" value="{{ inv.pec }}" onChange="{{ setInvPec }}"></div>
-          <div class="field"><label for="inv-sdi">Codice SDI</label><input class="input" id="inv-sdi" placeholder="opzionale se inserisci PEC" value="{{ inv.sdi }}" onChange="{{ setInvSdi }}"></div>
-        </div>
-      </sc-if>
-    </section>
-
-    <section class="card blueprint co-section">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <h2 class="co-h">Dati di spedizione</h2>
-      <label class="radio" style="margin-bottom:var(--space-4);"><input type="radio" name="shipMode" checked="{{ shipSame }}" onChange="{{ setShipSameTrue }}"><span class="dot"></span>Spedisci allo stesso indirizzo di fatturazione</label>
-      <label class="radio" style="margin-bottom:var(--space-4);"><input type="radio" name="shipMode" checked="{{ shipDifferent }}" onChange="{{ setShipSameFalse }}"><span class="dot"></span>Usa un indirizzo di spedizione diverso</label>
-
-      <div class="blueprint" style="position:relative;border:1px solid var(--color-accent);padding:var(--space-4);margin:var(--space-4) 0;display:flex;flex-direction:column;gap:var(--space-2);">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <label for="ship-phone" style="font-family:var(--font-heading);font-size:20px;font-weight:600;color:var(--color-text);display:flex;align-items:baseline;gap:var(--space-2);">Cellulare per la consegna <span style="font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-accent-700);">Obbligatorio</span></label>
-        <input class="input" id="ship-phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="es. 333 123 4567" value="{{ ship.phone }}" onChange="{{ setShipPhone }}" style="font-size:18px;max-width:320px;">
-        <p class="card-body" style="margin:0;color:var(--color-text);">Il corriere usa questo numero per avvisarti e concordare la consegna. Senza un cellulare valido non possiamo spedire.</p>
-      </div>
-
-
-      <sc-if value="{{ shipDifferent }}" hint-placeholder-val="{{ false }}">
-        <div class="co-grid">
-          <div class="field"><label for="ship-name">Nome destinatario</label><input class="input" id="ship-name" value="{{ ship.name }}" onChange="{{ setShipName }}"></div>
-          <div class="field"><label for="ship-address">Indirizzo</label><input class="input" id="ship-address" value="{{ ship.address }}" onChange="{{ setShipAddress }}"></div>
-          <div class="field"><label for="ship-city">Città</label><input class="input" id="ship-city" value="{{ ship.city }}" onChange="{{ setShipCity }}"></div>
-          <div class="field"><label for="ship-cap">CAP</label><input class="input" id="ship-cap" value="{{ ship.cap }}" onChange="{{ setShipCap }}"></div>
-          <div class="field" style="grid-column:1/-1;"><label for="ship-notes">Note di consegna (opzionale)</label><input class="input" id="ship-notes" value="{{ ship.notes }}" onChange="{{ setShipNotes }}"></div>
-        </div>
-      </sc-if>
-    </section>
-
-    <section class="card blueprint co-section">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <h2 class="co-h">Dati del mittente</h2>
-      <label class="radio" style="margin-bottom:var(--space-4);"><input type="checkbox" checked="{{ useSender }}" onChange="{{ toggleSender }}"><span class="dot"></span>Voglio usare la mia azienda come mittente per questa spedizione</label>
-      <p class="card-body" style="margin:0 0 var(--space-4);">Utile se rivendi la stampa e vuoi che il pacco arrivi al tuo cliente con la tua azienda come mittente, invece della nostra.</p>
-
-      <sc-if value="{{ useSender }}" hint-placeholder-val="{{ false }}">
-        <div class="co-grid">
-          <div class="field"><label for="send-company">Ragione sociale / Nome mittente</label><input class="input" id="send-company" value="{{ sender.company }}" onChange="{{ setSenderCompany }}"></div>
-          <div class="field"><label for="send-phone">Telefono</label><input class="input" id="send-phone" value="{{ sender.phone }}" onChange="{{ setSenderPhone }}"></div>
-          <div class="field"><label for="send-address">Indirizzo</label><input class="input" id="send-address" value="{{ sender.address }}" onChange="{{ setSenderAddress }}"></div>
-          <div class="field"><label for="send-city">Città</label><input class="input" id="send-city" value="{{ sender.city }}" onChange="{{ setSenderCity }}"></div>
-          <div class="field"><label for="send-cap">CAP</label><input class="input" id="send-cap" value="{{ sender.cap }}" onChange="{{ setSenderCap }}"></div>
-        </div>
-      </sc-if>
-    </section>
-
-    <sc-if value="{{ errorMsg }}" hint-placeholder-val="{{ null }}">
-      <p style="color:#b23b3b;font-size:14px;margin:0 0 var(--space-4);">{{ errorMsg }}</p>
-    </sc-if>
-
-    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4);">
-      <span style="font-size:14px;color:color-mix(in srgb, var(--color-text) 70%, transparent);">Totale da pagare</span>
-      <span style="font-family:var(--font-heading);font-size:26px;">€ {{ orderTotal }}</span>
-    </div>
-    <button type="submit" class="btn btn-primary btn-block blueprint" disabled="{{ submitting }}" style="display:flex;max-width:750px;margin-left:auto;margin-right:auto;">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>{{ submitLabel }}
-    </button>
-    <p style="text-align:center;font-size:12.5px;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin-top:var(--space-4);">Pagamento sicuro tramite Stripe. Riceverai fattura elettronica via SDI o email secondo i dati inseriti.</p>
-    <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
-      <a href="{{ preventivoHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block blueprint" style="margin-top:var(--space-3);display:flex;max-width:750px;margin-left:auto;margin-right:auto;">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi un preventivo ufficiale
-      </a>
-    </sc-if>
-  </form>
-
-  <sc-if value="{{ hasProduct }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;align-items:center;gap:var(--space-3);margin:var(--space-6) 0;">
-      <div style="flex:1;height:1px;background:var(--color-divider);"></div>
-      <span style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 55%, transparent);">oppure</span>
-      <div style="flex:1;height:1px;background:var(--color-divider);"></div>
-    </div>
-    <!-- PayPal limita i pulsanti a 750 px: gli altri due pulsanti hanno la stessa larghezza massima. -->
-    <div id="paypal-checkout-slot" style="min-height:45px;max-width:750px;margin:0 auto;"></div>
-  </sc-if>
+  </section>
 </main>
 
 <footer style="border-top:1px solid var(--color-divider);">
@@ -457,8 +465,9 @@ class Component extends DCLogic {
       shippingZone: shipZone,
       shippingCountry: shipZone === 'ue' ? this.state.shipCountry : 'Italia',
       lang: window.tpLang === 'en' ? 'en' : 'it',
-      customer: { invType, ...inv },
-      shipping: shipSame ? { sameAsBilling: true, phone: ship.phone } : { sameAsBilling: false, ...ship },
+      // Passo 1: solo email e destinatario; i dati di fatturazione arrivano dopo il pagamento (api/invoice-details.js).
+      customer: { invType: 'privato', name: ship.name, email: inv.email, later: true },
+      shipping: { sameAsBilling: false, ...ship },
       sender: useSender ? { use: true, ...sender } : { use: false },
       designLink: (design && design.link) || '',
       designFiles: (design && design.names) || [],
@@ -504,6 +513,7 @@ class Component extends DCLogic {
         if (d.issue === 'INSTRUMENT_DECLINED' && actions && actions.restart) return actions.restart();
         if (!res.ok || d.status !== 'COMPLETED') { this.setState({ errorMsg: (d.error || 'Pagamento PayPal non riuscito, riprova.') + (d.detail ? ' (' + d.detail + ')' : '') }); return; }
         this.saveRecap();
+        try { sessionStorage.setItem('tp_pp_ticket', JSON.stringify({ orderID: d.id || data.orderID, ticket: this.paypalTicket })); } catch (e) {}
         window.location.href = '/grazie.dc.html?token=' + encodeURIComponent(d.id || data.orderID);
       },
       // Non sovrascrive il messaggio reale già mostrato da createOrder.
@@ -565,12 +575,10 @@ class Component extends DCLogic {
   subtotal() { return this.state.items.reduce((a, i) => a + (parseFloat(i.price) || 0), 0); }
 
   validate() {
-    const { invType, inv } = this.state;
-    if (!inv.name || !inv.email) return 'Inserisci nome e email.';
-    if (!inv.address || !inv.city || !inv.cap) return 'Inserisci un indirizzo di fatturazione completo.';
-    if (invType === 'privato' && !inv.cf) return 'Inserisci il Codice Fiscale.';
-    if (invType === 'azienda' && (!inv.company || !inv.vat)) return 'Inserisci Ragione Sociale e Partita IVA.';
-    if (invType === 'azienda' && !inv.pec && !inv.sdi) return 'Inserisci PEC o Codice SDI.';
+    const { inv, ship, shipZone } = this.state;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(inv.email || '').trim())) return 'Inserisci un indirizzo email valido.';
+    if (!String(ship.name || '').trim()) return shipZone === 'ritiro' ? 'Inserisci il nome di chi ritira.' : 'Inserisci il nome del destinatario.';
+    if (shipZone !== 'ritiro' && (!ship.address || !ship.cap || !ship.city)) return 'Inserisci un indirizzo di consegna completo.';
     const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
     if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
     if (this.pickupOnly() && this.state.items.some(i => String(i.productId) === '215')) return 'Il Roll-Up 200/240 × 200 cm (ritiro o UPS) e la Struttura per Eventi (consegna e montaggio a Roma) vanno ordinati separatamente: fai due ordini.';
@@ -609,7 +617,7 @@ class Component extends DCLogic {
     try {
       const i = this.state.inv || {};
       localStorage.setItem('tp_customer', JSON.stringify({
-        name: i.name || '', email: i.email || '', phone: i.phone || '', company: i.company || '',
+        name: (this.state.ship || {}).name || '', email: i.email || '', phone: (this.state.ship || {}).phone || '', company: '',
       }));
     } catch (ex) {}
     this.saveRecap();
@@ -666,6 +674,7 @@ class Component extends DCLogic {
       notPickupOnly: !this.pickupOnly(),
       pickupOnlyNote: s.items.some(i => String(i.productId) === '215') ? 'Il Roll-Up 200/240 × 200 cm (ritiro o UPS) e la Struttura per Eventi (consegna e montaggio a Roma) vanno ordinati separatamente: fai due ordini.' : (this.canPickup() ? 'Roll-Up 200/240 × 200 cm: ritiro gratuito nel nostro punto vendita a Roma oppure spedizione UPS in Italia € 99,00.' : 'Roll-Up 200/240 × 200 cm: spedizione UPS in Italia € 99,00 (con i Prezzi strategici il ritiro non è disponibile).'),
       isZoneRitiro: s.shipZone === 'ritiro' && this.canPickup(),
+      notZoneRitiro: !(s.shipZone === 'ritiro' && this.canPickup()),
       shippingLabel: s.shipZone === 'ritiro' && this.canPickup() ? 'ritiro in sede (gratuito)' : shippingFee === 0 ? 'gratuita' : ('€ ' + eur(shippingFee)),
       isFlatShipping: false,
       isRollupShipping: s.items.some(i => String(i.productId) === '197') && s.shipZone !== 'italia',

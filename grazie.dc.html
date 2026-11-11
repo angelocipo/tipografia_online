@@ -33,6 +33,59 @@ a.btn-primary, a.btn-primary:hover { color: var(--color-bg); }
   * { animation: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
+<style>
+.vc{font-family:"SF Pro Display",-apple-system,system-ui,"Helvetica Neue",Inter,sans-serif;color:#1d1d1f;}
+.vc *{box-sizing:border-box;}
+.vc-wrap{max-width:1100px;margin:0 auto;padding-left:22px;padding-right:22px;}
+.vc-kick{font-size:14px;font-weight:600;color:#0062c4;letter-spacing:.4px;text-transform:uppercase;margin:0;}
+.vc-h1{font-size:clamp(32px,4.4vw,50px);line-height:1.06;font-weight:700;letter-spacing:-1.6px;margin:12px 0 0;font-family:inherit;}
+.vc-sub{font-size:16px;line-height:1.5;color:#636366;margin:16px 0 0;text-wrap:pretty;}
+.vc-panel{background:#f5f5f7;border-radius:26px;padding:36px;}
+.vc-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:start;}
+.vc-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+.vc-cap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:14px;}
+.vc h3{font-size:21px;font-weight:600;letter-spacing:-.4px;margin:0;font-family:inherit;color:#1d1d1f;}
+.vc-f{margin-top:14px;}
+.vc-lbl{display:block;font-size:14px;font-weight:600;color:#1d1d1f;}
+.vc-req{color:#0062c4;}
+.vc-in{display:block;width:100%;max-width:100%;margin-top:7px;font-size:16px;font-family:inherit;color:#1d1d1f;background:#fff;border:1px solid #d2d2d7;border-radius:13px;padding:13px 15px;outline:none;}
+.vc-in:focus{border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,.2);}
+select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23636366' stroke-width='1.8'/%3E%3C/svg%3E") no-repeat right 16px center;}
+.vc-hint{font-size:13px;line-height:1.45;color:#636366;margin:8px 0 0;text-wrap:pretty;}
+.vc-seg{display:flex;gap:4px;background:#e5e5ea;border-radius:980px;padding:4px;}
+.vc-seg label{flex:1;text-align:center;font-size:14px;font-weight:600;color:#3a3a3c;padding:9px 8px;border-radius:980px;cursor:pointer;position:relative;}
+.vc-seg input{position:absolute;opacity:0;width:1px;height:1px;}
+.vc-seg label:has(input:checked){background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.vc-seg label:has(input:focus-visible){outline:2px solid #0071e3;outline-offset:2px;}
+.vc-checks{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.vc-check{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:#1d1d1f;cursor:pointer;}
+.vc-check input{width:18px;height:18px;margin:0;accent-color:#0071e3;flex-shrink:0;}
+.vc-card{background:#fff;border-radius:18px;padding:20px;}
+.vc-spec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:14px 0 0;font-size:14px;}
+.vc-spec dt{color:#636366;font-weight:500;}
+.vc-spec dd{margin:0;font-weight:600;}
+.vc-drop{display:block;border:1px dashed #a1a1a6;border-radius:14px;background:#fafafa;padding:18px;margin-top:16px;cursor:pointer;}
+.vc-drop:hover{border-color:#0071e3;}
+.vc-warn{font-size:14px;font-weight:600;line-height:1.4;color:#1d1d1f;background:#fff4d6;border-radius:10px;padding:10px 14px;margin:10px 0 0;}
+.vc-textbtn{background:none;border:none;padding:0;margin-top:14px;font:inherit;font-size:14px;font-weight:600;color:#0062c4;cursor:pointer;text-decoration:none;}
+.vc-textbtn:hover{text-decoration:underline;}
+.vc-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;}
+.vc-big{font-size:28px;font-weight:700;letter-spacing:-1px;white-space:nowrap;}
+.vc-btn{display:block;width:100%;background:#0071e3;color:#fff;border:none;font-size:18px;font-weight:500;font-family:inherit;padding:16px;border-radius:980px;cursor:pointer;}
+.vc-btn:hover{background:#0062c4;}
+.vc-btn[disabled]{opacity:.6;cursor:wait;}
+.vc-btn2{display:block;width:100%;text-align:center;background:#fff;color:#1d1d1f;border:1px solid #d2d2d7;font-size:17px;font-weight:500;font-family:inherit;padding:15px;border-radius:980px;cursor:pointer;text-decoration:none;}
+.vc-btn2:hover{border-color:#1d1d1f;color:#1d1d1f;}
+.vc-or{display:flex;align-items:center;gap:12px;margin:22px 0 18px;}
+.vc-or span{flex:1;height:1px;background:rgba(0,0,0,.12);}
+.vc-or em{font-style:normal;font-size:12px;color:#636366;letter-spacing:.3px;text-transform:uppercase;}
+.vc-cond{margin:30px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:26px;}
+.vc-cond li{display:grid;grid-template-columns:38px 1fr;gap:16px;align-items:start;}
+.vc-cond li span{width:32px;height:32px;border-radius:50%;background:#1d1d1f;color:#fff;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.vc-cond p{font-size:16.5px;line-height:1.55;color:#1d1d1f;margin:0;text-wrap:pretty;}
+@media (max-width:900px){.vc-cols,.vc-two{grid-template-columns:minmax(0,1fr);}}
+@media (max-width:600px){.vc-panel{padding:22px 16px;border-radius:20px;}.vc-wrap{padding-left:12px;padding-right:12px;}.vc-cap{grid-template-columns:minmax(0,1fr);}.vc-seg label{font-size:13px;padding:9px 4px;}.vc-big{font-size:24px;}.nav > a.btn-primary{display:none;}}
+</style>
 <script src="i18n.js"></script>
 </helmet>
 
@@ -42,6 +95,80 @@ a.btn-primary, a.btn-primary:hover { color: var(--color-bg); }
   <a class="nav-wa" aria-label="WhatsApp 339 602 1366" href="https://wa.me/393396021366?text=Salve%2C%20vi%20scrivo%20dal%20sito%20tipografia.online" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none;margin-left:auto;padding:4px;"><svg width="36" height="36" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true" style="flex-shrink:0;"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35zM12.05 21.5h-.01a9.45 9.45 0 0 1-4.82-1.32l-.35-.21-3.58.94.96-3.49-.23-.36a9.43 9.43 0 0 1-1.45-5.03c0-5.21 4.24-9.45 9.46-9.45a9.4 9.4 0 0 1 6.68 2.77 9.39 9.39 0 0 1 2.77 6.69c0 5.21-4.24 9.46-9.45 9.46zm8.05-17.5A11.32 11.32 0 0 0 12.05.67C5.78.67.68 5.77.67 12.04c0 2 .52 3.96 1.52 5.69L.57 23.67l6.08-1.6a11.36 11.36 0 0 0 5.43 1.38h.01c6.27 0 11.37-5.1 11.38-11.37a11.3 11.3 0 0 0-3.33-8.05z"/></svg></a>
   <a href="contattateci.html" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Richiedi preventivo</a>
 </nav>
+
+<sc-if value="{{ showInvoice }}" hint-placeholder-val="{{ true }}">
+<section class="vc" style="max-width:760px;margin:0 auto;padding:56px 22px 0;">
+  <div style="text-align:center;">
+    <div style="width:48px;height:48px;border-radius:50%;background:#0071e3;display:flex;align-items:center;justify-content:center;margin:0 auto;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 9.5 18 20 6"></path></svg></div>
+    <p class="vc-kick" style="margin-top:22px;">Passo 2 di 2 · Dati di fatturazione</p>
+    <h1 class="vc-h1">Pagamento ricevuto. Ora la tua fattura.</h1>
+    <p class="vc-sub">Riferimento <strong style="color:#1d1d1f;">{{ orderRef }}</strong>. La fattura viene emessa esattamente con questi dati.</p>
+  </div>
+  <sc-if value="{{ invoiceSent }}" hint-placeholder-val="{{ false }}">
+    <div class="vc-panel" style="margin-top:36px;text-align:center;">
+      <h3>Dati ricevuti, grazie.</h3>
+      <p class="vc-hint" style="font-size:15px;">La fattura elettronica arriva entro un giorno lavorativo a {{ inv.email }}.</p>
+    </div>
+  </sc-if>
+  <sc-if value="{{ invoiceOpen }}" hint-placeholder-val="{{ true }}">
+    <form class="vc-panel" style="margin-top:36px;" onSubmit="{{ sendInvoice }}">
+      <h3>Chi intesta la fattura</h3>
+      <div class="vc-seg" role="radiogroup" aria-label="Tipo cliente" style="margin-top:16px;">
+        <label><input type="radio" name="invType" value="privato" checked="{{ isPrivato }}" onChange="{{ setInvType }}">Privato</label>
+        <label><input type="radio" name="invType" value="azienda" checked="{{ isAzienda }}" onChange="{{ setInvType }}">Azienda</label>
+        <label><input type="radio" name="invType" value="estero" checked="{{ isEstero }}" onChange="{{ setInvType }}">Foreign / Estero</label>
+      </div>
+      <sc-if value="{{ isPrivato }}" hint-placeholder-val="{{ true }}">
+        <div class="vc-two vc-f">
+          <div><label class="vc-lbl" for="i-name-p">Nome e Cognome <span class="vc-req">*</span></label><input class="vc-in" id="i-name-p" autocomplete="name" value="{{ inv.name }}" onChange="{{ setInvName }}"></div>
+          <div><label class="vc-lbl" for="i-cf-p">Codice Fiscale <span class="vc-req">*</span></label><input class="vc-in" id="i-cf-p" value="{{ inv.cf }}" onChange="{{ setInvCf }}"></div>
+        </div>
+          <div class="vc-f"><div><label class="vc-lbl" for="i-address-p">Indirizzo <span class="vc-req">*</span></label><input class="vc-in" id="i-address-p" autocomplete="street-address" placeholder="Via e numero civico" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div></div>
+          <div class="vc-cap vc-f">
+            <div><label class="vc-lbl" for="i-cap-p">CAP <span class="vc-req">*</span></label><input class="vc-in" id="i-cap-p" autocomplete="postal-code" placeholder="00147" value="{{ inv.cap }}" onChange="{{ setInvCap }}"></div>
+            <div><label class="vc-lbl" for="i-city-p">Città <span class="vc-req">*</span></label><input class="vc-in" id="i-city-p" placeholder="Roma" value="{{ inv.city }}" onChange="{{ setInvCity }}"></div>
+          </div>
+      </sc-if>
+      <sc-if value="{{ isAzienda }}" hint-placeholder-val="{{ false }}">
+        <div class="vc-two vc-f">
+          <div><label class="vc-lbl" for="i-name-a">Nome e Cognome referente <span class="vc-req">*</span></label><input class="vc-in" id="i-name-a" autocomplete="name" value="{{ inv.name }}" onChange="{{ setInvName }}"></div>
+          <div><label class="vc-lbl" for="i-ragsoc">Ragione Sociale <span class="vc-req">*</span></label><input class="vc-in" id="i-ragsoc" autocomplete="organization" value="{{ inv.company }}" onChange="{{ setInvCompany }}"></div>
+        </div>
+        <div class="vc-f"><div><label class="vc-lbl" for="i-piva">Partita IVA / Codice Fiscale <span class="vc-req">*</span></label><input class="vc-in" id="i-piva" value="{{ inv.vat }}" onChange="{{ setInvVat }}"></div></div>
+        <div class="vc-two vc-f">
+          <div><label class="vc-lbl" for="i-sdi">Codice SDI</label><input class="vc-in" id="i-sdi" placeholder="oppure la PEC" maxlength="7" value="{{ inv.sdi }}" onChange="{{ setInvSdi }}"></div>
+          <div><label class="vc-lbl" for="i-pec">PEC</label><input class="vc-in" id="i-pec" type="email" placeholder="oppure il Codice SDI" value="{{ inv.pec }}" onChange="{{ setInvPec }}"></div>
+        </div>
+        <p class="vc-hint">Serve almeno uno tra Codice SDI e PEC.</p>
+          <div class="vc-f"><div><label class="vc-lbl" for="i-address-a">Indirizzo sede legale <span class="vc-req">*</span></label><input class="vc-in" id="i-address-a" autocomplete="street-address" placeholder="Via e numero civico" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div></div>
+          <div class="vc-cap vc-f">
+            <div><label class="vc-lbl" for="i-cap-a">CAP <span class="vc-req">*</span></label><input class="vc-in" id="i-cap-a" autocomplete="postal-code" placeholder="00147" value="{{ inv.cap }}" onChange="{{ setInvCap }}"></div>
+            <div><label class="vc-lbl" for="i-city-a">Città <span class="vc-req">*</span></label><input class="vc-in" id="i-city-a" placeholder="Roma" value="{{ inv.city }}" onChange="{{ setInvCity }}"></div>
+          </div>
+      </sc-if>
+      <sc-if value="{{ isEstero }}" hint-placeholder-val="{{ false }}">
+        <div class="vc-two vc-f">
+          <div><label class="vc-lbl" for="i-name-e">Full name <span class="vc-req">*</span></label><input class="vc-in" id="i-name-e" autocomplete="name" value="{{ inv.name }}" onChange="{{ setInvName }}"></div>
+          <div><label class="vc-lbl" for="i-company-e">Company</label><input class="vc-in" id="i-company-e" placeholder="Leave blank if private" value="{{ inv.company }}" onChange="{{ setInvCompany }}"></div>
+        </div>
+        <div class="vc-f"><div><label class="vc-lbl" for="i-vat-e">VAT / Tax ID</label><input class="vc-in" id="i-vat-e" placeholder="Optional" value="{{ inv.vat }}" onChange="{{ setInvVat }}"></div></div>
+          <div class="vc-f"><div><label class="vc-lbl" for="i-address-e">Address <span class="vc-req">*</span></label><input class="vc-in" id="i-address-e" autocomplete="street-address" placeholder="Street and number" value="{{ inv.address }}" onChange="{{ setInvAddress }}"></div></div>
+          <div class="vc-cap vc-f">
+            <div><label class="vc-lbl" for="i-cap-e">Postal code <span class="vc-req">*</span></label><input class="vc-in" id="i-cap-e" autocomplete="postal-code" value="{{ inv.cap }}" onChange="{{ setInvCap }}"></div>
+            <div><label class="vc-lbl" for="i-city-e">City <span class="vc-req">*</span></label><input class="vc-in" id="i-city-e" value="{{ inv.city }}" onChange="{{ setInvCity }}"></div>
+          </div>
+        <div class="vc-f"><div><label class="vc-lbl" for="i-country-e">Country</label><input class="vc-in" id="i-country-e" value="{{ inv.country }}" onChange="{{ setInvCountry }}"></div></div>
+      </sc-if>
+      <div class="vc-f"><div><label class="vc-lbl" for="i-email">Email per la fattura <span class="vc-req">*</span></label><input class="vc-in" id="i-email" type="email" autocomplete="email" value="{{ inv.email }}" onChange="{{ setInvEmail }}"></div></div>
+      <sc-if value="{{ invErr }}" hint-placeholder-val="{{ null }}">
+        <p role="alert" style="color:#b42318;background:#fdecea;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;margin:18px 0 0;">{{ invErr }}</p>
+      </sc-if>
+      <button type="submit" class="vc-btn" disabled="{{ invSending }}" style="margin-top:24px;">{{ invBtnLabel }}</button>
+      <p style="font-size:13px;color:#636366;text-align:center;margin:12px 0 0;">La produzione parte dopo il controllo del tuo file.</p>
+    </form>
+  </sc-if>
+</section>
+</sc-if>
 
 <main style="max-width:760px;margin:0 auto;padding:var(--space-8) var(--space-6) calc(var(--space-8) * 2);">
   <div class="blueprint" style="border:1px solid var(--color-divider);">
@@ -60,7 +187,7 @@ a.btn-primary, a.btn-primary:hover { color: var(--color-bg); }
     </div>
 
     <div style="padding:var(--space-8) var(--space-6);">
-      <p style="font-size:16px;max-width:52ch;margin:0 auto var(--space-6);text-align:center;text-wrap:pretty;">Il pagamento è andato a buon fine. A breve riceverai un'email di conferma con il riepilogo dell'ordine e la fattura elettronica.</p>
+      <p style="font-size:16px;max-width:52ch;margin:0 auto var(--space-6);text-align:center;text-wrap:pretty;">Il pagamento è andato a buon fine. A breve riceverai un'email di conferma con il riepilogo dell'ordine. La fattura elettronica segue con i dati che inserisci qui sopra.</p>
       <sc-if value="{{ hasFileMsg }}" hint-placeholder-val="{{ false }}">
         <p style="font-size:13.5px;color:var(--color-neutral-700);max-width:52ch;margin:0 auto var(--space-6);text-align:center;">{{ fileMsg }}</p>
       </sc-if>
@@ -154,7 +281,40 @@ a.btn-primary, a.btn-primary:hover { color: var(--color-bg); }
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { orderRef: '', fileMsg: '', recap: null };
+  state = { orderRef: '', fileMsg: '', recap: null, sessionId: '', paypal: null,
+    invType: 'privato', inv: { name: '', email: '', company: '', vat: '', cf: '', pec: '', sdi: '', address: '', city: '', cap: '', country: '' },
+    invSending: false, invSent: false, invErr: null };
+
+  // Passo 2: dati di fatturazione dopo il pagamento → api/invoice-details.js (verifica il pagamento ed email al titolare).
+  invErrorFor() {
+    const { invType: t, inv: c } = this.state;
+    if (!c.name) return 'Inserisci nome e cognome.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(c.email || '').trim())) return 'Inserisci un indirizzo email valido.';
+    if (!c.address || !c.cap || !c.city) return 'Inserisci un indirizzo di fatturazione completo.';
+    if (t === 'privato' && !c.cf) return 'Inserisci il Codice Fiscale.';
+    if (t === 'azienda' && (!c.company || !c.vat)) return 'Inserisci Ragione Sociale e Partita IVA.';
+    if (t === 'azienda' && !c.pec && !c.sdi) return 'Inserisci PEC o Codice SDI.';
+    return null;
+  }
+
+  async sendInvoice(e) {
+    e.preventDefault();
+    const err = this.invErrorFor();
+    if (err) { this.setState({ invErr: err }); return; }
+    this.setState({ invSending: true, invErr: null });
+    try {
+      const body = { customer: { type: this.state.invType, ...this.state.inv } };
+      if (this.state.sessionId) body.session_id = this.state.sessionId; else body.paypal = this.state.paypal;
+      const r = await fetch('/api/invoice-details', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Invio non riuscito, riprova.');
+      try { localStorage.setItem('tp_inv_sent_' + this.state.orderRef, '1'); } catch (x) {}
+      this.setState({ invSending: false, invSent: true });
+    } catch (ex) {
+      this.setState({ invSending: false, invErr: ex.message || 'Invio non riuscito, riprova.' });
+    }
+  }
+
 
   // Il materiale da stampare parte da qui, non dalla scheda prodotto: i file sono rimasti
   // nel browser del cliente (IndexedDB) finché il pagamento non è confermato. Vedi tp-files.js.
@@ -194,7 +354,11 @@ class Component extends DCLogic {
     const orderRef = (sessionId || token) ? this.refFromSessionId(sessionId || token) : '';
     let recap = null;
     if (orderRef) { try { recap = JSON.parse(localStorage.getItem('tp_last_order') || 'null'); } catch (e) {} }
-    this.setState({ orderRef, recap });
+    let paypal = null, sent = false, email = '';
+    if (token && !sessionId) { try { const pp = JSON.parse(sessionStorage.getItem('tp_pp_ticket') || 'null'); if (pp && pp.orderID === token) paypal = pp; } catch (e) {} }
+    try { sent = localStorage.getItem('tp_inv_sent_' + orderRef) === '1'; } catch (e) {}
+    try { const c = JSON.parse(localStorage.getItem('tp_customer') || 'null'); email = (c && c.email) || (recap && recap.email) || ''; } catch (e) {}
+    this.setState({ orderRef, recap, sessionId: sessionId || '', paypal, invSent: sent, inv: { ...this.state.inv, email } });
     // Ordine pagato: il carrello si svuota.
     if (orderRef) { try { localStorage.removeItem('tp_cart'); } catch (e) {} }
     this.sendDesignFiles(orderRef);
@@ -236,7 +400,20 @@ class Component extends DCLogic {
       { label: 'Indirizzo', value: [sn.address, sn.cap, sn.city].filter(Boolean).join(', ') || '—' },
       { label: 'Telefono', value: sn.phone || '—' },
     ] : [];
+    const st = this.state, setInv = (k) => (e) => this.setState({ inv: { ...this.state.inv, [k]: e.target.value } });
+    const canInvoice = !!(st.orderRef && (st.sessionId || st.paypal));
     return {
+      showInvoice: canInvoice,
+      invoiceSent: canInvoice && st.invSent,
+      invoiceOpen: canInvoice && !st.invSent,
+      isPrivato: st.invType === 'privato', isAzienda: st.invType === 'azienda', isEstero: st.invType === 'estero',
+      setInvType: (e) => this.setState({ invType: e.target.value }),
+      inv: st.inv,
+      setInvName: setInv('name'), setInvEmail: setInv('email'), setInvCompany: setInv('company'), setInvVat: setInv('vat'),
+      setInvCf: setInv('cf'), setInvPec: setInv('pec'), setInvSdi: setInv('sdi'), setInvAddress: setInv('address'),
+      setInvCity: setInv('city'), setInvCap: setInv('cap'), setInvCountry: setInv('country'),
+      invErr: st.invErr, invSending: st.invSending, invBtnLabel: st.invSending ? 'Invio…' : 'Invia dati fattura',
+      sendInvoice: (e) => this.sendInvoice(e),
       printPdf: () => {
         const prev = document.title;
         if (this.state.orderRef) document.title = 'Ordine ' + this.state.orderRef + ' - Tipografia Online';
