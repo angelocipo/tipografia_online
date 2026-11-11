@@ -500,7 +500,7 @@ const PRODUCTS = [
     img:'img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp',
     gallery:['img/0e62b2c0-436c-4d30-bdb0-ac2be470aedd-copia-kl.webp'],
     intro:'Adesivo quadrato 5×5 cm in pellicola adesiva bianca 90 µm retro intagliato, stampa 4/0 colori. Impermeabile, adatto a interni ed esterni.',
-    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 50 a 50.000 pezzi'],
+    features:['Pellicola adesiva bianca 90 µm, retro intagliato','Stampa 4/0 colori','Da 1 a 50.000 pezzi'],
     specs:{'Materiale':'90 µm pellicola adesiva bianca (retro intagliato)','Formato':'quadrato 5×5 cm','Stampa':'4/0 colori','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 gg'},
     // Prezzi = prezzo scontato fornitore × 1,6. Overnight fino a 2.500 pz.
     pricing:{ type:'tiersDelivery', unit:'copie',
@@ -508,7 +508,7 @@ const PRODUCTS = [
       readyDays: [[4,6], [2,2], [1,1]],
       readyCutoffHours: [10, 10, 9],
       tiersByDelivery: [
-        [{qty:50,price:18.22},{qty:75,price:19.7},{qty:100,price:20.69},{qty:250,price:24.14},{qty:500,price:27.41},{qty:1000,price:32.77},{qty:2500,price:49.66},{qty:5000,price:77.68},{qty:7500,price:103.09},{qty:10000,price:128.32},{qty:15000,price:179.73},{qty:20000,price:228.27},{qty:25000,price:279.73},{qty:30000,price:330.77},{qty:40000,price:432.51},{qty:50000,price:542.58}],
+        [{qty:1,price:1},{qty:50,price:18.22},{qty:75,price:19.7},{qty:100,price:20.69},{qty:250,price:24.14},{qty:500,price:27.41},{qty:1000,price:32.77},{qty:2500,price:49.66},{qty:5000,price:77.68},{qty:7500,price:103.09},{qty:10000,price:128.32},{qty:15000,price:179.73},{qty:20000,price:228.27},{qty:25000,price:279.73},{qty:30000,price:330.77},{qty:40000,price:432.51},{qty:50000,price:542.58}],
         [{qty:50,price:53.07},{qty:75,price:53.92},{qty:100,price:54.56},{qty:250,price:58.16},{qty:500,price:61.02},{qty:1000,price:66.38},{qty:2500,price:83.71},{qty:5000,price:111.73},{qty:7500,price:137.15},{qty:10000,price:162.43},{qty:15000,price:213.86},{qty:20000,price:262.42},{qty:25000,price:313.87},{qty:30000,price:364.93},{qty:40000,price:466.7},{qty:50000,price:602.13}],
         [{qty:50,price:75.02},{qty:75,price:76.27},{qty:100,price:77.15},{qty:250,price:80.82},{qty:500,price:83.73},{qty:1000,price:92.66},{qty:2500,price:114.27}],
       ],
