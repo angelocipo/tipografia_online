@@ -40,7 +40,9 @@ module.exports = async (req, res) => {
     const sid = String(b.session_id || '');
     if (sid) {
       if (!/^cs_[A-Za-z0-9_]+$/.test(sid)) { res.status(400).json({ error: 'Ordine non valido' }); return; }
-      const s = await stripe.checkout.sessions.retrieve(sid);
+      let s;
+      try { s = await stripe.checkout.sessions.retrieve(sid); }
+      catch (e) { res.status(404).json({ error: 'Ordine non trovato. Scrivici a info@tipografia.online con il riferimento dell\'ordine.' }); return; }
       if (s.payment_status !== 'paid') { res.status(404).json({ error: 'Ordine non pagato' }); return; }
       lines = (await stripe.checkout.sessions.listLineItems(sid, { limit: 100 })).data;
       session = { id: s.id, created: s.created, amount_total: s.amount_total, customer_details: s.customer_details, customer_email: s.customer_email, metadata: { ...(s.metadata || {}) } };
