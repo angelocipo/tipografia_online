@@ -107,9 +107,23 @@ function priceItem(product, it) {
   const fIdx = Math.min(Math.max(Number.isInteger(formatIdx) ? formatIdx : 0, 0), product.formatRates.length - 1);
   const cIdx = Math.min(Math.max(Number.isInteger(cartaIdx) ? cartaIdx : 2, 0), product.cartaMultiplier.length - 1);
   const q = Math.max(1, parseInt(qty, 10) || 1);
-  const total = Math.round((product.formatRates[fIdx] * q * product.cartaMultiplier[cIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
+  // Misura personalizzata (ultima scelta): tariffa del primo formato standard in cui entra, oltre l'A0 € 10/m². Stessa regola di app.js.
+  const isCustom = product.formatDims && fIdx === product.formatDims.length;
+  let rate = product.formatRates[fIdx], sizeLabel = product.formatChoices[fIdx];
+  if (isCustom) {
+    const c = product.custom;
+    const w = parseInt((formula || {}).larghezza, 10), h = parseInt((formula || {}).altezza, 10);
+    if (!(w >= c.min && h >= c.min && Math.max(w, h) <= c.longMax && Math.min(w, h) <= c.shortMax)) {
+      return { error: `Misura personalizzata non valida: lato corto ${c.min}–${c.shortMax} cm, lato lungo fino a ${c.longMax} cm.` };
+    }
+    const s = Math.min(w, h), l = Math.max(w, h);
+    const fits = product.formatDims.map((d, i) => ({ d, r: product.formatRates[i] })).filter(x => s <= Math.min(...x.d) && l <= Math.max(...x.d));
+    rate = fits.length ? Math.min(...fits.map(x => x.r)) : Math.max(10, Math.round(10 * (w * h / 10000) * 100) / 100);
+    sizeLabel = `${w} × ${h} cm (misura personalizzata)`;
+  }
+  const total = Math.round((rate * q * product.cartaMultiplier[cIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
   unitAmountCents = Math.round(total * 100);
-  description = `${product.nome} — ${product.formatChoices[fIdx]}, ${product.cartaChoices[cIdx]}, ${q}pz`;
+  description = `${product.nome} — ${sizeLabel}, ${product.cartaChoices[cIdx]}, ${q}pz`;
   } else if (product.type === 'libretti') {
     const { quantita, facciate } = formula || {};
     // Stessi limiti dei campi numerici sulla scheda prodotto (1–200 rilegature, 12–100 facciate).
