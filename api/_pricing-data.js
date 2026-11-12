@@ -3,14 +3,17 @@
 
 const ROLLUP_VARIANTS = [
   // Ordine = gruppi in app.js (0–1 Con struttura, 2–3 Solo stampa fai da te, 4–5 Solo stampa + cambio da noi): il checkout usa l'indice.
-  { label: '200 × 200 cm — Con struttura', size: '200 × 200 cm', price: 320 },
+  { label: '200 × 200 cm — Con struttura', size: '200 × 200 cm', price: 384 },
   // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6 = € 549,73, arrotondato a € 550.
   { label: '240 × 200 cm — Con struttura', size: '240 × 200 cm', price: 550 },
   // Solo stampa: cambio del telo sulla struttura del cliente fai da te (€ 0) o fatto da noi (+ € 40).
-  { label: '200 × 200 cm — Solo stampa, cambio telo fai da te', size: '200 × 200 cm', price: 78 },
-  { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 88 },
-  { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 118 },
-  { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 128 },
+  { label: '200 × 200 cm — Solo stampa, cambio telo fai da te', size: '200 × 200 cm', price: 94 },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 115 },
+  { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 134 },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 155 },
+  // Noleggio fino a 3 giorni: € 550 di cui € 75 di caparra rimborsata dopo l'ispezione (fuori dalla fattura, vedi stripe-webhook.js).
+  { label: '240 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '240 × 200 cm', price: 550, deposit: 75 },
+  { label: '200 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '200 × 200 cm', price: 384, deposit: 75 },
 ];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];

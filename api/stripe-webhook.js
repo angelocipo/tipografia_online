@@ -158,7 +158,7 @@ function buildFatturaData(session, lineItemsData) {
   // fuori dalla fattura. Importo letto dalla descrizione creata in create-checkout-session.js.
   let depositCents = 0;
   const invLines = (lineItemsData || []).map((li) => {
-    const m = / — noleggio € ([\d.]+,\d{2}) \+ caparra 50% € ([\d.]+,\d{2}) \(restituita dopo ispezione\)/.exec(li.description || '');
+    const m = / — noleggio € ([\d.]+,\d{2}) \+ caparra(?: 50%)? € ([\d.]+,\d{2}) \(restituita dopo ispezione\)/.exec(li.description || '');
     if (!m) return { d: li.description, q: 1, c: li.amount_total };
     const dep = Math.round(parseFloat(m[2].replace(/\./g, '').replace(',', '.')) * 100);
     depositCents += dep;

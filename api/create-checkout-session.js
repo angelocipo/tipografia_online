@@ -326,6 +326,11 @@ function priceItem(product, it) {
     const variant = product.variants[Math.min(Math.max(idx, 0), product.variants.length - 1)];
     unitAmountCents = Math.round(variant.price * 100);
     description = `${product.nome} — ${variant.label}`;
+    // Noleggio con caparra: stesso formato della Struttura per Eventi, così la caparra resta fuori dalla fattura.
+    if (variant.deposit) {
+      const it = (n) => n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      description += ` — noleggio € ${it(variant.price - variant.deposit)} + caparra € ${it(variant.deposit)} (restituita dopo ispezione)`;
+    }
   } else {
     return null;
   }
