@@ -12,8 +12,8 @@ const ROLLUP_VARIANTS = [
   { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 134 },
   { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 155 },
   // Noleggio fino a 3 giorni: € 550 di cui € 75 di caparra rimborsata dopo l'ispezione (fuori dalla fattura, vedi stripe-webhook.js).
-  { label: '240 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '240 × 200 cm', price: 550, deposit: 75 },
   { label: '200 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '200 × 200 cm', price: 384, deposit: 75 },
+  { label: '240 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '240 × 200 cm', price: 550, deposit: 75 },
 ];
 
 const ANGOLI_ARROTONDATI_TIERS = [{qty:100,price:8},{qty:250,price:10},{qty:500,price:14},{qty:1000,price:19},{qty:2500,price:23},{qty:5000,price:29},{qty:7500,price:38},{qty:10000,price:48}];
