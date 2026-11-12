@@ -3,14 +3,18 @@
 
 const ROLLUP_VARIANTS = [
   // Ordine = gruppi in app.js (0–1 Con struttura, 2–3 Solo stampa fai da te, 4–5 Solo stampa + cambio da noi): il checkout usa l'indice.
-  { label: '200 × 200 cm — Con struttura', size: '200 × 200 cm', price: 320, img: 'img/rollup-200x200-mockup.webp' },
+  { label: '200 × 200 cm — Con struttura', size: '200 × 200 cm', price: 384, img: 'img/rollup-200x200-mockup.webp' },
   // 240 × 200: (struttura € 235 IVA incl. + stampa Pixart € 89 + IVA) × 1,6 = € 549,73, arrotondato a € 550.
   { label: '240 × 200 cm — Con struttura', size: '240 × 200 cm', price: 550, img: 'img/rollup-240x200-mockup.webp' },
   // Solo stampa: cambio del telo sulla struttura del cliente fai da te (€ 0) o fatto da noi (+ € 40).
-  { label: '200 × 200 cm — Solo stampa, cambio telo fai da te', size: '200 × 200 cm', price: 78, img: 'img/rollup-200x200-mockup.webp' },
-  { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 88, img: 'img/rollup-240x200-mockup.webp' },
-  { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 118, img: 'img/rollup-200x200-mockup.webp' },
-  { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 128, img: 'img/rollup-240x200-mockup.webp' },
+  { label: '200 × 200 cm — Solo stampa, cambio telo fai da te', size: '200 × 200 cm', price: 94, img: 'img/rollup-200x200-mockup.webp' },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 115, img: 'img/rollup-240x200-mockup.webp' },
+  { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 134, img: 'img/rollup-200x200-mockup.webp' },
+  { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 155, img: 'img/rollup-240x200-mockup.webp' },
+  // Noleggio 240 × 200 fino a 3 giorni con telo stampato nuovo (resta al cliente): € 550, di cui € 75 rimborsati dopo l'ispezione della struttura.
+  { label: '240 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '240 × 200 cm', price: 550, img: 'img/rollup-240x200-struttura.webp' },
+  // Indice 7 (aggiunto dopo, per non cambiare gli indici già in uso): noleggio 200 × 200 a € 384 (prezzo completo), € 75 rimborsati.
+  { label: '200 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '200 × 200 cm', price: 384, img: 'img/rollup-200x200-mockup.webp' },
 ];
 const ROLLUP_FEATURES = [
   'Stampa 4/0 colori (CMYK) su carta sintetica bi-strato',
@@ -176,7 +180,7 @@ const PRODUCTS = [
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato. Ritiro gratuito nel nostro punto vendita a Roma, Via Lorenzo Bonincontri 26 (Lun–Ven 8–12 / 15–18), oppure spedizione UPS in Italia € 99,00.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni','Consegna':'Ritiro a Roma o UPS Italia € 99'},
     pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0,
-      groups:[{ label:'Con struttura', from:0, to:2 }, { label:'Solo stampa · cambio telo fai da te', from:2, to:4 }, { label:'Solo stampa · cambio telo da noi (+ € 40)', from:4, to:6 }]} },
+      groups:[{ label:'Con struttura', from:0, to:2 }, { label:'Solo stampa · cambio telo fai da te', from:2, to:4 }, { label:'Solo stampa · cambio telo da noi (+ € 40)', from:4, to:6 }, { label:'Noleggio · fino a 3 giorni, struttura da restituire, € 75 rimborsati dopo il controllo', from:6, to:8 }]} },
   { id:'5850', ean:'0652026573220', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
     templatePdf:'template/rollup-150x200.pdf',
     img:'img/Professional-roll-up-banner-mockup-copia700.webp',
