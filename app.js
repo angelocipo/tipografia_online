@@ -175,7 +175,7 @@ const PRODUCTS = [
     templatePdf:'template/rollup-200x200.pdf',
     templatePdfs:[{'label':'200×200 cm','path':'template/rollup-200x200.pdf'},{'label':'240×200 cm','path':'template/rollup-240x200.pdf'}],
     img:'img/rollup-200-240x200-hero.webp',
-    gallery:['img/rollup-200-240x200-hero.webp','img/rollup-200x200-mockup.webp','img/rollup-240x200-mockup.webp','img/rollup-240x200-struttura.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    gallery:['img/rollup-200-240x200-hero.webp','img/rollup-200x200-mockup.webp','img/rollup-240x200-mockup.webp','img/rollup-240x200-struttura.webp','img/rollup-240x200-istruzioni-montaggio.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato. Ritiro gratuito nel nostro punto vendita a Roma, Via Lorenzo Bonincontri 26 (Lun–Ven 8–12 / 15–18), oppure spedizione UPS in Italia € 99,00.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni','Consegna':'Ritiro a Roma o UPS Italia € 99'},
     pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0,
