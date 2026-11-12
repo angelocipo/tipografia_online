@@ -1479,12 +1479,15 @@ const PRODUCTS = [
     img:'img/locandina-a3-7-1-2016.webp',
     gallery:['img/locandina-a3-7-1-2016.webp'],
     intro:'Locandine e manifesti stampati in 24H a Roma EUR, 7 formati disponibili, carta usomano o sintetica.',
-    features:['7 formati: 35×50, 50×70, 70×100 cm, A3, A2, A1, A0','Carta Usomano gr. 80, Usomano gr. 180 o Sintetica gr. 160','Stampa in 24 ore'],
+    features:['7 formati: 35×50, 50×70, 70×100 cm, A3, A2, A1, A0, oppure misura personalizzata fino a 90×300 cm','Carta Usomano gr. 80, Usomano gr. 180 o Sintetica gr. 160','Stampa in 24 ore'],
     specs:{'Formati':'35×50, 50×70, 70×100 cm, A3, A2, A1, A0','Carta':'Usomano gr. 80/180, Sintetica gr. 160'},
     // Reconstructed 1:1 from the real Advanced Product Fields config for this product (Formato × Quantità × Carta).
     pricing:{ type:'locandine250',
-      formatChoices:['35 x 50 cm','50 x 70 cm','70 x 100 cm','A3','A2','A1','A0'],
-      formatRates:[2.8,5.3,8.3,2.8,5.3,8,10],
+      formatChoices:['35 x 50 cm','50 x 70 cm','70 x 100 cm','A3','A2','A1','A0','Misura personalizzata'],
+      formatRates:[2.8,5.3,8.3,2.8,5.3,8,10,10],
+      // Misure dei 7 formati standard (cm). L'ultima scelta è la misura personalizzata: lato corto max 90 cm (rotolo), lato lungo max 300 cm.
+      formatDims:[[35,50],[50,70],[70,100],[29.7,42],[42,59.4],[59.4,84.1],[84.1,118.9]],
+      custom:{ min:10, shortMax:90, longMax:300, w:50, h:70 },
       cartaChoices:['Usomano gr 80','Usomano gr 180','Carta Sintetica gr 160'],
       cartaMultiplier:[0.8,1.1,1.4],
       qty:{min:1,max:500,default:1},
@@ -2364,8 +2367,9 @@ async function startStripeCheckout(btn){
     if (pricingType === 'locandine250') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = locandineState(p);
-      body.formula = { formatIdx: f.formatIdx, cartaIdx: f.cartaIdx, qty: f.qty };
-      human = { 'Formato': p.pricing.formatChoices[f.formatIdx], 'Carta': p.pricing.cartaChoices[f.cartaIdx], 'Quantità': f.qty };
+      const locCustom = p.pricing.formatDims && f.formatIdx === p.pricing.formatDims.length;
+      body.formula = { formatIdx: f.formatIdx, cartaIdx: f.cartaIdx, qty: f.qty, ...(locCustom ? { larghezza: f.w, altezza: f.h } : {}) };
+      human = { 'Formato': locCustom ? f.w + ' × ' + f.h + ' cm (misura personalizzata)' : p.pricing.formatChoices[f.formatIdx], 'Carta': p.pricing.cartaChoices[f.cartaIdx], 'Quantità': f.qty };
     }
     if (pricingType === 'scatolaGioielli') {
       const p = PRODUCTS.find(x => x.id === productId);
@@ -2626,7 +2630,7 @@ function bv24hState(p){
 function locandineState(p){
   const cur = state.locandineById[p.id];
   if (cur) return cur;
-  const fresh = { formatIdx: 0, cartaIdx: 2, qty: p.pricing.qty.default };
+  const fresh = { formatIdx: 0, cartaIdx: 2, qty: p.pricing.qty.default, w: p.pricing.custom ? p.pricing.custom.w : 50, h: p.pricing.custom ? p.pricing.custom.h : 70 };
   state.locandineById[p.id] = fresh;
   return fresh;
 }
@@ -2669,8 +2673,18 @@ function readyInfoHtml(p, deliveryLabel, deliveryIdx, rdOverride, cutoffOverride
 function deliveryDefault(p){
   return { deliveryIdx: 0, qtyIdx: p?.pricing?.defaultQtyIdx ?? 0 };
 }
+function locandineCustomRate(pr, w, h){
+  // Misura personalizzata: tariffa del primo formato standard in cui entra (anche ruotata);
+  // oltre l'A0 € 10/m² (tariffa A0). Stessa regola in api/create-checkout-session.js.
+  const s = Math.min(w, h), l = Math.max(w, h);
+  const fits = pr.formatDims.map((d, i) => ({ d, r: pr.formatRates[i] })).filter(x => s <= Math.min(...x.d) && l <= Math.max(...x.d));
+  if (fits.length) return Math.min(...fits.map(x => x.r));
+  return Math.max(10, Math.round(10 * (w * h / 10000) * 100) / 100);
+}
 function computeLocandinePrice(p, f){
-  return Math.round((p.pricing.formatRates[f.formatIdx] * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
+  const isCustom = p.pricing.formatDims && f.formatIdx === p.pricing.formatDims.length;
+  const rate = isCustom ? locandineCustomRate(p.pricing, f.w, f.h) : p.pricing.formatRates[f.formatIdx];
+  return Math.round((rate * f.qty * p.pricing.cartaMultiplier[f.cartaIdx] * 1.22 + 5) * 100) / 100; // + € 5 costo fisso
 }
 function scatolaState(p){
   const cur = state.scatolaById[p.id];
@@ -3377,6 +3391,18 @@ function renderDetail(){
             ${p.pricing.formatChoices.map((c,i) => `<button class="pill ${i===f.formatIdx?'active':''}" data-loc-formato="${i}">${esc(c)}</button>`).join('')}
           </div>
         </div>
+        ${p.pricing.formatDims && f.formatIdx === p.pricing.formatDims.length ? `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Larghezza (cm)</div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.custom.min}" max="${p.pricing.custom.longMax}" id="locW" value="${f.w}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">Altezza (cm)</div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" min="${p.pricing.custom.min}" max="${p.pricing.custom.longMax}" id="locH" value="${f.h}" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid oklch(0.88 0.005 90); font-size:14px; font-family:inherit;">
+          </div>
+        </div>
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">Lato corto massimo 90 cm (larghezza del rotolo), lato lungo fino a 300 cm.</div>` : ''}
         <div>
           <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Carta</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -4078,6 +4104,12 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
   app.querySelectorAll('[data-plast-toggle]').forEach(el => el.addEventListener('change', () => { state.plastById[el.dataset.plastToggle] = el.checked; renderDetail(); }));
   app.querySelectorAll('[data-grafica-toggle]').forEach(el => el.addEventListener('change', () => { state.graficaById[el.dataset.graficaToggle] = el.checked; renderDetail(); }));
   if (p.pricing && p.pricing.qty) bindNum('locQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { locandineState(p).qty = n; });
+  if (p.pricing && p.pricing.custom && p.pricing.type === 'locandine250') {
+    const c = p.pricing.custom;
+    // Lato corto al massimo 90 cm: se entrambi i lati superano 90, quello appena modificato scende a 90.
+    bindNum('locW', c.min, c.longMax, (n) => { const st = locandineState(p); st.w = n; if (Math.min(st.w, st.h) > c.shortMax) st.w = c.shortMax; });
+    bindNum('locH', c.min, c.longMax, (n) => { const st = locandineState(p); st.h = n; if (Math.min(st.w, st.h) > c.shortMax) st.h = c.shortMax; });
+  }
   app.querySelectorAll('[data-loc-formato]').forEach(el => el.addEventListener('click', () => { locandineState(p).formatIdx = parseInt(el.dataset.locFormato,10); renderDetail(); }));
   app.querySelectorAll('[data-loc-carta]').forEach(el => el.addEventListener('click', () => { locandineState(p).cartaIdx = parseInt(el.dataset.locCarta,10); renderDetail(); }));
   if (p.pricing && p.pricing.qty) bindNum('scatolaQty', p.pricing.qty.min, p.pricing.qty.max, (n) => { scatolaState(p).qty = n; });
