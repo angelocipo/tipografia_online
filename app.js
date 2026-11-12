@@ -2630,7 +2630,8 @@ function bv24hState(p){
 function locandineState(p){
   const cur = state.locandineById[p.id];
   if (cur) return cur;
-  const fresh = { formatIdx: 0, cartaIdx: 2, qty: p.pricing.qty.default, w: p.pricing.custom ? p.pricing.custom.w : 50, h: p.pricing.custom ? p.pricing.custom.h : 70 };
+  // Misura personalizzata selezionata di default (ultima scelta, dopo i formati standard).
+  const fresh = { formatIdx: p.pricing.formatDims ? p.pricing.formatDims.length : 0, cartaIdx: 2, qty: p.pricing.qty.default, w: p.pricing.custom ? p.pricing.custom.w : 50, h: p.pricing.custom ? p.pricing.custom.h : 70 };
   state.locandineById[p.id] = fresh;
   return fresh;
 }
