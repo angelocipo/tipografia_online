@@ -11,10 +11,9 @@ const ROLLUP_VARIANTS = [
   { label: '240 × 200 cm — Solo stampa, cambio telo fai da te', size: '240 × 200 cm', price: 115, img: 'img/rollup-240x200-mockup.webp' },
   { label: '200 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '200 × 200 cm', price: 134, img: 'img/rollup-200x200-mockup.webp' },
   { label: '240 × 200 cm — Solo stampa, cambio telo fatto da noi', size: '240 × 200 cm', price: 155, img: 'img/rollup-240x200-mockup.webp' },
-  // Noleggio 240 × 200 fino a 3 giorni con telo stampato nuovo (resta al cliente): € 550, di cui € 75 rimborsati dopo l'ispezione della struttura.
-  { label: '240 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '240 × 200 cm', price: 550, img: 'img/rollup-240x200-struttura.webp' },
-  // Indice 7 (aggiunto dopo, per non cambiare gli indici già in uso): noleggio 200 × 200 a € 384 (prezzo completo), € 75 rimborsati.
+  // Noleggio fino a 3 giorni con telo stampato nuovo (resta al cliente): indice 6 = 200 × 200 (€ 384), 7 = 240 × 200 (€ 550); € 75 rimborsati dopo l'ispezione.
   { label: '200 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '200 × 200 cm', price: 384, img: 'img/rollup-200x200-mockup.webp' },
+  { label: '240 × 200 cm — Noleggio fino a 3 giorni, telo stampato incluso (€ 75 rimborsati alla restituzione)', size: '240 × 200 cm', price: 550, img: 'img/rollup-240x200-struttura.webp' },
 ];
 const ROLLUP_FEATURES = [
   'Stampa 4/0 colori (CMYK) su carta sintetica bi-strato',
