@@ -2801,13 +2801,27 @@ function updateSeo(){
     const parentCat = CATEGORY_PAGES[p.variantOf || p.id] || p.categoria;
     setSeo({ path, noindex: !!p.hidden, image: p.img,
       title: cut(p.nome + ' | Tipografia Online Roma EUR', 70),
-      desc: cut((p.intro || p.nome) + (price ? ' Da € ' + price.toFixed(2).replace('.', ',') + ' IVA inclusa.' : ''), 158),
+      desc: (() => {
+        // Ahrefs segnala le description sotto i ~110 caratteri: le più corte si completano con consegna e sede.
+        let d = (p.intro || p.nome) + (price ? ' Da € ' + price.toFixed(2).replace('.', ',') + ' IVA inclusa.' : '');
+        if (d.length < 110) d += ' Stampa a Roma EUR, consegna in tutta Italia e UE.';
+        return cut(d, 158);
+      })(),
       ld: [product, crumbs([['Catalogo', '/'], [CATEGORY_TITLES[parentCat] || parentCat, categoryPath(parentCat)], [p.nome, path]])] });
   } else if (state.categoryPage) {
     const cat = state.categoryPage, name = CATEGORY_TITLES[cat] || cat, path = categoryPath(cat);
+    // Elenco prodotti della categoria come schema.org Product (stesso filtro di renderCategoryPage).
+    const parentId = Object.keys(CATEGORY_PAGES).find(id => CATEGORY_PAGES[id] === cat);
+    const items = PRODUCTS.filter(p => !p.hidden && (parentId ? (p.id === parentId || p.variantOf === parentId) : (inCategory(p, cat) && !p.variantOf)));
+    const itemList = { '@context':'https://schema.org', '@type':'ItemList', name, itemListElement: items.slice(0, 50).map((p, i) => {
+      const price = lowPriceOf(p, false), url = SITE + seoPath(productPath(p));
+      const prod = { '@type':'Product', name:p.nome, url, image:[SITE + '/' + p.img], description:cut(p.intro || p.nome, 300), brand:{ '@type':'Brand', name:'Tipografia Online' } };
+      if (price) prod.offers = { '@type':'Offer', price: price.toFixed(2), priceCurrency:'EUR', availability:'https://schema.org/InStock', url };
+      return { '@type':'ListItem', position:i+1, item: prod };
+    }) };
     setSeo({ path, title: cut(name + ' | Stampa Online Roma EUR', 70),
-      desc: cut(CATEGORY_INTROS[cat] || (name + ': stampa online con prezzi IVA inclusa, stampa in 24H e consegna in Italia e UE.'), 158),
-      ld: [crumbs([['Catalogo', '/'], [name, path]])] });
+      desc: cut(CATEGORY_INTROS[cat] || (name + ': stampa online a Roma EUR con prezzi IVA inclusa, controllo del file prima della stampa, stampa in 24H e consegna in tutta Italia e UE.'), 158),
+      ld: items.length ? [itemList, crumbs([['Catalogo', '/'], [name, path]])] : [crumbs([['Catalogo', '/'], [name, path]])] });
   } else {
     setSeo({ path: '/', title: HOME_SEO.title, desc: HOME_SEO.desc, image: 'img/rollup-1024x1024.webp', ld: null });
   }
