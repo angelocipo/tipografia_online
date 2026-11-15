@@ -17,14 +17,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy & GDPR | Tipografia Online Roma EUR</title>
 <meta name="description" content="Informativa sul trattamento dei dati personali (GDPR - Reg. UE 679/2016) di Printing Italy / Tipografia Online Roma EUR: finalità, base giuridica e diritti dell'interessato.">
-<link rel="canonical" href="https://www.tipografia.online/privacy-gdpr.html">
+<link rel="canonical" href="https://tipografia.online/privacy-gdpr.html">
 <meta name="robots" content="index, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Tipografia Online Roma EUR">
 <meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Privacy & GDPR | Tipografia Online Roma EUR">
 <meta property="og:description" content="Informativa sul trattamento dei dati personali secondo il GDPR.">
-<meta property="og:url" content="https://www.tipografia.online/privacy-gdpr.html">
+<meta property="og:url" content="https://tipografia.online/privacy-gdpr.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap">
@@ -34,7 +34,7 @@
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1032048402974729&ev=PageView&noscript=1" alt=""></noscript>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-341HJWRT35"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-341HJWRT35');</script>
-<script type="application/ld+json">[{"@context":"https://schema.org","@type":"LocalBusiness","@id":"https://www.tipografia.online/#business","telephone":"+39 339 602 1366","name":"Tipografia Online Roma EUR","url":"https://www.tipografia.online/","address":{"@type":"PostalAddress","streetAddress":"Via Lorenzo Bonincontri, 26","postalCode":"00147","addressLocality":"Roma","addressRegion":"RM","addressCountry":"IT"}},{"@context":"https://schema.org","@type":"WebPage","name":"Privacy & GDPR","url":"https://www.tipografia.online/privacy-gdpr.html"},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.tipografia.online/tipografia-roma-eur.html"},{"@type":"ListItem","position":2,"name":"Privacy & GDPR","item":"https://www.tipografia.online/privacy-gdpr.html"}]}]</script>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"LocalBusiness","@id":"https://tipografia.online/#business","telephone":"+39 339 602 1366","name":"Tipografia Online Roma EUR","url":"https://tipografia.online/","address":{"@type":"PostalAddress","streetAddress":"Via Lorenzo Bonincontri, 26","postalCode":"00147","addressLocality":"Roma","addressRegion":"RM","addressCountry":"IT"}},{"@context":"https://schema.org","@type":"WebPage","name":"Privacy & GDPR","url":"https://tipografia.online/privacy-gdpr.html"},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://tipografia.online/tipografia-roma-eur.html"},{"@type":"ListItem","position":2,"name":"Privacy & GDPR","item":"https://tipografia.online/privacy-gdpr.html"}]}]</script>
 <style>
 .idx-wrap{max-width:1180px;margin:0 auto;padding:0 var(--space-6);}
 .idx-grid{display:grid;gap:var(--space-6);}
@@ -156,11 +156,11 @@ class Component extends DCLogic {
   renderVals() {
     const navLinks = NAV.map(n => ({ ...n, current: n.href === CURRENT ? 'page' : 'false' }));
     const jsonLd = JSON.stringify([
-      { '@context': 'https://schema.org', '@type': 'LocalBusiness', '@id': 'https://www.tipografia.online/#business', telephone: '+39 339 602 1366', name: 'Tipografia Online Roma EUR', url: 'https://www.tipografia.online/', address: { '@type': 'PostalAddress', streetAddress: 'Via Lorenzo Bonincontri, 26', postalCode: '00147', addressLocality: 'Roma', addressRegion: 'RM', addressCountry: 'IT' } },
-      { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Privacy & GDPR', url: 'https://www.tipografia.online/privacy-gdpr.html' },
+      { '@context': 'https://schema.org', '@type': 'LocalBusiness', '@id': 'https://tipografia.online/#business', telephone: '+39 339 602 1366', name: 'Tipografia Online Roma EUR', url: 'https://tipografia.online/', address: { '@type': 'PostalAddress', streetAddress: 'Via Lorenzo Bonincontri, 26', postalCode: '00147', addressLocality: 'Roma', addressRegion: 'RM', addressCountry: 'IT' } },
+      { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Privacy & GDPR', url: 'https://tipografia.online/privacy-gdpr.html' },
       { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tipografia.online/tipografia-roma-eur.html' },
-        { '@type': 'ListItem', position: 2, name: 'Privacy & GDPR', item: 'https://www.tipografia.online/privacy-gdpr.html' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tipografia.online/tipografia-roma-eur.html' },
+        { '@type': 'ListItem', position: 2, name: 'Privacy & GDPR', item: 'https://tipografia.online/privacy-gdpr.html' },
       ]},
     ]);
     return { navLinks, footerGroups: FOOTER_GROUPS, jsonLd };

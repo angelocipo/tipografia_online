@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.tipografia.online/sitemap.xml
+Sitemap: https://tipografia.online/sitemap.xml

@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="img/favicon.png">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="canonical" href="https://www.tipografia.online/preventivo.html">
+<link rel="canonical" href="https://tipografia.online/preventivo.html">
 <script src="./support.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -238,7 +238,7 @@ class Component extends DCLogic {
       hasCaparra: caparra > 0,
       caparraFmt: eur(caparra),
       righe: (this.state.righe || []).map(r => ({ ...r, hasQr: !r.isCaparra, hasEan: !!r.ean, quantita: r.quantita || '-', prezzoFmt: eur(r.prezzo),
-        qrSrc: 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=' + encodeURIComponent('https://www.tipografia.online' + r.productUrl) })),
+        qrSrc: 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=' + encodeURIComponent('https://tipografia.online' + r.productUrl) })),
       quoteNumber: this.state.quoteNumber || '',
       dateStr: this.state.dateStr || '',
       prezzoFmt: eur(prezzo),

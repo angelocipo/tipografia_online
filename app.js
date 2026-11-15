@@ -157,7 +157,7 @@ const PRODUCTS = [
   { id:'197', ean:'0652026573206', nome:'Stampa Roll-Up 80/85 × 200 cm', categoria:'Rollup',
     templatePdfs:[{'label':'80×200 cm','path':'template/rollup-80x200.pdf'},{'label':'85×200 cm','path':'template/rollup-85x200.pdf'}],
     img:'img/rollup.webp',
-    gallery:['img/rollup.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    gallery:['img/rollup.webp','img/rollup-80x200-lipedema-roma.webp','img/rollup-80x200-magic-roma.webp','img/rollup-85x200-academy-roma.webp','img/rollup-80x200-coppia-roma.webp','img/rollup-240x200-ibd-roma.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:"Rollup stampato in 24H. Stampa il tuo Roll-Up a Roma in 24 ore e presentati sempre al meglio, anche all'ultimo minuto. Qualità premium, colori vivi e materiali resistenti.",
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'80×200 · 85×200 cm','Uso':'Interni'},
     // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
@@ -175,7 +175,7 @@ const PRODUCTS = [
     templatePdf:'template/rollup-200x200.pdf',
     templatePdfs:[{'label':'200×200 cm','path':'template/rollup-200x200.pdf'},{'label':'240×200 cm','path':'template/rollup-240x200.pdf'}],
     img:'img/rollup-200-240x200-hero.webp',
-    gallery:['img/rollup-200-240x200-hero.webp','img/rollup-200x200-mockup.webp','img/rollup-240x200-mockup.webp','img/rollup-240x200-struttura.webp','img/rollup-240x200-istruzioni-montaggio.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
+    gallery:['img/rollup-200-240x200-hero.webp','img/rollup-200x200-mockup.webp','img/rollup-240x200-mockup.webp','img/rollup-240x200-struttura.webp','img/rollup-240x200-istruzioni-montaggio.webp','img/rollup-240x200-ibd-roma.webp','img/rollup-80x200-lipedema-roma.webp','img/rollup-80x200-magic-roma.webp','img/rollup-85x200-academy-roma.webp','img/rollup-80x200-coppia-roma.webp','img/IMG_4262ac-copia.webp','img/IMG_4265ac-copia.webp','img/rollup-500.webp'],
     intro:'Il formato maxi del nostro roll-up: massimo impatto visivo per stand fieristici e vetrine di grande formato. Ritiro gratuito nel nostro punto vendita a Roma, Via Lorenzo Bonincontri 26 (Lun–Ven 8–12 / 15–18), oppure spedizione UPS in Italia € 99,00.',
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Tempi':'24 ore','Uso':'Interni','Consegna':'Ritiro a Roma o UPS Italia € 99'},
     pricing:{type:'size', unit:'cadauno', variants:ROLLUP_VARIANTS, defaultIndex:0,
@@ -183,7 +183,7 @@ const PRODUCTS = [
   { id:'5850', ean:'0652026573220', nome:'Stampa Roll-Up 150 × 200 cm', categoria:'Rollup',
     templatePdf:'template/rollup-150x200.pdf',
     img:'img/Professional-roll-up-banner-mockup-copia700.webp',
-    gallery:['img/Professional-roll-up-banner-mockup-copia700.webp','img/IMG_4265ac-copia.webp','img/IMG_4262ac-copia.webp','img/rollup-500.webp'],
+    gallery:['img/Professional-roll-up-banner-mockup-copia700.webp','img/rollup-80x200-lipedema-roma.webp','img/rollup-80x200-magic-roma.webp','img/rollup-85x200-academy-roma.webp','img/rollup-80x200-coppia-roma.webp','img/rollup-240x200-ibd-roma.webp','img/IMG_4265ac-copia.webp','img/IMG_4262ac-copia.webp','img/rollup-500.webp'],
     intro:"La via di mezzo perfetta: largo abbastanza da farsi notare, comodo da spostare tra un evento e l'altro. Stampa il tuo Roll-Up a Roma in 3gg.",
     features:ROLLUP_FEATURES, specs:{'Materiale':'Carta sintetica bi-strato','Formato':'150×200 cm','Uso':'Interni'},
     // Reconstructed 1:1 from the real Advanced Product Fields (Studio Wombat) config for this product.
@@ -2763,7 +2763,7 @@ function categoryPath(cat){ return (window.TP_PATHS ? '/categoria/' : '#cat-') +
 function seoPath(path){ return path.replace(/^#cat-(.*)$/, (m, c) => '/categoria/' + slugify(decodeURIComponent(c))).replace(/^#/, '/prodotto/'); }
 function allCategoryPages(){ return [...new Set([...CATEGORIES, ...Object.values(CATEGORY_PAGES)])]; }
 function categoryBySlug(s){ return allCategoryPages().find(c => slugify(c) === s) || null; }
-const SITE = 'https://www.tipografia.online';
+const SITE = 'https://tipografia.online';
 const HOME_SEO = { title: document.title, desc: (document.querySelector('meta[name="description"]') || {}).content || '' };
 function setMeta(sel, attr, val){
   let el = document.head.querySelector(sel);
