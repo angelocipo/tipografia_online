@@ -2775,10 +2775,13 @@ function setSeo(o){
   setMeta('meta[name="description"]', 'content', o.desc);
   setMeta('meta[name="robots"]', 'content', o.noindex ? 'noindex, follow' : 'index, follow');
   o.path = seoPath(o.path);
-  setMeta('link[rel="canonical"]', 'href', SITE + o.path);
+  // Versione inglese (?lang=en): canonical e og:url puntano a sé stessa, come fa middleware.js nell'HTML del server.
+  const enUrl = new URLSearchParams(location.search).get('lang') === 'en';
+  const self = SITE + o.path + (enUrl ? '?lang=en' : '');
+  setMeta('link[rel="canonical"]', 'href', self);
   setMeta('meta[property="og:title"]', 'content', o.title);
   setMeta('meta[property="og:description"]', 'content', o.desc);
-  setMeta('meta[property="og:url"]', 'content', SITE + o.path);
+  setMeta('meta[property="og:url"]', 'content', self);
   if (o.image) setMeta('meta[property="og:image"]', 'content', SITE + '/' + o.image.replace(/^\//, ''));
   const ld = document.getElementById('ld-page');
   if (ld) ld.textContent = o.ld ? JSON.stringify(o.ld) : '';
