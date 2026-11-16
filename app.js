@@ -322,6 +322,30 @@ const PRODUCTS = [
         [{qty:100,price:90},{qty:500,price:103},{qty:1000,price:115},{qty:2500,price:177},{qty:5000,price:304},{qty:10000,price:528},{qty:20000,price:1027},{qty:30000,price:1493},{qty:40000,price:2029},{qty:50000,price:2445},{qty:60000,price:2853},{qty:70000,price:3322},{qty:80000,price:3749},{qty:90000,price:4183},{qty:100000,price:4643}],
       ],
     } },
+  { id:'5796', ean:'', nome:'Pieghevoli 1 Piega Formato Chiuso A7', categoria:'Pieghevoli',
+    img:'img/pieghevoli-1-piega-a7-hero.webp',
+    gallery:['img/pieghevoli-1-piega-a7-hero.webp'],
+    intro:'Pieghevole con 1 piega sul lato lungo, formato chiuso DIN A7 orizzontale (10,5 × 7,4 cm) o verticale (7,4 × 10,5 cm), aperto 10,5 × 14,8 cm. Carta patinata opaca 300 g cordonata, stampa fronte/retro a 4 colori. Ideale per biglietti d\'auguri, inviti, tessere fedeltà e mini listini.',
+    features:['Formato chiuso A7 orizzontale 10,5×7,4 cm o verticale 7,4×10,5 cm, aperto 10,5×14,8 cm','Carta patinata opaca 300 g, cordonata e consegnata aperta','Stampa f/r a 4 colori','Da 100 a 70.000 copie','Tempi di realizzazione: Standard 4–6 gg lavorativi, Express 2 gg o Overnight 1 giorno (fino a 10.000 copie)'],
+    specs:{'Formato':'Chiuso A7 · aperto 10,5×14,8 cm','Carta':'Patinata opaca 300 g','Piega':'1 piega, lato lungo','Tempi':'Standard 4–6 gg · Express 2 gg · Overnight 1 g'},
+    // Prezzi = costo Flyeralarm (IVA esclusa) × 1,6 + IVA 22%, listino del 16/11/2026. Overnight solo fino a 10.000 copie.
+    // Standard 100 / 250 / 500 copie: prezzi fissati a mano (€ 46 / 59 / 85 IVA inclusa).
+    pricing:{ type:'tiersDelivery', unit:'copie',
+      // Orientamento (stesso prezzo): o = orientamento del formato chiuso, e = lato della piega (sempre il lato lungo).
+      choiceTitle: 'Orientamento',
+      legaturaChoices: [
+        { label:'Orizzontale — chiuso 10,5×7,4 cm, piega in alto', o:'h', e:'t' },
+        { label:'Verticale — chiuso 7,4×10,5 cm, piega a sinistra', o:'v', e:'l' },
+      ],
+      deliveryChoices: ['Standard 4–6 gg lavorativi', 'Express 2 gg lavorativi', 'Overnight 1 giorno lavorativo'],
+      readyDays: [[4,6], [2,2], [1,1]],
+      readyCutoffHours: [10, 10, 9],
+      tiersByDelivery: [
+        [{qty:100,price:46},{qty:250,price:59},{qty:500,price:85},{qty:1000,price:109.53},{qty:2500,price:195.67},{qty:5000,price:333.83},{qty:7500,price:417.51},{qty:10000,price:536.45},{qty:15000,price:678.98},{qty:20000,price:863.99},{qty:25000,price:1037.64},{qty:30000,price:1182.15},{qty:35000,price:1326.75},{qty:40000,price:1473.21},{qty:45000,price:1623.81},{qty:50000,price:1767.13},{qty:55000,price:1929.26},{qty:60000,price:2105.68},{qty:65000,price:2282.12},{qty:70000,price:2458.56}],
+        [{qty:100,price:86.42},{qty:250,price:96.18},{qty:500,price:108.9},{qty:1000,price:160.71},{qty:2500,price:249.72},{qty:5000,price:394.66},{qty:7500,price:510.21},{qty:10000,price:641.86},{qty:15000,price:821.56},{qty:20000,price:1048.97},{qty:25000,price:1263.63},{qty:30000,price:1426.01},{qty:35000,price:1608.04},{qty:40000,price:1792.13},{qty:45000,price:1980.91},{qty:50000,price:2161.47},{qty:55000,price:2343.65},{qty:60000,price:2561.41},{qty:65000,price:2779.22},{qty:70000,price:2997}],
+        [{qty:100,price:120.81},{qty:250,price:130.76},{qty:500,price:143.76},{qty:1000,price:201.76},{qty:2500,price:297.72},{qty:5000,price:450.79},{qty:7500,price:570.82},{qty:10000,price:710.33}],
+      ],
+    } },
   { id:'5606', ean:'0652026573299', nome:'Locandine 70×100 cm', categoria:'Locandine e Manifesti',
     templatePdf:'template/formato-70x100.pdf',
     img:'img/locandine700x700-copia.webp',
@@ -2341,7 +2365,7 @@ async function startStripeCheckout(btn){
       const pp = PRODUCTS.find(x => x.id === productId);
       if (pp && pp.pricing.legaturaChoices) {
         const t = pp.pricing.tiersByDelivery[cur.deliveryIdx][cur.qtyIdx];
-        human = { 'Formato': pp.specs['Formato'], 'Legatura': pp.pricing.legaturaChoices[(state.legaturaById || {})[productId] ?? 0].label, 'Quantità': t.qty + ' pz', 'Consegna': pp.pricing.deliveryChoices[cur.deliveryIdx] };
+        human = { 'Formato': pp.specs['Formato'], [pp.pricing.choiceTitle || 'Legatura']: pp.pricing.legaturaChoices[(state.legaturaById || {})[productId] ?? 0].label, 'Quantità': t.qty + ' pz', 'Consegna': pp.pricing.deliveryChoices[cur.deliveryIdx] };
       }
     }
     if (pricingType === 'size') body.sizeIndex = idx;
@@ -3544,7 +3568,7 @@ function renderDetail(){
     pricingHtml = `
       ${p.pricing.legaturaChoices ? `
       <div style="margin-bottom:14px;">
-        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Legatura</div>
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">${esc(p.pricing.choiceTitle || 'Legatura')}</div>
         <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px;">
           ${p.pricing.legaturaChoices.map((c,i) => {
             const w = c.o === 'v' ? 24 : 34, hh = c.o === 'v' ? 32 : 24;
