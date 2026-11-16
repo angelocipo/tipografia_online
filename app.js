@@ -2392,7 +2392,7 @@ async function startStripeCheckout(btn){
     if (pricingType === 'bv24h') {
       const p = PRODUCTS.find(x => x.id === productId);
       const f = bv24hState(p);
-      const angoliOn = !!state.angoliById[productId];
+      const angoliOn = false;
       body.formula = { larghezza: f.larghezza, altezza: f.altezza, qty: f.qty, latiIdx: f.latiIdx, cartaIdx: f.cartaIdx, soggettiIdx: f.soggettiIdx, angoliArrotondati: angoliOn };
       human = { 'Larghezza': f.larghezza + ' cm', 'Altezza': f.altezza + ' cm', 'Quantità': f.qty, 'Stampa': p.pricing.latiChoices[f.latiIdx], 'Carta': 'gr. ' + p.pricing.cartaChoices[f.cartaIdx], 'Soggetti diversi': p.pricing.soggettiChoices[f.soggettiIdx], ...(angoliOn ? { 'Angoli arrotondati': 'Sì' } : {}) };
     }
@@ -3383,7 +3383,7 @@ function renderDetail(){
   } else if (p.pricing.type === 'bv24h'){
     const f = bv24hState(p);
     const baseTotal = computeBv24hPrice(p, f);
-    const angoliOn = !!state.angoliById[p.id];
+    const angoliOn = false; // Angoli arrotondati non disponibili per i BV 24H
     const angoliSurcharge = angoliOn ? angoliPrice(f.qty) : 0;
     const total = baseTotal + angoliSurcharge;
     pricingHtml = `
@@ -3420,7 +3420,6 @@ function renderDetail(){
             ${p.pricing.soggettiChoices.map((c,i) => `<button class="pill ${i===f.soggettiIdx?'active':''}" data-bv-soggetti="${i}">${c}</button>`).join('')}
           </div>
         </div>
-        <div>${angoliCheckboxHtml(p, f.qty)}</div>
       </div>
       <div style="display:flex; align-items:baseline; justify-content:space-between; padding-top:14px; border-top:1px solid oklch(0.92 0.005 90);">
         <span style="font-size:13px; color:oklch(0.5 0.01 90);">Totale</span>
