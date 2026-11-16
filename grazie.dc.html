@@ -343,6 +343,9 @@ class Component extends DCLogic {
       const mix = i < 3 ? (h1 >>> (i * 5)) : (h2 >>> ((i - 3) * 5));
       out += REF_ALPHABET[mix % 32];
     }
+    // Almeno una cifra nel codice: se sono uscite solo lettere, una posizione (scelta dall'hash) diventa una cifra.
+    // I codici che hanno già una cifra non cambiano.
+    if (!/[0-9]/.test(out)) { const pos = h1 % 6; out = out.slice(0, pos) + '23456789'[h2 % 8] + out.slice(pos + 1); }
     return out;
   }
 
