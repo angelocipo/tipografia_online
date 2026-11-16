@@ -288,7 +288,9 @@ async function processPaidOrder(session, lineItemsData) {
       // Il cliente riceve l'email nella lingua scelta sul sito (md.lang, da checkout); il titolare sempre in italiano.
       const buyerLang = md.lang === 'en' ? 'en' : 'it';
       const buyerHtml = orderEmailHtml(order, total, md, attachments.length > 0, buyerLang);
-      const summaryHtml = buyerLang === 'it' ? buyerHtml : orderEmailHtml(order, total, md, attachments.length > 0, 'it');
+      // Copia per il titolare: sempre in italiano, con Express / Overnight in rosso e grassetto.
+      const summaryHtml = orderEmailHtml(order, total, md, attachments.length > 0, 'it', true);
+      const rush = rushLabel(order);
       // Each send gets its OWN try. They used to share one: if the buyer send threw, the owner
       // notification was skipped entirely and the shop never learned about the order.
       if (buyerEmail) {
@@ -302,7 +304,7 @@ async function processPaidOrder(session, lineItemsData) {
       try {
         await sendEmail({
           to: OWNER_EMAIL,
-          subject: `Nuovo ordine #${order.number} — € ${total.toFixed(2)}`,
+          subject: `${rush ? rush.toUpperCase() + ' — ' : ''}Nuovo ordine #${order.number} — € ${total.toFixed(2)}`,
           html: summaryHtml.replace('</body></html>', ztlHtml + ownerBlockHtml(order, buyerEmail, session, fatturaLink, xmlAttachments.length > 0, xmlWarnings) + '</body></html>'),
           attachments: [...attachments, ...xmlAttachments],
         });
@@ -388,16 +390,31 @@ const EMAIL_TEXT = {
   },
 };
 
-function orderEmailHtml(order, total, md, hasDdt, lang) {
+// Express / Overnight in the order lines (delivery labels like "Express 2 gg", "Overnight 1 g").
+const RUSH_RE = /\b(Express|Overnight)\b/gi;
+function rushLabel(order) {
+  const txt = (order.lines || []).map((l) => l.description || '').join(' ');
+  if (/\bOvernight\b/i.test(txt)) return 'Overnight';
+  if (/\bExpress\b/i.test(txt)) return 'Express';
+  return '';
+}
+
+function orderEmailHtml(order, total, md, hasDdt, lang, forOwner) {
   md = md || {};
   const T = EMAIL_TEXT[lang === 'en' ? 'en' : 'it'];
+  const RUSH_STYLE = 'color:#d00000;font-weight:700;';
+  const rush = forOwner ? rushLabel(order) : '';
+  const rushBanner = rush
+    ? `<tr><td style="padding:18px 32px 0;"><div style="border:2px solid #d00000;padding:12px 16px;font:700 22px/1.2 ${HEAD_FONT};letter-spacing:.04em;text-transform:uppercase;${RUSH_STYLE}">${rush}</div></td></tr>`
+    : '';
   const rows = order.lines.map((l) => {
+    const desc = forOwner ? String(l.description).replace(RUSH_RE, (m) => `<strong style="${RUSH_STYLE}">${m}</strong>`) : l.description;
     const lineTotal = l.unitPrice * l.quantity;
     const eanLine = l.ean
       ? `<div style="padding-top:4px;font:400 12px/1.4 ${BODY_FONT};color:${MUTED};letter-spacing:.04em;">EAN ${l.ean}</div>`
       : '';
     return `<tr>
-      <td style="padding:14px 0;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};">${l.description}${eanLine}</td>
+      <td style="padding:14px 0;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};">${desc}${eanLine}</td>
       <td style="padding:14px 0 14px 16px;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${MUTED};text-align:right;white-space:nowrap;">${l.quantity}×</td>
       <td style="padding:14px 0 14px 16px;border-bottom:1px solid ${RULE};font:400 15px/1.45 ${BODY_FONT};color:${INK};text-align:right;white-space:nowrap;">${eur(lineTotal)}</td>
     </tr>`;
@@ -470,6 +487,7 @@ function orderEmailHtml(order, total, md, hasDdt, lang) {
           </td>
         </tr></table>
       </td></tr>
+      ${rushBanner}
 
       <tr><td style="padding:26px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
