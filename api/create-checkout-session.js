@@ -64,7 +64,7 @@ function priceItem(product, it) {
     const lati = product.latiMultiplier[latI];
     let total = Math.round((20 + bv * soggetti * lati * q * (l*10+20)*(a*10+40)/440/320) * 100) / 100;
     let angoliSuffix = '';
-    if (formula && formula.angoliArrotondati) { total += angoliArrotondatiPrice(q); angoliSuffix = ', Angoli arrotondati'; }
+    // Angoli arrotondati non più disponibili per i BV 24H: ignorati anche se richiesti.
     unitAmountCents = total * 100;
     description = `${product.nome} — ${l}×${a} cm, gr.${product.cartaChoices[cartaI]}, ${product.latiChoices[latI]}, ${product.soggettiChoices[sogI]} soggetti, ${q}pz${angoliSuffix}`;
   } else if (product.type === 'adesiviPrespaziati') {
