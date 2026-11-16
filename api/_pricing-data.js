@@ -176,55 +176,74 @@ const PRICING = {
       ] },
     ] },
   '5515': { nome: 'Biglietti da Visita Prezzi Strategici', ean: '0652026573602', type: 'businessCardStrategici',
-    qtyLabels: [500,1000,2500,5000,10000,15000,20000],
+    qtyLabels: [250,500,1000,2500,5000,7500,10000,15000,20000,25000,30000],
     formats: [
-      { label: 'Orizzontale 5,5×8,5 cm', papers: [
+      { label: 'Orizzontale 8,5×5,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [40,45,54,71,105,136,165] },
-          { label: 'Express 2 gg', prices: [73,78,87,104,137,169,198] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [30.18,37.13,43.41,54.6,80.87,105.45,128.36,172.34,210.52,259.44,291.98] },
+          { label: 'Express 2 gg lavorativi', prices: [79.02,85.97,92.25,104.43,130.71,155.3,178.2,222.18,260.38,343.16,375.7] },
+          { label: 'Overnight 1 giorno lavorativo', prices: [113.26,120.34,131.86,149.39,181.3,206.38,234.86,279.78,323.86,410.43,458.93] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [45,49,58,78,116,153,203] },
-          { label: 'Express 2 gg', prices: [79,82,90,111,149,185,262] },
+          { label: 'Standard 5–7 gg lavorativi', prices: [41.83,45.44,49.66,60,88.84,116.46,143,193.05,253.56,311.44,364.58] },
+          { label: 'Express 2 gg lavorativi', prices: [90.67,94.3,98.5,109.84,138.67,166.29,192.86,242.89,337.31,395.16,448.3] },
         ] },
-        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 500', deliveries: [
+          { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
+        ] },
       ] },
       { label: 'Verticale 5,5×8,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [40,45,54,71,105,136,165] },
-          { label: 'Express 2 gg', prices: [73,78,87,104,137,169,198] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [30.18,37.13,43.41,54.6,80.87,105.45,128.36,172.34,210.52,259.44,291.98] },
+          { label: 'Express 2 gg lavorativi', prices: [79.02,85.97,92.25,104.43,130.71,155.3,178.2,222.18,260.38,343.16,375.7] },
+          { label: 'Overnight 1 giorno lavorativo', prices: [113.26,120.34,131.86,149.39,181.3,206.38,234.86,279.78,323.86,410.43,458.93] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [45,49,58,78,116,153,203] },
-          { label: 'Express 2 gg', prices: [79,82,90,111,149,185,262] },
+          { label: 'Standard 5–7 gg lavorativi', prices: [41.83,45.44,49.66,60,88.84,116.46,143,193.05,253.56,311.44,364.58] },
+          { label: 'Express 2 gg lavorativi', prices: [90.67,94.3,98.5,109.84,138.67,166.29,192.86,242.89,337.31,395.16,448.3] },
         ] },
-        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 500', deliveries: [
+          { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
+        ] },
       ] },
       { label: 'Orizzontale 9×5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [43,46,52,67,98,124,149] },
-          { label: 'Express 2 gg', prices: [76,79,85,100,131,157,182] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [38.96,41.36,44.95,51.16,74.53,97.95,118.47,157.66,189.05,234.53,264.42] },
+          { label: 'Express 2 gg lavorativi', prices: [87.8,90.2,93.79,101,124.38,147.81,168.3,207.5,238.89,318.25,348.14] },
+          { label: 'Overnight 1 giorno lavorativo', prices: [122.21,124.67,133.42,145.85,174.82,198.73,224.77,264.79,301.92,385.01,430.79] },
         ] },
-        { label: 'gr. 400', deliveries: [ { label: 'Budget 1 Settimana', prices: [45,48,57,76,113,150,200] } ] },
-        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 400', deliveries: [
+          { label: 'Standard 5–7 gg lavorativi', prices: [41.27,44.7,48.72,58.6,86.43,113.12,138.73,190.12,250.21,292.84,339.69] },
+        ] },
+        { label: 'gr. 500', deliveries: [
+          { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
+        ] },
       ] },
       { label: 'Verticale 5×9 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [43,46,52,67,98,124,149] },
-          { label: 'Express 2 gg', prices: [76,79,85,100,131,157,182] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [38.96,41.36,44.95,51.16,74.53,97.95,118.47,157.66,189.05,234.53,264.42] },
+          { label: 'Express 2 gg lavorativi', prices: [87.8,90.2,93.79,101,124.38,147.81,168.3,207.5,238.89,318.25,348.14] },
+          { label: 'Overnight 1 giorno lavorativo', prices: [122.21,124.67,133.42,145.85,174.82,198.73,224.77,264.79,301.92,385.01,430.79] },
         ] },
-        { label: 'gr. 400', deliveries: [ { label: 'Budget 1 Settimana', prices: [45,48,57,76,113,150,200] } ] },
-        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 400', deliveries: [
+          { label: 'Standard 5–7 gg lavorativi', prices: [41.27,44.7,48.72,58.6,86.43,113.12,138.73,190.12,250.21,292.84,339.69] },
+        ] },
+        { label: 'gr. 500', deliveries: [
+          { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
+        ] },
       ] },
-      // Order of `formats` MUST match index.html exactly — the client sends a numeric
-      // formatIndex, so a different order here charges the price of a different format.
       { label: 'Quadrato 5,5×5,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Budget 1 Settimana', prices: [41,41,45,56,78,97,114] },
-          { label: 'Express 2 gg', prices: [75,73,78,89,110,129,147] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [34.94,35.94,36.99,41.19,57.6,73.88,89.21,116.96,141.95,166.12,184.66] },
+          { label: 'Express 2 gg lavorativi', prices: [83.78,84.78,85.85,91.02,107.46,123.72,139.04,166.8,191.78,215.95,234.49] },
+          { label: 'Overnight 1 giorno lavorativo', prices: [118.12,119.13,125.3,135.68,157.55,174.16,194.89,223.23,253.84,278.51,312.71] },
         ] },
-        { label: 'gr. 400', deliveries: [ { label: 'Budget 1 Settimana', prices: [41,43,49,62,89,115,138] } ] },
-        { label: 'gr. 500', deliveries: [ { label: 'Budget 1 Settimana', prices: [44,48,56,73,109,142,176] } ] },
+        { label: 'gr. 400', deliveries: [
+          { label: 'Standard 5–7 gg lavorativi', prices: [36.44,38.49,40.52,46.98,65.84,85.46,104.72,142.71,174.31,222.08,252.71] },
+        ] },
+        { label: 'gr. 500', deliveries: [
+          { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
+        ] },
       ] },
     ] },
   // Soft Touch: costo Flyeralarm (IVA esclusa, consegna inclusa) × 1,5 + IVA 22%. Verticale 5,5×8,5 = Orizzontale 8,5×5,5 e Orizzontale 9×5 = Verticale 5×9 (stesso costo, formato ruotato). Ordine formati = api/_pricing-data.js.
