@@ -209,7 +209,7 @@ class Component extends DCLogic {
     const canPickup = items.every(i => (SHIPPING_IDS.includes(i.productId) || i.productId === '5970') && i.productId !== '215');
     const romaOnly = items.some(i => i.productId === '215');
     // «Resto di Roma» sostituito da «Ritiro in sede Roma EUR» (resta solo per la Struttura per Eventi, che non si ritira).
-    let zones = pickupOnly ? ['ritiro', 'italia'] : romaOnly ? ['roma_centro', 'roma_resto'] : canPickup ? ['roma_centro', 'italia', 'ue'] : ['roma_centro', 'roma_resto', 'italia', 'ue'];
+    let zones = pickupOnly ? ['ritiro', 'italia'] : romaOnly ? ['roma_centro', 'roma_resto'] : ['roma_centro', 'italia', 'ue'];
     if (canPickup && !pickupOnly) zones = ['ritiro', ...zones];
     let zona = params.get('zona') || '';
     if (!zones.includes(zona)) zona = canPickup ? 'ritiro' : zones[0];
