@@ -186,7 +186,7 @@ const PRICING = {
     formats: [
       { label: 'Orizzontale 8,5×5,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Standard 4–6 gg lavorativi', prices: [30.18,37.13,43.41,54.6,80.87,105.45,128.36,172.34,210.52,259.44,291.98] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [30.18,40,45,54.6,80.87,105.45,128.36,172.34,210.52,259.44,291.98] },
           { label: 'Express 2 gg lavorativi', prices: [79.02,85.97,92.25,104.43,130.71,155.3,178.2,222.18,260.38,343.16,375.7] },
           { label: 'Overnight 1 giorno lavorativo', prices: [113.26,120.34,131.86,149.39,181.3,206.38,234.86,279.78,323.86,410.43,458.93] },
         ] },
@@ -200,7 +200,7 @@ const PRICING = {
       ] },
       { label: 'Verticale 5,5×8,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Standard 4–6 gg lavorativi', prices: [30.18,37.13,43.41,54.6,80.87,105.45,128.36,172.34,210.52,259.44,291.98] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [30.18,40,45,54.6,80.87,105.45,128.36,172.34,210.52,259.44,291.98] },
           { label: 'Express 2 gg lavorativi', prices: [79.02,85.97,92.25,104.43,130.71,155.3,178.2,222.18,260.38,343.16,375.7] },
           { label: 'Overnight 1 giorno lavorativo', prices: [113.26,120.34,131.86,149.39,181.3,206.38,234.86,279.78,323.86,410.43,458.93] },
         ] },
@@ -214,12 +214,12 @@ const PRICING = {
       ] },
       { label: 'Orizzontale 9×5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Standard 4–6 gg lavorativi', prices: [38.96,41.36,44.95,51.16,74.53,97.95,118.47,157.66,189.05,234.53,264.42] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [38.96,43,46,52,74.53,97.95,118.47,157.66,189.05,234.53,264.42] },
           { label: 'Express 2 gg lavorativi', prices: [87.8,90.2,93.79,101,124.38,147.81,168.3,207.5,238.89,318.25,348.14] },
           { label: 'Overnight 1 giorno lavorativo', prices: [122.21,124.67,133.42,145.85,174.82,198.73,224.77,264.79,301.92,385.01,430.79] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: 'Standard 5–7 gg lavorativi', prices: [41.27,44.7,48.72,58.6,86.43,113.12,138.73,190.12,250.21,292.84,339.69] },
+          { label: 'Standard 5–7 gg lavorativi', prices: [41.27,45,48.72,58.6,86.43,113.12,138.73,190.12,250.21,292.84,339.69] },
         ] },
         { label: 'gr. 500', deliveries: [
           { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
@@ -227,12 +227,12 @@ const PRICING = {
       ] },
       { label: 'Verticale 5×9 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Standard 4–6 gg lavorativi', prices: [38.96,41.36,44.95,51.16,74.53,97.95,118.47,157.66,189.05,234.53,264.42] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [38.96,43,46,52,74.53,97.95,118.47,157.66,189.05,234.53,264.42] },
           { label: 'Express 2 gg lavorativi', prices: [87.8,90.2,93.79,101,124.38,147.81,168.3,207.5,238.89,318.25,348.14] },
           { label: 'Overnight 1 giorno lavorativo', prices: [122.21,124.67,133.42,145.85,174.82,198.73,224.77,264.79,301.92,385.01,430.79] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: 'Standard 5–7 gg lavorativi', prices: [41.27,44.7,48.72,58.6,86.43,113.12,138.73,190.12,250.21,292.84,339.69] },
+          { label: 'Standard 5–7 gg lavorativi', prices: [41.27,45,48.72,58.6,86.43,113.12,138.73,190.12,250.21,292.84,339.69] },
         ] },
         { label: 'gr. 500', deliveries: [
           { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
@@ -240,12 +240,12 @@ const PRICING = {
       ] },
       { label: 'Quadrato 5,5×5,5 cm', papers: [
         { label: 'gr. 300 (classico)', deliveries: [
-          { label: 'Standard 4–6 gg lavorativi', prices: [34.94,35.94,36.99,41.19,57.6,73.88,89.21,116.96,141.95,166.12,184.66] },
+          { label: 'Standard 4–6 gg lavorativi', prices: [34.94,41,41,45,57.6,73.88,89.21,116.96,141.95,166.12,184.66] },
           { label: 'Express 2 gg lavorativi', prices: [83.78,84.78,85.85,91.02,107.46,123.72,139.04,166.8,191.78,215.95,234.49] },
           { label: 'Overnight 1 giorno lavorativo', prices: [118.12,119.13,125.3,135.68,157.55,174.16,194.89,223.23,253.84,278.51,312.71] },
         ] },
         { label: 'gr. 400', deliveries: [
-          { label: 'Standard 5–7 gg lavorativi', prices: [36.44,38.49,40.52,46.98,65.84,85.46,104.72,142.71,174.31,222.08,252.71] },
+          { label: 'Standard 5–7 gg lavorativi', prices: [36.44,41,43,49,65.84,85.46,104.72,142.71,174.31,222.08,252.71] },
         ] },
         { label: 'gr. 500', deliveries: [
           { label: 'Standard 7–9 gg lavorativi', prices: [40.68,44.08,48.98,59.28,83.33,107.13,132.54,177.53,223.41,272.3,313.18] },
