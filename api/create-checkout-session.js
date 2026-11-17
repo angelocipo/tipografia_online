@@ -411,9 +411,9 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: "Il Roll-Up 200/240 × 200 cm si ritira nel nostro punto vendita a Roma oppure si spedisce con UPS in Italia (€ 99,00): non spediamo all'estero." });
       return;
     }
-    // Ritiro in sede gratuito: non per Prezzi strategici (fuori da SHIPPING_IDS, Backdrop a parte) né Struttura per Eventi.
-    if (zone === 'ritiro' && priced.some(p => p.productId === '215' || (!SHIPPING_IDS.includes(p.productId) && p.productId !== '5970'))) {
-      res.status(400).json({ error: 'Il ritiro in sede non è disponibile per i Prezzi strategici: scegli una zona di consegna.' });
+    // Ritiro in sede Roma EUR gratuito: tutti i prodotti (Prezzi strategici compresi) tranne la Struttura per Eventi.
+    if (zone === 'ritiro' && priced.some(p => p.productId === '215')) {
+      res.status(400).json({ error: 'Il ritiro in sede non è disponibile per la Struttura per Eventi: scegli una zona di consegna a Roma.' });
       return;
     }
     // Carrello: una sola spedizione = la tariffa più alta tra gli articoli.
