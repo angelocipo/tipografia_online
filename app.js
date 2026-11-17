@@ -2107,7 +2107,7 @@ function priceFrom(p){
   if (p.pricing.type === 'imageSwatchQty') return p.pricing.pricePerUnit;
   if (p.pricing.type === 'adesivoInterno') {
     const { larghezza, altezza, qty } = p.pricing;
-    return Math.round((10 + 1 * ((larghezza.default+2)*(altezza.default+2)/44/32) * qty.default * 1.22 * 2) * 100) / 100;
+    return Math.round((10 + 1 * ((larghezza.default+2)*(altezza.default+2)/44/32) * qty.default * 1.22 * 2.5) * 100) / 100;
   }
   if (p.pricing.type === 'adesiviPrespaziati') {
     const { base, altezza, copie } = p.pricing;
@@ -2629,7 +2629,7 @@ function adesivoState(p){
 }
 function computeAdesivoPrice(p, f){
   const mult = p.pricing.sagomaMultiplier[f.sagomaIdx];
-  return Math.round((10 + mult * ((f.larghezza+2)*(f.altezza+2)/44/32) * f.qty * 1.22 * 2) * 100) / 100;
+  return Math.round((10 + mult * ((f.larghezza+2)*(f.altezza+2)/44/32) * f.qty * 1.22 * 2.5) * 100) / 100;
 }
 
 function prespaziatiState(p){
