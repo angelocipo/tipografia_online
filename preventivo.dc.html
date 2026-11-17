@@ -149,7 +149,7 @@ const eur = n => Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, m
 const ZONE_RATES = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
 // Copia di SHIPPING_IDS in api/create-checkout-session.js: tenerle allineate.
 const SHIPPING_IDS = ['197', '5833', '5850', '198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
-const ZONE_LABELS = { ritiro: 'Ritiro in sede (gratuito)', roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)', ue: 'Unione Europea (+2/3 giorni)' };
+const ZONE_LABELS = { ritiro: 'Ritiro in sede Roma EUR — € 0', roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)', ue: 'Unione Europea (+2/3 giorni)' };
 // Spedizione di un articolo: stessa regola di itemShippingFee() in checkout.dc.html e del server.
 function itemShippingFee(it, zone) {
   if (zone === 'ritiro') return 0;
@@ -208,7 +208,8 @@ class Component extends DCLogic {
     const allStrategici = items.every(i => !SHIPPING_IDS.includes(i.productId) && i.productId !== '5970');
     const canPickup = items.every(i => (SHIPPING_IDS.includes(i.productId) || i.productId === '5970') && i.productId !== '215');
     const romaOnly = items.some(i => i.productId === '215');
-    let zones = pickupOnly ? ['ritiro', 'italia'] : romaOnly ? ['roma_centro', 'roma_resto'] : ['roma_centro', 'roma_resto', 'italia', 'ue'];
+    // «Resto di Roma» sostituito da «Ritiro in sede Roma EUR» (resta solo per la Struttura per Eventi, che non si ritira).
+    let zones = pickupOnly ? ['ritiro', 'italia'] : romaOnly ? ['roma_centro', 'roma_resto'] : canPickup ? ['roma_centro', 'italia', 'ue'] : ['roma_centro', 'roma_resto', 'italia', 'ue'];
     if (canPickup && !pickupOnly) zones = ['ritiro', ...zones];
     let zona = params.get('zona') || '';
     if (!zones.includes(zona)) zona = canPickup ? 'ritiro' : zones[0];
@@ -232,7 +233,7 @@ class Component extends DCLogic {
     const iva = totale - caparra - imponibile;
     const allStrategici = !!this.state.allStrategici;
     const consegnaText = zona === 'ritiro'
-      ? 'Ritiro in sede — Via Lorenzo Bonincontri, 26 – 00147 Roma (gratuito)'
+      ? 'Ritiro in sede Roma EUR — Via Lorenzo Bonincontri, 26 – 00147 Roma — € 0,00'
       : 'Spedizione: ' + ZONE_LABELS[zona] + ' — ' + (allStrategici ? 'inclusa nel prezzo' : spedizione > 0 ? '€ ' + eur(spedizione) : 'gratuita');
     return {
       showZoneSelect: (this.state.zones || []).length > 1,
