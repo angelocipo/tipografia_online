@@ -88,7 +88,7 @@ function priceItem(product, it) {
     const q = Math.max(product.qty.min, Math.min(product.qty.max, parseInt(qty, 10) || product.qty.default));
     const sIdx = sagomaIdx === 1 ? 1 : 0;
     const mult = product.sagomaMultiplier[sIdx];
-    const total = Math.round((10 + mult * ((l+2)*(a+2)/44/32) * q * 1.22 * 2) * 100) / 100;
+    const total = Math.round((10 + mult * ((l+2)*(a+2)/44/32) * q * 1.22 * 2.5) * 100) / 100;
     unitAmountCents = total * 100;
     description = `${product.nome} — ${l}×${a} cm, ${q}pz, sagoma: ${product.sagomaChoices[sIdx]}`;
   } else if (product.type === 'imageSwatchQty') {
