@@ -30,7 +30,17 @@
 <script src="i18n.js"></script>
 </helmet>
 
-<div class="no-print" style="max-width:900px;margin:16px auto 0;padding:0 16px;display:flex;justify-content:flex-end;gap:10px;">
+<div class="no-print" style="max-width:900px;margin:16px auto 0;padding:0 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+  <sc-if value="{{ showZoneSelect }}" hint-placeholder-val="{{ true }}">
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;font-family:Barlow,Helvetica,Arial,sans-serif;">Consegna:
+      <select onChange="{{ handleZona }}" style="font-size:14px;padding:10px 12px;border-radius:8px;border:1.5px solid #c9ced3;background:#fff;">
+        <sc-for list="{{ zoneOptions }}" as="o" hint-placeholder-count="5">
+          <option value="{{ o.value }}" selected="{{ o.selected }}">{{ o.label }}</option>
+        </sc-for>
+      </select>
+    </label>
+  </sc-if>
+  <sc-if value="{{ hideZoneSelect }}" hint-placeholder-val="{{ false }}"><span></span></sc-if>
   <button onClick="{{ handlePrint }}" style="border:none;background:oklch(0.42 0.12 255);color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:8px;cursor:pointer;">Salva come PDF</button>
 </div>
 
@@ -120,18 +130,12 @@
       </div>
     </div>
 
-    <sc-if value="{{ hasSpedizione }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 70%, transparent);line-height:1.6;margin-bottom:20px;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:14px;">
-        <div style="font-weight:600;color:var(--color-text);margin-bottom:4px;">Opzioni di spedizione</div>
-        <sc-if value="{{ isZonaRomaCentro }}" hint-placeholder-val="{{ false }}"><div>Roma Sud/EUR/Centro — € 20,00 (opzione applicata in questo preventivo)</div></sc-if>
-        <sc-if value="{{ isZonaRomaResto }}" hint-placeholder-val="{{ false }}"><div>Resto di Roma — € 30,00 (opzione applicata in questo preventivo)</div></sc-if>
-        <sc-if value="{{ isRollupRoma }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;"><span>{{ spedizioneZona }} — € {{ spedizioneFmt }}</span><span>Roll-Up: 1° a tariffa zona, ogni successivo € 15,00 (applicato in questo preventivo).</span></div></sc-if>
-        <sc-if value="{{ isZonaUe }}" hint-placeholder-val="{{ false }}"><div>Unione Europea (+2/3 giorni) — € 35,00 (opzione applicata in questo preventivo)</div></sc-if>
-        <sc-if value="{{ isBackdropUe }}" hint-placeholder-val="{{ false }}"><div>Unione Europea (+2/3 giorni) — € 55,00 (Backdrop, opzione applicata in questo preventivo)</div></sc-if>
-        <sc-if value="{{ isZonaItalia }}" hint-placeholder-val="{{ false }}"><div>Italia (+1 giorno) — € 25,00 (opzione applicata in questo preventivo)</div></sc-if>
-        <div>Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</div>
-      </div>
-    </sc-if>
+    <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 70%, transparent);line-height:1.6;margin-bottom:20px;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:14px;">
+      <div style="font-weight:600;color:var(--color-text);margin-bottom:4px;">Consegna</div>
+      <div>{{ consegnaText }}</div>
+      <sc-if value="{{ isRollupRoma }}" hint-placeholder-val="{{ false }}"><div>Roll-Up: 1° a tariffa zona, ogni successivo € 15,00 (applicato in questo preventivo).</div></sc-if>
+      <sc-if value="{{ notRitiro }}" hint-placeholder-val="{{ true }}"><div>Non spediamo in Città del Vaticano né fuori dall'Unione Europea.</div></sc-if>
+    </div>
 
     <div style="font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);line-height:1.6;margin-top:auto;border-top:1px solid color-mix(in srgb, var(--color-text) 15%, transparent);padding-top:16px;">
       Preventivo generato automaticamente in base alla configurazione selezionata sul sito. Prezzi IVA inclusa, salvo diversa indicazione. Per confermare l'ordine o richiedere modifiche, contattateci a info@tipografia.online o tramite il modulo sul sito.
@@ -142,6 +146,21 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 const eur = n => Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const ZONE_RATES = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35 };
+// Copia di SHIPPING_IDS in api/create-checkout-session.js: tenerle allineate.
+const SHIPPING_IDS = ['197', '5833', '5850', '198', '199', '200', '201', '203', '209', '210', '212', '213', '214', '215', '220', '221', '223', '224', '225', '226', '227', '250', '5849', '211', '216', '218', '284', '5047', '5805', '5851'];
+const ZONE_LABELS = { ritiro: 'Ritiro in sede (gratuito)', roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)', ue: 'Unione Europea (+2/3 giorni)' };
+// Spedizione di un articolo: stessa regola di itemShippingFee() in checkout.dc.html e del server.
+function itemShippingFee(it, zone) {
+  if (zone === 'ritiro') return 0;
+  const pid = String(it.productId || '');
+  if (pid === '5970') return zone === 'ue' ? 55 : 0; // Backdrop: trasporto incluso in Italia, UE + € 55.
+  if (pid === '215') return 0; // Struttura per Eventi: consegna inclusa.
+  if (pid === '5833') return 99; // Roll-Up 200/240 × 200: UPS in Italia € 99.
+  if (!SHIPPING_IDS.includes(pid)) return 0;
+  if (pid === '197' && zone !== 'italia') return ZONE_RATES[zone] + 15 * (Math.max(1, it.rq || 1) - 1);
+  return ZONE_RATES[zone] ?? 20;
+}
 class Component extends DCLogic {
   state = {};
   componentDidMount() {
@@ -150,30 +169,19 @@ class Component extends DCLogic {
     const configurazione = params.get('config') || '';
     const quantita = params.get('quantita') || '-';
     const prezzo = parseFloat(params.get('prezzo')) || 0;
-    const pid = params.get('pid');
+    const pid = String(params.get('pid') || '');
     const ean = params.get('ean') || '';
     const collection = params.get('collection') || 'strategici';
-    // Same rule as checkout.dc.html: shipping only on "Su Misura" products, zone rate (no reduced rate over € 100,00).
-    const zoneRates = { roma_centro: 20, roma_resto: 30, italia: 25, ue: 35, ritiro: 0 };
-    const zona = params.get('zona') || 'roma_centro';
-    let spedizione = collection === 'misura' && prezzo > 0 ? (zoneRates[zona] ?? 20) : 0;
-    // Backdrop '5970': trasporto incluso in Italia, UE + € 55 (stessa regola in checkout.dc.html).
-    if (String(pid) === '5970') spedizione = zona === 'ue' ? 55 : 0;
-    if (zona === 'ritiro') spedizione = 0;
-    if (String(pid) === '215') spedizione = 0; // Struttura per Eventi: consegna inclusa.
-    // Roll-Up 80/85 × 200: stessa regola del checkout (1° a tariffa zona, successivi € 15).
-    const rollupQ = pid === '197' ? Math.max(1, parseInt(params.get('quantita'), 10) || 1) : 0;
-    if (rollupQ && zona !== 'italia' && zoneRates[zona]) spedizione = zoneRates[zona] + 15 * (rollupQ - 1);
     const productUrl = pid ? `/#${encodeURIComponent(pid)}` : '/';
     const now = new Date();
-    let righe = [{ prodotto, dettagli: configurazione.split(' · ').map(s => s.trim()).filter(Boolean), quantita, prezzo, productUrl, ean, pid: String(pid || '') }];
-    let st = { prezzo, spedizione, zona, rollupQ, pid };
-    // Carrello (dal checkout): tutte le righe da localStorage, spedizione già calcolata dal checkout.
+    let righe = [{ prodotto, dettagli: configurazione.split(' · ').map(s => s.trim()).filter(Boolean), quantita, prezzo, productUrl, ean, pid }];
+    let items = [{ productId: pid, col: collection, price: prezzo, rq: pid === '197' ? (parseInt(quantita, 10) || 1) : 0 }];
+    // Carrello (dal checkout): tutte le righe da localStorage.
     if (params.get('cart') === '1') {
-      let items = [];
-      try { items = JSON.parse(localStorage.getItem('tp_cart') || '[]') || []; } catch (e) {}
-      if (items.length) {
-        righe = items.map(it => {
+      let cart = [];
+      try { cart = JSON.parse(localStorage.getItem('tp_cart') || '[]') || []; } catch (e) {}
+      if (cart.length) {
+        righe = cart.map(it => {
           const det = it.details || [];
           const q = det.find(d => d.label === 'Quantità' || d.label === 'Quantity');
           return {
@@ -182,14 +190,8 @@ class Component extends DCLogic {
             quantita: q ? q.value : '1', prezzo: parseFloat(it.price) || 0,
           };
         });
-        const r197 = items.find(i => String(i.productId) === '197');
-        st = {
-          prezzo: righe.reduce((a, r) => a + r.prezzo, 0),
-          spedizione: Math.max(0, parseFloat(params.get('sped')) || 0),
-          zona,
-          rollupQ: r197 ? Math.max(1, parseInt((((r197.body || {}).formula) || {}).qty, 10) || 1) : 0,
-          pid: items.some(i => String(i.productId) === '5970') ? '5970' : '',
-        };
+        items = cart.map(it => ({ productId: String(it.productId || ''), col: it.col || 'misura', price: parseFloat(it.price) || 0,
+          rq: String(it.productId) === '197' ? Math.max(1, parseInt((((it.body || {}).formula) || {}).qty, 10) || 1) : 0 }));
       }
     }
     // Struttura per Eventi (215): prezzo = noleggio × 1,5 → riga noleggio + riga caparra 50% (fuori campo IVA).
@@ -201,50 +203,64 @@ class Component extends DCLogic {
         { prodotto: 'Caparra confirmatoria 50%', dettagli: ['Restituita dopo ispezione senza danni', 'Fuori campo IVA (art. 15 DPR 633/72)'], quantita: '1', prezzo: Math.round((r.prezzo - noleggio) * 100) / 100, productUrl: r.productUrl, ean: '', pid: '', isCaparra: true },
       ];
     });
+    // Zone disponibili (stesse regole del checkout).
+    const pickupOnly = items.some(i => i.productId === '5833');
+    const allStrategici = items.every(i => !SHIPPING_IDS.includes(i.productId) && i.productId !== '5970');
+    const canPickup = items.every(i => (SHIPPING_IDS.includes(i.productId) || i.productId === '5970') && i.productId !== '215');
+    const romaOnly = items.some(i => i.productId === '215');
+    let zones = pickupOnly ? ['ritiro', 'italia'] : romaOnly ? ['roma_centro', 'roma_resto'] : ['roma_centro', 'roma_resto', 'italia', 'ue'];
+    if (canPickup && !pickupOnly) zones = ['ritiro', ...zones];
+    let zona = params.get('zona') || '';
+    if (!zones.includes(zona)) zona = canPickup ? 'ritiro' : zones[0];
     this.setState({
-      righe, collection, ...st,
+      righe, items, zones, zona, allStrategici,
       quoteNumber: `PRT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`,
       dateStr: now.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
-    // Stampa solo quando i QR sono caricati (max 4 s), altrimenti nel PDF uscirebbero vuoti.
-    setTimeout(() => {
-      const imgs = [...document.querySelectorAll('img')].filter(i => !i.complete);
-      const wait = Promise.all(imgs.map(i => new Promise(r => { i.onload = i.onerror = r; })));
-      Promise.race([wait, new Promise(r => setTimeout(r, 4000))]).then(() => window.print());
-    }, 400);
   }
   renderVals() {
-    const prezzo = this.state.prezzo || 0;
-    const spedizione = this.state.spedizione || 0;
-    const rollupQ = this.state.rollupQ || 0;
-    const zona = this.state.zona;
+    const righe = this.state.righe || [];
+    const items = this.state.items || [];
+    const zona = this.state.zona || 'roma_centro';
+    const prezzo = righe.reduce((a, r) => a + r.prezzo, 0);
+    // Carrello: una sola spedizione = la tariffa più alta tra gli articoli.
+    const spedizione = Math.max(0, ...items.map(it => itemShippingFee(it, zona)));
+    const rollupQ = (items.find(i => i.productId === '197') || {}).rq || 0;
     const totale = prezzo + spedizione;
-    const caparra = (this.state.righe || []).filter(r => r.isCaparra).reduce((a, r) => a + r.prezzo, 0);
+    const caparra = righe.filter(r => r.isCaparra).reduce((a, r) => a + r.prezzo, 0);
     const imponibile = (totale - caparra) / 1.22;
     const iva = totale - caparra - imponibile;
-    const zoneLabels = { roma_centro: 'Roma Sud/EUR/Centro', roma_resto: 'Resto di Roma', italia: 'Italia (+1 giorno)', ue: 'Unione Europea (+2/3 giorni)' };
+    const allStrategici = !!this.state.allStrategici;
+    const consegnaText = zona === 'ritiro'
+      ? 'Ritiro in sede — Via Lorenzo Bonincontri, 26 – 00147 Roma (gratuito)'
+      : 'Spedizione: ' + ZONE_LABELS[zona] + ' — ' + (allStrategici ? 'inclusa nel prezzo' : spedizione > 0 ? '€ ' + eur(spedizione) : 'gratuita');
     return {
+      showZoneSelect: (this.state.zones || []).length > 1,
+      hideZoneSelect: (this.state.zones || []).length <= 1,
+      zoneOptions: (this.state.zones || []).map(z => ({ value: z, label: ZONE_LABELS[z], selected: z === zona })),
+      handleZona: (e) => this.setState({ zona: e.target.value }),
       hasSpedizione: spedizione > 0,
-      isFlatSpedizione: false,
-      isZonaRomaCentro: !rollupQ && this.state.zona === 'roma_centro',
-      isZonaRomaResto: !rollupQ && this.state.zona === 'roma_resto',
-      isRollupRoma: !!rollupQ && (zona === 'roma_centro' || zona === 'roma_resto' || zona === 'ue'),
-      isZonaUe: !rollupQ && zona === 'ue' && String(this.state.pid) !== '5970',
-      isBackdropUe: zona === 'ue' && String(this.state.pid) === '5970',
-      isZonaItalia: this.state.zona === 'italia',
+      notRitiro: zona !== 'ritiro',
+      consegnaText,
+      isRollupRoma: !!rollupQ && rollupQ > 1 && zona !== 'italia' && zona !== 'ritiro',
       spedizioneFmt: eur(spedizione),
-      spedizioneZona: zoneLabels[this.state.zona] || '',
+      spedizioneZona: ZONE_LABELS[zona] || '',
       totaleFmt: eur(totale),
       hasCaparra: caparra > 0,
       caparraFmt: eur(caparra),
-      righe: (this.state.righe || []).map(r => ({ ...r, hasQr: !r.isCaparra, hasEan: !!r.ean, quantita: r.quantita || '-', prezzoFmt: eur(r.prezzo),
+      righe: righe.map(r => ({ ...r, hasQr: !r.isCaparra, hasEan: !!r.ean, quantita: r.quantita || '-', prezzoFmt: eur(r.prezzo),
         qrSrc: 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=' + encodeURIComponent('https://tipografia.online' + r.productUrl) })),
       quoteNumber: this.state.quoteNumber || '',
       dateStr: this.state.dateStr || '',
       prezzoFmt: eur(prezzo),
       imponibileFmt: eur(imponibile),
       ivaFmt: eur(iva),
-      handlePrint: () => window.print(),
+      handlePrint: () => {
+        // Stampa solo quando i QR sono caricati (max 4 s), altrimenti nel PDF uscirebbero vuoti.
+        const imgs = [...document.querySelectorAll('img')].filter(i => !i.complete);
+        const wait = Promise.all(imgs.map(i => new Promise(r => { i.onload = i.onerror = r; })));
+        Promise.race([wait, new Promise(r => setTimeout(r, 4000))]).then(() => window.print());
+      },
     };
   }
 }
