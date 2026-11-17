@@ -769,7 +769,7 @@ const PRICING = {
   '218': { nome: 'Biglietti da visita 24H', ean: '0652026573534', type: 'bv24h',
     larghezza: { min:5.5, max:10.5, default:5.5 },
     altezza: { min:5.5, max:14.8, default:8.5 },
-    qty: { min:50, max:1000, default:100 },
+    qty: { min:250, max:1000, default:250 },
     latiMultiplier: [1, 1.5],
     latiChoices: ['1 lato', '2 lati'],
     cartaMultiplier: [1, 1.5, 1.9],
