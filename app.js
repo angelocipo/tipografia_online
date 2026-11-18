@@ -1666,14 +1666,14 @@ const PRODUCTS = [
     specs:{'Nastro':'Raso 460 g/m² · 2 cm','Stampa':'4/0 colori','Gancio':'Moschettone a trapezio','Tempi':'Standard 6–8 gg · Express 4–5 gg · Overnight 1 g · 1.000 pz: 15–18 gg'},
     // Prezzi = costo Flyeralarm (IVA esclusa) × 1,6 + IVA 22%, listino del 18/11/2026. Express fino a 500 pz, Overnight fino a 100 pz, 1.000 pz solo 15–18 gg.
     pricing:{ type:'tiersDelivery', unit:'pz',
-      deliveryChoices: ['Standard 6–8 gg lavorativi', 'Express 4–5 gg lavorativi', 'Overnight 1 giorno lavorativo', 'Standard 15–18 gg lavorativi (1.000 pz)'],
-      readyDays: [[6,8], [4,5], [1,1], [15,18]],
-      readyCutoffHours: [10, 10, 10, 10],
+      deliveryChoices: ['Standard 6–8 gg lavorativi', 'Express 4–5 gg lavorativi', 'Overnight 1 giorno lavorativo'],
+      readyDays: [[6,8], [4,5], [1,1]],
+      readyCutoffHours: [10, 10, 10],
+      // 1.000 pz: solo Standard 15–18 gg (label e readyDays sul tier: compaiono solo scegliendo 1.000 pz).
       tiersByDelivery: [
-        [{qty:100,price:246.69},{qty:200,price:437.28},{qty:250,price:515.66},{qty:300,price:587.84},{qty:400,price:765.97},{qty:500,price:880.34},{qty:600,price:1007.82},{qty:750,price:1224.85},{qty:800,price:1288.69},{qty:900,price:1417.62}],
+        [{qty:100,price:246.69},{qty:200,price:437.28},{qty:250,price:515.66},{qty:300,price:587.84},{qty:400,price:765.97},{qty:500,price:880.34},{qty:600,price:1007.82},{qty:750,price:1224.85},{qty:800,price:1288.69},{qty:900,price:1417.62},{qty:1000,price:1154.67,label:'Standard 15–18 gg lavorativi (1.000 pz)',readyDays:[15,18]}],
         [{qty:100,price:279.79},{qty:200,price:479.92},{qty:250,price:562.21},{qty:300,price:638.02},{qty:400,price:825.04},{qty:500,price:945.14}],
         [{qty:100,price:313.38}],
-        [{qty:1000,price:1154.67}],
       ],
     } },
   { id:'5805', ean:'0652026573565', nome:'Libretti Chiesa Personalizzati', categoria:'Servizi',
@@ -2399,7 +2399,7 @@ async function startStripeCheckout(btn){
       const pp = PRODUCTS.find(x => x.id === productId);
       if (pp && pp.pricing.legaturaChoices) {
         const t = pp.pricing.tiersByDelivery[cur.deliveryIdx][cur.qtyIdx];
-        human = { 'Formato': pp.specs['Formato'], [pp.pricing.choiceTitle || 'Legatura']: pp.pricing.legaturaChoices[(state.legaturaById || {})[productId] ?? 0].label, 'Quantità': t.qty + ' pz', 'Consegna': pp.pricing.deliveryChoices[cur.deliveryIdx] };
+        human = { 'Formato': pp.specs['Formato'], [pp.pricing.choiceTitle || 'Legatura']: pp.pricing.legaturaChoices[(state.legaturaById || {})[productId] ?? 0].label, 'Quantità': t.qty + ' pz', 'Consegna': t.label || pp.pricing.deliveryChoices[cur.deliveryIdx] };
       }
     }
     if (pricingType === 'size') body.sizeIndex = idx;
@@ -3617,9 +3617,9 @@ function renderDetail(){
       <div style="margin-bottom:14px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Consegna</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          ${p.pricing.deliveryChoices.map((c,i) => `<button class="pill ${i===deliveryIdx?'active':''}" data-delivery-idx="${i}">${esc(c)}</button>`).join('')}
+          ${p.pricing.deliveryChoices.map((c,i) => `<button class="pill ${i===deliveryIdx?'active':''}" data-delivery-idx="${i}">${esc(i===deliveryIdx && tier.label ? tier.label : c)}</button>`).join('')}
         </div>
-        ${readyInfoHtml(p, p.pricing.deliveryChoices[deliveryIdx], deliveryIdx)}
+        ${readyInfoHtml(p, tier.label || p.pricing.deliveryChoices[deliveryIdx], deliveryIdx, tier.readyDays)}
       </div>
       <div style="margin-bottom:18px;">
         <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:8px;">Quantità (dello stesso soggetto)</div>
