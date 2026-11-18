@@ -82,7 +82,15 @@ const PRICING = {
       [{qty:100,price:55},{qty:500,price:70},{qty:1000,price:81},{qty:2500,price:142},{qty:5000,price:240},{qty:10000,price:433},{qty:20000,price:842},{qty:30000,price:1245},{qty:40000,price:1678},{qty:50000,price:2013},{qty:60000,price:2393},{qty:70000,price:2787},{qty:80000,price:3140},{qty:90000,price:3431},{qty:100000,price:3685}],
       [{qty:100,price:90},{qty:500,price:103},{qty:1000,price:115},{qty:2500,price:177},{qty:5000,price:304},{qty:10000,price:528},{qty:20000,price:1027},{qty:30000,price:1493},{qty:40000,price:2029},{qty:50000,price:2445},{qty:60000,price:2853},{qty:70000,price:3322},{qty:80000,price:3749},{qty:90000,price:4183},{qty:100000,price:4643}],
     ] },
+  '5797': { nome: 'Lanyard Personalizzati', ean: '', type: 'tiersDelivery', unit: 'pz',
+    deliveryChoices: ['Standard 6–8 gg lavorativi', 'Express 4–5 gg lavorativi', 'Overnight 1 giorno lavorativo'],
+    tiersByDelivery: [
+        [{qty:1,price:43.14},{qty:10,price:56.69},{qty:25,price:88.19},{qty:50,price:151.57},{qty:100,price:246.69},{qty:200,price:437.29},{qty:250,price:515.66},{qty:300,price:587.84},{qty:400,price:765.96},{qty:500,price:880.33},{qty:600,price:1007.82},{qty:750,price:1224.84},{qty:800,price:1288.69},{qty:900,price:1417.62}],
+        [{qty:1,price:66.08},{qty:10,price:80.29},{qty:25,price:113.37},{qty:50,price:179.92},{qty:100,price:279.8},{qty:200,price:479.92},{qty:250,price:562.22},{qty:300,price:638.01},{qty:400,price:825.03},{qty:500,price:945.14}],
+        [{qty:1,price:99.65},{qty:10,price:113.86},{qty:25,price:146.95},{qty:50,price:213.49},{qty:100,price:313.37}],
+      ] },
   '5796': { nome: 'Pieghevoli 1 Piega Formato Chiuso A7', ean: '', type: 'tiersDelivery',
+    deliveryChoices: ['Standard 4–6 gg lavorativi', 'Express 2 gg lavorativi', 'Overnight 1 giorno lavorativo'],
     tiersByDelivery: [
         [{qty:100,price:46},{qty:250,price:59},{qty:500,price:85},{qty:1000,price:109.53},{qty:2500,price:195.67},{qty:5000,price:333.83},{qty:7500,price:417.51},{qty:10000,price:536.45},{qty:15000,price:678.98},{qty:20000,price:863.99},{qty:25000,price:1037.64},{qty:30000,price:1182.15},{qty:35000,price:1326.75},{qty:40000,price:1473.21},{qty:45000,price:1623.81},{qty:50000,price:1767.13},{qty:55000,price:1929.26},{qty:60000,price:2105.68},{qty:65000,price:2282.12},{qty:70000,price:2458.56}],
         [{qty:100,price:86.42},{qty:250,price:96.18},{qty:500,price:108.9},{qty:1000,price:160.71},{qty:2500,price:249.72},{qty:5000,price:394.66},{qty:7500,price:510.21},{qty:10000,price:641.86},{qty:15000,price:821.56},{qty:20000,price:1048.97},{qty:25000,price:1263.63},{qty:30000,price:1426.01},{qty:35000,price:1608.04},{qty:40000,price:1792.13},{qty:45000,price:1980.91},{qty:50000,price:2161.47},{qty:55000,price:2343.65},{qty:60000,price:2561.41},{qty:65000,price:2779.22},{qty:70000,price:2997}],

@@ -30,7 +30,9 @@ function priceItem(product, it) {
     const idx = Number.isInteger(tierIndex) ? tierIndex : 0;
     const tier = tiers[Math.min(Math.max(idx, 0), tiers.length - 1)];
     unitAmountCents = Math.round(tier.price * 100);
-    description = `${product.nome} — ${tier.qty} copie`;
+    // Consegna nella descrizione (serve anche per evidenziare Express / Overnight nell'email al titolare).
+    const dLabel = product.deliveryChoices ? product.deliveryChoices[Math.min(Math.max(dIdx, 0), product.deliveryChoices.length - 1)] : '';
+    description = `${product.nome} — ${dLabel ? dLabel + ', ' : ''}${tier.qty} ${product.unit || 'copie'}`;
   } else if (product.type === 'tiers') {
     const idx = Number.isInteger(tierIndex) ? tierIndex : 0;
     const tier = product.tiers[Math.min(Math.max(idx, 0), product.tiers.length - 1)];
