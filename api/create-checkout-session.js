@@ -32,7 +32,7 @@ function priceItem(product, it) {
     unitAmountCents = Math.round(tier.price * 100);
     // Consegna nella descrizione (serve anche per evidenziare Express / Overnight nell'email al titolare).
     const dLabel = product.deliveryChoices ? product.deliveryChoices[Math.min(Math.max(dIdx, 0), product.deliveryChoices.length - 1)] : '';
-    description = `${product.nome} — ${dLabel ? dLabel + ', ' : ''}${tier.qty} ${product.unit || 'copie'}`;
+    description = `${product.nome} — ${(tier.label || dLabel) ? (tier.label || dLabel) + ', ' : ''}${tier.qty} ${product.unit || 'copie'}`;
   } else if (product.type === 'tiers') {
     const idx = Number.isInteger(tierIndex) ? tierIndex : 0;
     const tier = product.tiers[Math.min(Math.max(idx, 0), product.tiers.length - 1)];
