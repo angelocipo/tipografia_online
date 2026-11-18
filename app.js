@@ -2543,6 +2543,11 @@ async function startStripeCheckout(btn){
     const details = human
       ? Object.entries(human).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => ({ label: k, value: String(v) }))
       : quoteConfigText(p, body.formula, idx).split(' · ').filter(Boolean).map(s => { const i = s.indexOf(': '); return i > 0 ? { label: s.slice(0, i), value: s.slice(i + 2) } : { label: 'Opzione', value: s }; });
+    // quoteConfigText salta la chiave 'qty': la quantità va comunque nel carrello (checkout e preventivo), es. Stampa Badge Personalizzati.
+    if (!human && body.formula && body.formula.qty != null && body.formula.qty !== '' && !details.some(d => /^Quantit/i.test(d.label))) {
+      const qOpt = ((p && p.pricing.options) || []).find(o => o.key === 'qty');
+      details.unshift({ label: 'Quantità', value: body.formula.qty + ' ' + ((qOpt && qOpt.unitSuffix) || (p && p.pricing.unit) || 'pz') });
+    }
     const ok = window.TPCart && window.TPCart.add({ productId, name, price: parseFloat(price) || 0, col, ean: (p && p.ean) || '', body, details });
     btn.disabled = false;
     btn.textContent = originalLabel;

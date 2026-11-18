@@ -183,7 +183,7 @@ class Component extends DCLogic {
       if (cart.length) {
         righe = cart.map(it => {
           const det = it.details || [];
-          const q = det.find(d => d.label === 'Quantità' || d.label === 'Quantity');
+          const q = det.find(d => /^(Quantit[àa]|Quantity)/i.test(d.label));
           return {
             prodotto: it.name || 'Prodotto', ean: it.ean || '', pid: String(it.productId || ''), productUrl: it.productId ? '/#' + encodeURIComponent(it.productId) : '/',
             dettagli: det.filter(d => d !== q).map(d => d.label + ': ' + d.value),
