@@ -1312,7 +1312,7 @@ function renderDetail(){
             <img src="${mainImage}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover; display:block;">
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            ${(p.gallery||[]).map(url => `<div class="thumb ${mainImage===url?'active':''}" data-thumb="${esc(url)}"><img src="${url}"></div>`).join('')}
+            ${(p.gallery||[]).map((url, gi) => `<div class="thumb ${mainImage===url?'active':''}" data-thumb="${esc(url)}"><img src="${url}" alt="${esc(p.nome)} – photo ${gi+1}" loading="lazy"></div>`).join('')}
           </div>
         </div>
         <div>

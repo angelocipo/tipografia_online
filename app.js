@@ -4024,7 +4024,7 @@ ${p.pricing.noPrint ? '' : `      <div style="font-size:11.5px; color:oklch(0.55
             <img src="${mainImage}" alt="${esc(p.nome)}" fetchpriority="high" style="width:100%; height:100%; object-fit:cover; display:block;">${imgBadgeHtml(p)}
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            ${(p.gallery||[]).map(url => `<div class="thumb ${mainImage===url?'active':''}" data-thumb="${esc(url)}"><img src="${url}"></div>`).join('')}
+            ${(p.gallery||[]).map((url, gi) => `<div class="thumb ${mainImage===url?'active':''}" data-thumb="${esc(url)}"><img src="${url}" alt="${esc(p.nome)} – ${window.tpLang === 'en' ? 'photo' : 'foto'} ${gi+1}" loading="lazy"></div>`).join('')}
           </div>
         </div>
         <div>
