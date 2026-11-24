@@ -184,7 +184,7 @@ select.vc-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
             </div>
           </sc-if>
           <sc-if value="{{ notZoneRitiro }}" hint-placeholder-val="{{ true }}">
-            <div class="vc-f"><div><label class="vc-lbl" for="ship-name">Nome destinatario <span class="vc-req">*</span></label><input class="vc-in" id="ship-name" autocomplete="name" placeholder="Persona o azienda che riceve il pacco" value="{{ ship.name }}" onChange="{{ setShipName }}"></div></div>
+            <div class="vc-f"><div><label class="vc-lbl" for="ship-name">Nome sul citofono <span class="vc-req">*</span></label><input class="vc-in" id="ship-name" autocomplete="name" placeholder="Nome e cognome o azienda, come scritto sul citofono" value="{{ ship.name }}" onChange="{{ setShipName }}"></div></div>
             <div class="vc-f"><div><label class="vc-lbl" for="ship-address">Indirizzo di consegna <span class="vc-req">*</span></label><input class="vc-in" id="ship-address" autocomplete="street-address" placeholder="Via e numero civico" value="{{ ship.address }}" onChange="{{ setShipAddress }}"></div></div>
             <div class="vc-cap vc-f">
               <div><label class="vc-lbl" for="ship-cap">CAP <span class="vc-req">*</span></label><input class="vc-in" id="ship-cap" autocomplete="postal-code" placeholder="00147" value="{{ ship.cap }}" onChange="{{ setShipCap }}"></div>
@@ -589,7 +589,7 @@ class Component extends DCLogic {
   validate() {
     const { inv, ship, shipZone } = this.state;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(inv.email || '').trim())) return 'Inserisci un indirizzo email valido.';
-    if (!String(ship.name || '').trim()) return shipZone === 'ritiro' ? 'Inserisci il nome di chi ritira.' : 'Inserisci il nome del destinatario.';
+    if (!String(ship.name || '').trim()) return shipZone === 'ritiro' ? 'Inserisci il nome di chi ritira.' : 'Inserisci il nome come scritto sul citofono.';
     if (shipZone !== 'ritiro' && (!ship.address || !ship.cap || !ship.city)) return 'Inserisci un indirizzo di consegna completo.';
     const phoneDigits = String((this.state.ship || {}).phone || '').replace(/[^\d]/g, '');
     if (phoneDigits.length < 9 || phoneDigits.length > 13) return 'Inserisci un numero di cellulare valido per la consegna.';
