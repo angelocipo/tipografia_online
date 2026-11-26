@@ -166,7 +166,8 @@ function priceItem(product, it) {
     // Il prezzo si calcola sempre in cm, qualunque unità abbia scelto il cliente.
     const k = ({ CM:1, INCH:2.54, FEET:30.48 })[String(unit || 'CM').toUpperCase()] || 1;
     const hCm = h * k, wCm = w * k;
-    const base = wCm * 0.002 + 29 + ((2*hCm + 2*wCm) / 100) * 50;
+    // 300×585 cm = noleggio € 1.265; tutte le misure scalate dello stesso fattore (STRUTTURA_215_FACTOR in app.js).
+    const base = (wCm * 0.002 + 29 + ((2*hCm + 2*wCm) / 100) * 50) * (1265 / 915.17);
     const total = base * 1.5;
     unitAmountCents = Math.round(total * 100);
     description = `${product.nome} — Roma, ${evLabel} — ${h}×${w} ${String(unit || 'CM').toUpperCase()} — noleggio € ${base.toFixed(2).replace('.', ',')} + caparra 50% € ${(base/2).toFixed(2).replace('.', ',')} (restituita dopo ispezione)`;
