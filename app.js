@@ -23,6 +23,8 @@ const ROLLUP_FEATURES = [
 ];
 // Struttura per Eventi: le misure si inseriscono in cm, inch o feet ma il prezzo si calcola sempre in cm.
 const STRUTTURA_TO_CM = { CM:1, INCH:2.54, FEET:30.48 };
+// Struttura per Eventi: 300×585 cm = noleggio € 1.265 (prima € 915,17); tutte le misure scalate dello stesso fattore.
+const STRUTTURA_215_FACTOR = 1265 / 915.17;
 function struttura215cm(sel) {
   const k = STRUTTURA_TO_CM[String(sel.unit || 'CM').toUpperCase()] || 1;
   return [(Number(sel.altezza) || 100) * k, (Number(sel.larghezza) || 100) * k];
@@ -1449,11 +1451,12 @@ const PRODUCTS = [
     pricing:{type:'quote',
       formula: (sel) => {
         const [h, w] = struttura215cm(sel);
-        return w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
+        // Listino × (1265 / 915,17): 300×585 cm = noleggio € 1.265, le altre misure in proporzione (stessa regola in api/create-checkout-session.js).
+        return (w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50) * STRUTTURA_215_FACTOR;
       },
       depositNote: (sel, p) => {
         const [h, w] = struttura215cm(sel);
-        const base = w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50;
+        const base = (w * 0.002 + 29 + ((2*h + 2*w) / 100) * 50) * STRUTTURA_215_FACTOR;
         return `Prezzo prodotto € ${fmtEUR(base)} + caparra confirmatoria 50% (€ ${fmtEUR(base/2)}), restituita dopo ispezione senza danni.`;
       },
       options:[
