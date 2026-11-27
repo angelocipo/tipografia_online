@@ -295,7 +295,7 @@ function priceItem(product, it) {
     const idx = Number.isInteger(tierIndex) ? tierIndex : 0;
     const i = Math.min(Math.max(idx, 0), delivery.prices.length - 1);
     let priceStrategici = delivery.prices[i];
-    const qtyLabelsS = format.qtyLabels || product.qtyLabels;
+    const qtyLabelsS = paper.qtyLabels || format.qtyLabels || product.qtyLabels;
     let angoliSuffixStrategici = '';
     if (formula && formula.angoliArrotondati && !product.noFinish) { priceStrategici += angoliArrotondatiPrice(qtyLabelsS[i]); angoliSuffixStrategici = ', Angoli arrotondati'; }
     // Motivi: 1° a prezzo pieno, ogni motivo aggiuntivo al 90%. Quantità per ogni motivo.

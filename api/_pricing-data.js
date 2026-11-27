@@ -173,6 +173,24 @@ const PRICING = {
         ] },
       ] },
     ] },
+  '6101': { nome: 'Cartelle di Presentazione A4 con Lembi', ean: '', type: 'businessCardStrategici', noFinish: true,
+    formats: [
+      { label: 'A4 verticale (chiusa 21×29,7 cm)', papers: [
+        { label: '300 g patinata opaca', qtyLabels: [1,5,10,25,50,75,100,250,500,1000,2500,5000,7500,10000,15000,20000,25000,50000,75000,100000], deliveries: [
+          { label: 'Standard 6–8 gg lavorativi', readyDays: [6,8], prices: [39.63,115.9,123.17,148.46,173.18,205.39,225.26,251.9,317.04,502.78,1070.06,1978.78,2804.42,3763.12,5512.26,7155.07,8904.56,17275.47,25001.25,33307.18] },
+          { label: 'Express 3–4 gg lavorativi', readyDays: [3,4], prices: [88.46,164.75,172.02,197.31,222.02,254.22,274.1,300.75,368.29,592.11,1274.75,2352.5,3338.83,4471.57] },
+          { label: 'Overnight 1 giorno lavorativo', readyDays: [1,1], prices: [122.9,200.78,208.21,234.05,259.26,292.16,312.43,339.63,408.59,644.27,1352.48,2466.14] },
+        ] },
+        { label: '400 g patinata opaca', qtyLabels: [10,25,50,75,100,250,500,1000,2500,5000,7500,10000], deliveries: [
+          { label: 'Standard 6–8 gg lavorativi', readyDays: [6,8], prices: [149.7,176.05,201.92,241.76,273.54,292.19,564.48,730.78,1414.94,2647.09,3702.59,4995.71] },
+          { label: 'Express 3–4 gg lavorativi', readyDays: [3,4], prices: [198.54,224.9,250.75,290.59,322.37,341.06,660.02,862.46,1673.66,3146.24,4404.98,5944.62] },
+        ] },
+        { label: '450 g cartoncino SBS opaco', qtyLabels: [1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,100,250,500,1000,1250,2500], deliveries: [
+          { label: 'Standard 8–10 gg lavorativi', readyDays: [8,10], prices: [40.78,129.38,163.14,173.74,207.92,252.14,261.81,293.58,303.1,351.74,354.22,362.72,399.52,437.5,445.97,482.61,565.65,926.3,1164.93,1744.46,2060.86,3622.91] },
+          { label: 'Express 5–6 gg lavorativi', readyDays: [5,6], prices: [89.63,178.22,211.97,222.59,256.77,300.98,310.64,342.48,352.96,406.46,409.18,418.53,458.99,500.8,510.11,550.43,641.76,1058.02,1340.03,2016.59,2403.7,4239.18] },
+        ] },
+      ] },
+    ] },
   '6001': { nome: 'Buste da Lettera con Finestra a Destra', ean: '', type: 'businessCardStrategici', noFinish: true,
     formats: [
       { label: 'DIN lungo 22×11 cm', qtyLabels: [10,25,50,75,100,250,500,750,1000,2000,2500,3000,4000,5000,6000,7000,7500,8000], papers: [
